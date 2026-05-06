@@ -49,12 +49,27 @@ The planning artifacts have already been refined once in response to formal revi
   - workspace dock rendering
   - workspace CRUD/styling/reorder
   - documentStore transaction batching integration
+- Checkpoint 3 review refinements:
+  - workspace card styling now renders stored background/text colors
+  - workspace downward drag reorder now persists correctly
+  - reorder coverage now includes the downward-move path
+- Checkpoint 4 builder pass:
+  - block templates
+  - empty workspace add-block affordances
+  - top bar add-block flow
+  - block cards and headers
+- Checkpoint 4 follow-up fix:
+  - normal user-created workspaces now start empty
+  - first-launch bootstrap starter workspace behavior remains intact
+- Checkpoint 4 review outcome:
+  - reviewed and accepted after the empty-workspace follow-up fix
 
 ### Review State
 
 - Checkpoint 1: reviewed and refined
 - Checkpoint 2: reviewed; acceptable to continue, with note that transaction batching should stay coordinated through `documentStore`
-- Checkpoint 3: builder-complete, not yet formally reviewed by the primary reviewer agent at the time this continuity system was created
+- Checkpoint 3: reviewed and refined; acceptable to continue
+- Checkpoint 4: reviewed and accepted
 
 ## Current App Usability
 
@@ -62,6 +77,7 @@ The planning artifacts have already been refined once in response to formal revi
 - browser preview is available through the local Vite URL
 - local `tauri:dev` is not available on the user's work PC because Rust/MSVC tooling is unavailable there
 - native Windows desktop verification is being done through GitHub Actions artifacts
+- local `npm run typecheck`, `npm run test`, `npm run build`, and `npm run lint` pass after the checkpoint 3 review fixes on 2026-05-06
 
 ## Current Constraints
 
@@ -72,10 +88,12 @@ The planning artifacts have already been refined once in response to formal revi
 
 ## Recommended Next Work
 
-1. Review checkpoint 3 implementation against plan and UI spec
-2. If acceptable, continue with the next build checkpoint:
-   - block creation and management
-   - or whichever checkpoint the reviewer explicitly approves next
+1. Start the next block-management checkpoint inside EPIC-06
+2. Prefer this sequence:
+   - `TICKET-026`
+   - `TICKET-027`
+   - `TICKET-028`
+   - `TICKET-029`
 
 ## Notes
 

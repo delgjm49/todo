@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from "react";
+import { BlockTemplateMenu } from "../block/BlockTemplateMenu.js";
 import { useDocumentStore } from "../../stores/documentStore.js";
 import { useUiStore } from "../../stores/uiStore.js";
 
@@ -6,6 +8,7 @@ export function TopBar() {
   const workspaceIndex = useDocumentStore((state) => state.workspaceIndex);
   const undo = useDocumentStore((state) => state.undo);
   const redo = useDocumentStore((state) => state.redo);
+  const createBlockFromTemplate = useDocumentStore((state) => state.createBlockFromTemplate);
   const saveStatus = useDocumentStore((state) => state.saveStatus);
   const dirty = useDocumentStore((state) => state.dirty);
   const canUndo = useDocumentStore((state) => state.canUndo);
@@ -14,6 +17,25 @@ export function TopBar() {
   const inspectorOpen = useUiStore((state) => state.inspectorOpen);
   const toggleInspector = useUiStore((state) => state.toggleInspector);
   const activeWorkspace = workspaceIndex.find((entry) => entry.id === activeWorkspaceId) ?? workspaceIndex[0] ?? null;
+  const [blockMenuOpen, setBlockMenuOpen] = useState(false);
+  const blockMenuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!blockMenuOpen) {
+      return undefined;
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (blockMenuRef.current && event.target instanceof Node && blockMenuRef.current.contains(event.target)) {
+        return;
+      }
+
+      setBlockMenuOpen(false);
+    };
+
+    window.addEventListener("pointerdown", handlePointerDown);
+    return () => window.removeEventListener("pointerdown", handlePointerDown);
+  }, [blockMenuOpen]);
 
   return (
     <header className="sticky top-0 z-30 flex h-[56px] items-center justify-between gap-4 border-b border-border bg-panel/92 px-5 backdrop-blur">
@@ -23,7 +45,19 @@ export function TopBar() {
       </div>
 
       <div className="flex items-center gap-2">
-        <ToolbarButton label="+ Block" disabled />
+        <div className="relative">
+          <ToolbarButton label="+ Block" onClick={() => setBlockMenuOpen((state) => !state)} />
+          {blockMenuOpen ? (
+            <div className="absolute left-0 top-[calc(100%+0.5rem)] z-40" ref={blockMenuRef}>
+              <BlockTemplateMenu
+                onSelectTemplate={(template) => {
+                  createBlockFromTemplate(template);
+                  setBlockMenuOpen(false);
+                }}
+              />
+            </div>
+          ) : null}
+        </div>
         <ToolbarButton
           label="Undo"
           disabled={!canUndo}

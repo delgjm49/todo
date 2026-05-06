@@ -8,10 +8,10 @@ import type { WorkspaceStyle } from "../types/formatting";
 import {
   createDefaultStorageService,
   createDefaultWorkspaceIndexEntry,
-  createStarterBlock,
   type StorageService,
   StorageOperationError,
 } from "../services/storage/index.js";
+import { BLOCK_TEMPLATES, createBlockTemplate, getBlockTemplateLabel } from "../domain/templates/blockTemplates.js";
 import type { HistoryTransactionKind } from "./historyStore.js";
 import { useHistoryStore } from "./historyStore.js";
 
@@ -69,6 +69,10 @@ export interface DocumentStoreState {
     targetWorkspaceId: WorkspaceId,
     options?: DocumentMutationOptions
   ) => boolean;
+  createBlockFromTemplate: (
+    templateType: (typeof BLOCK_TEMPLATES)[number]["type"],
+    options?: DocumentMutationOptions
+  ) => boolean;
 }
 
 let cachedDefaultService: Promise<StorageService> | null = null;
@@ -101,17 +105,9 @@ function getDefaultWorkspaceTitle(index: number): string {
 }
 
 function createWorkspaceDocument(workspaceId: WorkspaceId): WorkspaceDocument {
-  const block = createStarterBlock("basic_checklist", "Today");
-  block.id = createId("block");
-  block.workspaceId = workspaceId;
-  block.rows = block.rows.map((row) => ({
-    ...row,
-    id: createId("row"),
-  }));
-
   return {
     id: workspaceId,
-    blocks: [block],
+    blocks: [],
   };
 }
 
@@ -315,6 +311,21 @@ function createDefaultWorkspaceState(title?: string): {
   const workspace = createWorkspaceDocument(workspaceId);
   const workspaceIndexEntry = createWorkspaceIndexEntry(workspaceId, title?.trim() || "Workspace", 0);
   return { workspace, workspaceIndexEntry };
+}
+
+function appendBlockToWorkspace(
+  workspace: WorkspaceDocument,
+  templateType: (typeof BLOCK_TEMPLATES)[number]["type"]
+): WorkspaceDocument {
+  const nextBlock = createBlockTemplate(templateType, workspace.id, {
+    title: getBlockTemplateLabel(templateType),
+    order: workspace.blocks.length,
+  });
+
+  return {
+    ...structuredClone(workspace),
+    blocks: [...structuredClone(workspace.blocks), nextBlock],
+  };
 }
 
 function commitSnapshot(
@@ -756,8 +767,7 @@ export const useDocumentStore = create<DocumentStoreState>()((set, get) => ({
       return false;
     }
 
-    const adjustedTargetIndex = sourceIndex < targetIndex ? targetIndex - 1 : targetIndex;
-    nextWorkspaceIndex.splice(adjustedTargetIndex, 0, moved);
+    nextWorkspaceIndex.splice(targetIndex, 0, moved);
 
     const nextSnapshot: AppDocumentSnapshot = {
       settings: structuredClone(state.settings),
@@ -768,6 +778,33 @@ export const useDocumentStore = create<DocumentStoreState>()((set, get) => ({
     };
 
     return commitSnapshot(set, get, nextSnapshot, "drag", options);
+  },
+  createBlockFromTemplate: (templateType, options) => {
+    const state = get();
+    if (!state.settings) {
+      return false;
+    }
+
+    const workspaceId = state.activeWorkspaceId ?? state.workspaceIndex[0]?.id ?? null;
+    if (!workspaceId) {
+      return false;
+    }
+
+    const workspace = state.workspacesById[workspaceId];
+    if (!workspace) {
+      return false;
+    }
+
+    const nextWorkspace = appendBlockToWorkspace(workspace, templateType);
+    const nextSnapshot: AppDocumentSnapshot = {
+      settings: structuredClone(state.settings),
+      workspaceIndex: structuredClone(state.workspaceIndex),
+      workspacesById: replaceWorkspaceDocument(state.workspacesById, nextWorkspace),
+      activeWorkspaceId: workspaceId,
+      loadedWorkspaceIds: structuredClone(state.loadedWorkspaceIds),
+    };
+
+    return commitSnapshot(set, get, nextSnapshot, "formatting", options);
   },
 }));
 

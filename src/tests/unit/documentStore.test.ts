@@ -87,7 +87,7 @@ describe("document store autosave", () => {
     assert.equal(useHistoryStore.getState().canUndo, true);
   });
 
-  test("handles workspace create, select, rename, style, reorder, and delete flows", async () => {
+  test("creates new workspaces empty while preserving workspace CRUD, style, reorder, and delete flows", async () => {
     const service = await createMemoryStorageService();
     const calls: AppDocumentSnapshot[] = [];
 
@@ -114,6 +114,14 @@ describe("document store autosave", () => {
       useDocumentStore.getState().workspaceIndex.find((entry) => entry.title === "Draft")?.id ?? null;
     assert.ok(createdWorkspaceId);
     assert.equal(useDocumentStore.getState().activeWorkspaceId, createdWorkspaceId);
+    assert.equal(useDocumentStore.getState().workspacesById[createdWorkspaceId]?.blocks.length, 0);
+
+    const firstBlockCreated = useDocumentStore.getState().createBlockFromTemplate("basic_checklist", {
+      service,
+      autosaveDelayMs: 5,
+    });
+    assert.equal(firstBlockCreated, true);
+    assert.equal(useDocumentStore.getState().workspacesById[createdWorkspaceId]?.blocks.length, 1);
 
     useDocumentStore.getState().selectWorkspace(baseWorkspaceId);
     assert.equal(useDocumentStore.getState().activeWorkspaceId, baseWorkspaceId);
@@ -145,9 +153,10 @@ describe("document store autosave", () => {
 
     const reordered = useDocumentStore
       .getState()
-      .reorderWorkspaces(createdWorkspaceId, baseWorkspaceId, { service, autosaveDelayMs: 5 });
+      .reorderWorkspaces(baseWorkspaceId, createdWorkspaceId, { service, autosaveDelayMs: 5 });
     assert.equal(reordered, true);
     assert.equal(useDocumentStore.getState().workspaceIndex[0]?.id, createdWorkspaceId);
+    assert.equal(useDocumentStore.getState().workspaceIndex[1]?.id, baseWorkspaceId);
 
     const deleted = useDocumentStore.getState().deleteWorkspace(createdWorkspaceId, { service, autosaveDelayMs: 5 });
     assert.equal(deleted, true);
@@ -159,6 +168,51 @@ describe("document store autosave", () => {
     assert.equal(calls.length, 1);
     assert.equal(useDocumentStore.getState().saveStatus, "saved");
     assert.equal(useHistoryStore.getState().canUndo, true);
+  });
+
+  test("creates blocks from each supported template through the store", async () => {
+    const service = await createMemoryStorageService();
+    const calls: AppDocumentSnapshot[] = [];
+
+    service.saveAppData = async (document) => {
+      calls.push({
+        settings: structuredClone(document.settings),
+        workspaceIndex: structuredClone(document.workspaceIndex),
+        workspacesById: structuredClone(document.workspacesById),
+        activeWorkspaceId: document.activeWorkspaceId,
+        loadedWorkspaceIds: [...document.loadedWorkspaceIds],
+      });
+
+      return createSavedOutcome(document);
+    };
+
+    await useDocumentStore.getState().initializeAppData(service);
+    const templates: Array<"basic_checklist" | "bulleted_list" | "numbered_list"> = [
+      "basic_checklist",
+      "bulleted_list",
+      "numbered_list",
+    ];
+
+    for (const templateType of templates) {
+      const created = useDocumentStore
+        .getState()
+        .createBlockFromTemplate(templateType, { service, autosaveDelayMs: 5 });
+      assert.equal(created, true);
+    }
+
+    await wait(20);
+
+    const activeWorkspaceId = useDocumentStore.getState().activeWorkspaceId;
+    assert.ok(activeWorkspaceId);
+    const workspace = useDocumentStore.getState().workspacesById[activeWorkspaceId];
+    assert.ok(workspace);
+    assert.equal(workspace.blocks.length, 4);
+    assert.deepEqual(
+      workspace.blocks.map((block) => block.blockType),
+      ["basic_checklist", "basic_checklist", "bulleted_list", "numbered_list"]
+    );
+    assert.equal(calls.length, 1);
+    assert.equal(useDocumentStore.getState().saveStatus, "saved");
   });
 
   test("debounces autosave after committed changes and after undo/redo", async () => {

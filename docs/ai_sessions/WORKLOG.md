@@ -75,6 +75,66 @@
   - workspace dock and workspace CRUD/styling/reorder
 - At the time of this entry, checkpoint 3 had not yet been formally reviewed by the primary reviewer agent
 
+### Checkpoint 3 Review And Refinement
+
+- Reviewed checkpoint 3 against the backlog, plan, and UI spec
+- Found and fixed a workspace reorder defect:
+  - dragging a workspace downward onto a later card did not change persisted order
+- Found and fixed a workspace styling defect:
+  - stored workspace background/text colors were persisted but not rendered on dock cards
+- Updated workspace reorder coverage to include the downward-move case
+- Re-ran local verification:
+  - `npm run typecheck`
+  - `npm run test`
+  - `npm run build`
+  - `npm run lint`
+- Review outcome:
+  - checkpoint 3 is now acceptable to continue from
+  - next checkpoint should be EPIC-06 block creation and management
+
+### Implementation Checkpoint 4
+
+- Builder completed checkpoint 4 / EPIC-06 block creation and management in the current thread
+- Implemented:
+  - block templates
+  - empty workspace add-block affordances
+  - top bar add-block flow
+  - block cards and headers
+- Verified locally:
+  - `npm run typecheck`
+  - `npm run test`
+  - `npm run lint`
+  - `npm run build`
+- Status:
+  - builder-complete
+  - not yet formally reviewed
+
+### Checkpoint 4 Follow-Up Fix
+
+- Addressed the review finding that new user-created workspaces were still seeded with a starter block
+- Changed the normal workspace-create path so new workspaces now start empty
+- Preserved first-launch bootstrap behavior so the starter Home workspace still seeds with a block
+- Updated continuity docs so checkpoint 4 is described as awaiting re-review after this follow-up fix
+
+### Checkpoint 4 Review Outcome
+
+- Re-reviewed checkpoint 4 after the empty-workspace follow-up fix
+- Verified locally:
+  - `npm run typecheck`
+  - `npm run test`
+  - `npm run build`
+  - `npm run lint`
+- Review outcome:
+  - checkpoint 4 is now accepted
+  - the accepted behavior is:
+    - user-created workspaces start empty
+    - first-launch bootstrap still creates a starter Home workspace with a block
+  - the next checkpoint should continue the remaining EPIC-06 block management tickets:
+    - `TICKET-026`
+    - `TICKET-027`
+    - `TICKET-028`
+    - `TICKET-029`
+
 ### Session Continuity System
 
 - Added stateless-session workflow docs:

@@ -24,12 +24,15 @@ export function WorkspaceCard({
   onDrop: () => void;
   onDragOver: (event: DragEvent<HTMLButtonElement>) => void;
 }) {
+  const workspaceBackground = entry.style.background ?? undefined;
+  const workspaceTextColor = entry.style.textColor ?? undefined;
+
   return (
     <button
       className={`group relative flex w-full items-stretch overflow-hidden rounded-2xl border text-left transition ${
         active
-          ? "border-accent/70 bg-accent/10 shadow-soft"
-          : "border-border bg-panelMuted/60 hover:border-accent/40 hover:bg-panelMuted"
+          ? "border-accent/70 shadow-soft ring-1 ring-accent/40"
+          : "border-border bg-panelMuted/60 hover:border-accent/40"
       } ${dragging ? "opacity-50" : ""} ${dropTarget ? "ring-2 ring-accent/60" : ""}`}
       draggable
       onClick={onSelect}
@@ -43,6 +46,10 @@ export function WorkspaceCard({
       onDrop={(event) => {
         event.preventDefault();
         onDrop();
+      }}
+      style={{
+        backgroundColor: workspaceBackground,
+        color: workspaceTextColor,
       }}
       type="button"
     >
@@ -59,7 +66,7 @@ export function WorkspaceCard({
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="truncate text-sm font-medium">{entry.title}</div>
-            <div className="mt-1 text-xs uppercase tracking-[0.22em] text-textMuted">
+            <div className="mt-1 text-xs uppercase tracking-[0.22em] opacity-70">
               Workspace {entry.order + 1}
             </div>
           </div>
@@ -69,7 +76,7 @@ export function WorkspaceCard({
             </div>
           ) : null}
         </div>
-        <div className="mt-3 flex items-center gap-2 text-xs text-textMuted">
+        <div className="mt-3 flex items-center gap-2 text-xs opacity-70">
           <span>{entry.style.background ?? "#1F2937"}</span>
           <span>/</span>
           <span>{entry.style.textColor ?? "#F9FAFB"}</span>
