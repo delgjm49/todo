@@ -1,0 +1,7 @@
+:root {
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --dock-width: 300px;
+  --topbar-height: 52px;
+}
