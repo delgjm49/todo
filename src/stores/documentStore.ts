@@ -1,13 +1,24 @@
 import { create } from "zustand";
-import type { AppDocument, LoadedAppData, SaveFailure, SaveOutcome, SaveStatus } from "../types/app";
+import type { AppDocument, AppDocumentSnapshot, LoadedAppData, SaveFailure, SaveOutcome, SaveStatus } from "../types/app";
 import type { WorkspaceDocument, WorkspaceIndexEntry } from "../types/workspace";
 import type { WorkspaceId } from "../domain/ids";
+import { createId } from "../domain/ids.js";
 import type { Settings } from "../types/settings";
+import type { WorkspaceStyle } from "../types/formatting";
 import {
   createDefaultStorageService,
+  createDefaultWorkspaceIndexEntry,
+  createStarterBlock,
   type StorageService,
   StorageOperationError,
 } from "../services/storage/index.js";
+import type { HistoryTransactionKind } from "./historyStore.js";
+import { useHistoryStore } from "./historyStore.js";
+
+export interface DocumentMutationOptions {
+  service?: StorageService;
+  autosaveDelayMs?: number;
+}
 
 export interface DocumentStoreState {
   isInitialized: boolean;
@@ -21,6 +32,8 @@ export interface DocumentStoreState {
   workspacesById: Record<WorkspaceId, WorkspaceDocument>;
   loadedWorkspaceIds: WorkspaceId[];
   activeWorkspaceId: WorkspaceId | null;
+  canUndo: boolean;
+  canRedo: boolean;
   dirty: boolean;
   lastSaveAt: string | null;
   initializeAppData: (service?: StorageService) => Promise<void>;
@@ -28,42 +41,159 @@ export interface DocumentStoreState {
   retrySave: (service?: StorageService) => Promise<boolean>;
   setActiveWorkspaceId: (workspaceId: WorkspaceId | null) => void;
   markDirty: (dirty: boolean) => void;
+  beginDocumentTransaction: (kind: HistoryTransactionKind) => void;
+  updateDocumentTransaction: (snapshot: AppDocumentSnapshot) => void;
+  commitDocumentTransaction: (options?: DocumentMutationOptions) => boolean;
+  commitDocumentSnapshot: (
+    snapshot: AppDocumentSnapshot,
+    kind: HistoryTransactionKind,
+    options?: DocumentMutationOptions
+  ) => boolean;
+  undo: (options?: DocumentMutationOptions) => boolean;
+  redo: (options?: DocumentMutationOptions) => boolean;
+  createWorkspace: (title?: string, options?: DocumentMutationOptions) => boolean;
+  selectWorkspace: (workspaceId: WorkspaceId) => void;
+  renameWorkspace: (
+    workspaceId: WorkspaceId,
+    title: string,
+    options?: DocumentMutationOptions
+  ) => boolean;
+  deleteWorkspace: (workspaceId: WorkspaceId, options?: DocumentMutationOptions) => boolean;
+  updateWorkspaceStyle: (
+    workspaceId: WorkspaceId,
+    stylePatch: Partial<WorkspaceStyle>,
+    options?: DocumentMutationOptions
+  ) => boolean;
+  reorderWorkspaces: (
+    sourceWorkspaceId: WorkspaceId,
+    targetWorkspaceId: WorkspaceId,
+    options?: DocumentMutationOptions
+  ) => boolean;
 }
 
 let cachedDefaultService: Promise<StorageService> | null = null;
+let activeStorageService: StorageService | null = null;
+let autosaveTimer: ReturnType<typeof setTimeout> | null = null;
+let saveInFlight = false;
+let saveQueuedAfterFlight = false;
+let documentRevision = 0;
 
-async function getDefaultService(): Promise<StorageService> {
+const DEFAULT_AUTOSAVE_DELAY_MS = 250;
+
+function getEmptyPersistedManifest() {
+  return {
+    settings: false,
+    workspaceIndex: false,
+    workspaceIds: [] as WorkspaceId[],
+  };
+}
+
+function cloneSnapshot(snapshot: AppDocumentSnapshot): AppDocumentSnapshot {
+  return structuredClone(snapshot);
+}
+
+function cloneWorkspaceDocument(workspace: WorkspaceDocument): WorkspaceDocument {
+  return structuredClone(workspace);
+}
+
+function getDefaultWorkspaceTitle(index: number): string {
+  return index <= 0 ? "Workspace" : `Workspace ${index + 1}`;
+}
+
+function createWorkspaceDocument(workspaceId: WorkspaceId): WorkspaceDocument {
+  const block = createStarterBlock("basic_checklist", "Today");
+  block.id = createId("block");
+  block.workspaceId = workspaceId;
+  block.rows = block.rows.map((row) => ({
+    ...row,
+    id: createId("row"),
+  }));
+
+  return {
+    id: workspaceId,
+    blocks: [block],
+  };
+}
+
+function createWorkspaceIndexEntry(
+  workspaceId: WorkspaceId,
+  title: string,
+  order: number
+): WorkspaceIndexEntry {
+  const template = createDefaultWorkspaceIndexEntry();
+  return {
+    ...template,
+    id: workspaceId,
+    title,
+    order,
+    style: structuredClone(template.style),
+  };
+}
+
+function createSnapshotFromState(state: Pick<
+  DocumentStoreState,
+  "settings" | "workspaceIndex" | "workspacesById" | "activeWorkspaceId" | "loadedWorkspaceIds"
+>): AppDocumentSnapshot {
+  if (!state.settings) {
+    throw new Error("Document store is not initialized.");
+  }
+
+  return {
+    settings: structuredClone(state.settings),
+    workspaceIndex: structuredClone(state.workspaceIndex),
+    workspacesById: structuredClone(state.workspacesById),
+    activeWorkspaceId: state.activeWorkspaceId,
+    loadedWorkspaceIds: structuredClone(state.loadedWorkspaceIds),
+  };
+}
+
+function toDocumentState(payload: LoadedAppData): {
+  settings: Settings;
+  workspaceIndex: WorkspaceIndexEntry[];
+  workspacesById: Record<WorkspaceId, WorkspaceDocument>;
+  loadedWorkspaceIds: WorkspaceId[];
+  activeWorkspaceId: WorkspaceId | null;
+} {
+  const workspaceIndex = structuredClone(payload.workspaceIndex).sort((left, right) => left.order - right.order);
+  const workspacesById = payload.workspaces.reduce<Record<WorkspaceId, WorkspaceDocument>>((accumulator, workspace) => {
+    accumulator[workspace.id] = cloneWorkspaceDocument(workspace);
+    return accumulator;
+  }, {});
+  const loadedWorkspaceIds = workspaceIndex
+    .map((entry) => entry.id)
+    .filter((workspaceId) => workspaceId in workspacesById);
+
+  const activeWorkspaceId = loadedWorkspaceIds.includes(payload.activeWorkspaceId ?? "")
+    ? payload.activeWorkspaceId
+    : loadedWorkspaceIds[0] ?? null;
+
+  return {
+    settings: structuredClone(payload.settings),
+    workspaceIndex,
+    workspacesById,
+    loadedWorkspaceIds,
+    activeWorkspaceId,
+  };
+}
+
+function withStorageService(service?: StorageService): Promise<StorageService> {
+  if (service) {
+    activeStorageService = service;
+    return Promise.resolve(service);
+  }
+
+  if (activeStorageService) {
+    return Promise.resolve(activeStorageService);
+  }
+
   if (cachedDefaultService === null) {
     cachedDefaultService = createDefaultStorageService();
   }
 
-  return cachedDefaultService;
-}
-
-function toDocumentState(payload: LoadedAppData): AppDocument {
-  return {
-    settings: payload.settings,
-    workspaceIndex: payload.workspaceIndex,
-    workspacesById: payload.workspaces.reduce<Record<WorkspaceId, WorkspaceDocument>>(
-      (accumulator, workspace) => {
-        accumulator[workspace.id] = workspace;
-        return accumulator;
-      },
-      {}
-    ),
-    activeWorkspaceId: payload.activeWorkspaceId,
-    loadedWorkspaceIds: payload.workspaces.map((workspace) => workspace.id),
-    dirty: false,
-    lastSaveAt: null,
-  };
-}
-
-async function withStorageService(service?: StorageService): Promise<StorageService> {
-  if (service) {
-    return service;
-  }
-
-  return getDefaultService();
+  return cachedDefaultService.then((resolved) => {
+    activeStorageService = resolved;
+    return resolved;
+  });
 }
 
 function toSaveFailure(error: unknown): SaveFailure {
@@ -83,6 +213,146 @@ function toSaveFailure(error: unknown): SaveFailure {
   };
 }
 
+function scheduleAutosave(service: StorageService | undefined, delayMs: number | undefined, saveAll: (service?: StorageService) => Promise<boolean>): void {
+  const resolvedDelay = delayMs ?? DEFAULT_AUTOSAVE_DELAY_MS;
+
+  if (autosaveTimer) {
+    clearTimeout(autosaveTimer);
+  }
+
+  autosaveTimer = setTimeout(() => {
+    autosaveTimer = null;
+    void saveAll(service);
+  }, resolvedDelay);
+}
+
+function clearAutosaveTimer(): void {
+  if (autosaveTimer) {
+    clearTimeout(autosaveTimer);
+    autosaveTimer = null;
+  }
+}
+
+function setCommittedSnapshot(
+  set: (partial: Partial<DocumentStoreState> | ((state: DocumentStoreState) => Partial<DocumentStoreState>)) => void,
+  snapshot: AppDocumentSnapshot,
+  dirty: boolean
+): void {
+  set({
+    settings: structuredClone(snapshot.settings),
+    workspaceIndex: structuredClone(snapshot.workspaceIndex),
+    workspacesById: structuredClone(snapshot.workspacesById),
+    activeWorkspaceId: snapshot.activeWorkspaceId,
+    loadedWorkspaceIds: structuredClone(snapshot.loadedWorkspaceIds),
+    canUndo: useHistoryStore.getState().canUndo,
+    canRedo: useHistoryStore.getState().canRedo,
+    dirty,
+    saveStatus: dirty ? "idle" : "saved",
+    saveError: null,
+  });
+}
+
+function setDirtyState(
+  set: (partial: Partial<DocumentStoreState> | ((state: DocumentStoreState) => Partial<DocumentStoreState>)) => void,
+  state: Partial<Pick<DocumentStoreState, "saveStatus" | "saveError" | "lastSaveOutcome">> = {}
+): void {
+  set({
+    dirty: true,
+    saveStatus: state.saveStatus ?? "idle",
+    saveError: state.saveError ?? null,
+    lastSaveOutcome: state.lastSaveOutcome ?? null,
+  });
+}
+
+function updateWorkspaceIndexOrder(workspaceIndex: WorkspaceIndexEntry[]): WorkspaceIndexEntry[] {
+  return workspaceIndex.map((entry, index) => ({
+    ...structuredClone(entry),
+    order: index,
+  }));
+}
+
+function reconcileActiveWorkspace(
+  activeWorkspaceId: WorkspaceId | null,
+  workspaceIndex: WorkspaceIndexEntry[],
+  workspacesById: Record<WorkspaceId, WorkspaceDocument>
+): WorkspaceId | null {
+  if (activeWorkspaceId && workspaceIndex.some((entry) => entry.id === activeWorkspaceId) && activeWorkspaceId in workspacesById) {
+    return activeWorkspaceId;
+  }
+
+  const firstWorkspace = workspaceIndex.find((entry) => entry.id in workspacesById);
+  return firstWorkspace?.id ?? null;
+}
+
+function replaceWorkspaceDocument(
+  workspacesById: Record<WorkspaceId, WorkspaceDocument>,
+  workspace: WorkspaceDocument
+): Record<WorkspaceId, WorkspaceDocument> {
+  return {
+    ...structuredClone(workspacesById),
+    [workspace.id]: cloneWorkspaceDocument(workspace),
+  };
+}
+
+function removeWorkspaceDocument(
+  workspacesById: Record<WorkspaceId, WorkspaceDocument>,
+  workspaceId: WorkspaceId
+): Record<WorkspaceId, WorkspaceDocument> {
+  const next = structuredClone(workspacesById);
+  delete next[workspaceId];
+  return next;
+}
+
+function reindexSnapshotWorkspaces(workspaceIndex: WorkspaceIndexEntry[]): WorkspaceIndexEntry[] {
+  return updateWorkspaceIndexOrder(workspaceIndex);
+}
+
+function createDefaultWorkspaceState(title?: string): {
+  workspace: WorkspaceDocument;
+  workspaceIndexEntry: WorkspaceIndexEntry;
+} {
+  const workspaceId = createId("workspace");
+  const workspace = createWorkspaceDocument(workspaceId);
+  const workspaceIndexEntry = createWorkspaceIndexEntry(workspaceId, title?.trim() || "Workspace", 0);
+  return { workspace, workspaceIndexEntry };
+}
+
+function commitSnapshot(
+  set: (partial: Partial<DocumentStoreState> | ((state: DocumentStoreState) => Partial<DocumentStoreState>)) => void,
+  get: () => DocumentStoreState,
+  snapshot: AppDocumentSnapshot,
+  kind: HistoryTransactionKind,
+  options?: DocumentMutationOptions
+): boolean {
+  const committed = useHistoryStore.getState().commitSnapshot(snapshot, kind);
+  if (!committed) {
+    return false;
+  }
+
+  const nextSnapshot = cloneSnapshot(committed);
+  documentRevision += 1;
+  setCommittedSnapshot(set, nextSnapshot, true);
+  set({
+    activeWorkspaceId: reconcileActiveWorkspace(
+      nextSnapshot.activeWorkspaceId,
+      nextSnapshot.workspaceIndex,
+      nextSnapshot.workspacesById
+    ),
+    canUndo: useHistoryStore.getState().canUndo,
+    canRedo: useHistoryStore.getState().canRedo,
+  });
+  scheduleAutosave(options?.service, options?.autosaveDelayMs, get().saveAll);
+  return true;
+}
+
+function currentSnapshotFromState(state: DocumentStoreState): AppDocumentSnapshot | null {
+  if (!state.settings) {
+    return null;
+  }
+
+  return createSnapshotFromState(state);
+}
+
 export const useDocumentStore = create<DocumentStoreState>()((set, get) => ({
   isInitialized: false,
   isHydrating: false,
@@ -95,15 +365,22 @@ export const useDocumentStore = create<DocumentStoreState>()((set, get) => ({
   workspacesById: {},
   loadedWorkspaceIds: [],
   activeWorkspaceId: null,
+  canUndo: false,
+  canRedo: false,
   dirty: false,
   lastSaveAt: null,
   initializeAppData: async (service) => {
+    clearAutosaveTimer();
+    saveInFlight = false;
+    saveQueuedAfterFlight = false;
+    documentRevision = 0;
     set({ isHydrating: true, loadError: null, saveStatus: "loading" });
 
     try {
       const resolvedService = await withStorageService(service);
       const payload = await resolvedService.loadAppData();
       const documentState = toDocumentState(payload);
+      activeStorageService = resolvedService;
 
       set({
         isInitialized: true,
@@ -117,10 +394,21 @@ export const useDocumentStore = create<DocumentStoreState>()((set, get) => ({
         workspacesById: documentState.workspacesById,
         loadedWorkspaceIds: documentState.loadedWorkspaceIds,
         activeWorkspaceId: documentState.activeWorkspaceId,
-        dirty: documentState.dirty,
-        lastSaveAt: documentState.lastSaveAt,
+        canUndo: false,
+        canRedo: false,
+        dirty: false,
+        lastSaveAt: null,
+      });
+
+      useHistoryStore.getState().initializeHistory({
+        settings: structuredClone(documentState.settings),
+        workspaceIndex: structuredClone(documentState.workspaceIndex),
+        workspacesById: structuredClone(documentState.workspacesById),
+        activeWorkspaceId: documentState.activeWorkspaceId,
+        loadedWorkspaceIds: structuredClone(documentState.loadedWorkspaceIds),
       });
     } catch (error) {
+      useHistoryStore.getState().clearHistory();
       set({
         isHydrating: false,
         isInitialized: true,
@@ -140,31 +428,40 @@ export const useDocumentStore = create<DocumentStoreState>()((set, get) => ({
         },
         lastSaveOutcome: {
           persistenceState: "none",
-          persisted: {
-            settings: false,
-            workspaceIndex: false,
-            workspaceIds: [],
-          },
+          persisted: getEmptyPersistedManifest(),
         },
       });
       return false;
     }
 
     const resolvedService = await withStorageService(service);
+    activeStorageService = resolvedService;
+    const startRevision = documentRevision;
     const document: AppDocument = {
-      settings: state.settings,
-      workspaceIndex: state.workspaceIndex,
-      workspacesById: state.workspacesById,
+      settings: structuredClone(state.settings),
+      workspaceIndex: structuredClone(state.workspaceIndex),
+      workspacesById: structuredClone(state.workspacesById),
       activeWorkspaceId: state.activeWorkspaceId,
-      loadedWorkspaceIds: state.loadedWorkspaceIds,
+      loadedWorkspaceIds: structuredClone(state.loadedWorkspaceIds),
       dirty: state.dirty,
       lastSaveAt: state.lastSaveAt,
     };
 
+    if (saveInFlight) {
+      saveQueuedAfterFlight = true;
+      return false;
+    }
+
+    saveInFlight = true;
     set({ saveStatus: "saving", saveError: null });
 
     try {
       const outcome = await resolvedService.saveAppData(document);
+
+      if (startRevision !== documentRevision) {
+        saveQueuedAfterFlight = true;
+        return outcome.persistenceState === "full";
+      }
 
       if (outcome.persistenceState === "full") {
         set({
@@ -190,23 +487,288 @@ export const useDocumentStore = create<DocumentStoreState>()((set, get) => ({
       });
       return false;
     } catch (error) {
+      if (startRevision !== documentRevision) {
+        saveQueuedAfterFlight = true;
+        return false;
+      }
+
       set({
         saveStatus: "error",
         saveError: toSaveFailure(error),
         lastSaveOutcome: {
           persistenceState: "none",
-          persisted: {
-            settings: false,
-            workspaceIndex: false,
-            workspaceIds: [],
-          },
+          persisted: getEmptyPersistedManifest(),
         },
         dirty: true,
       });
       return false;
+    } finally {
+      saveInFlight = false;
+
+      if (saveQueuedAfterFlight && get().dirty) {
+        saveQueuedAfterFlight = false;
+        scheduleAutosave(activeStorageService ?? resolvedService, 0, get().saveAll);
+      } else {
+        saveQueuedAfterFlight = false;
+      }
     }
   },
   retrySave: async (service) => get().saveAll(service),
   setActiveWorkspaceId: (workspaceId) => set({ activeWorkspaceId: workspaceId }),
   markDirty: (dirty) => set({ dirty }),
+  beginDocumentTransaction: (kind) => {
+    clearAutosaveTimer();
+    const snapshot = currentSnapshotFromState(get());
+    if (!snapshot) {
+      return;
+    }
+
+    useHistoryStore.getState().beginTransaction(kind, snapshot);
+  },
+  updateDocumentTransaction: (snapshot) => {
+    clearAutosaveTimer();
+    documentRevision += 1;
+    useHistoryStore.getState().updateTransaction(snapshot);
+    setCommittedSnapshot(set, snapshot, true);
+    setDirtyState(set);
+  },
+  commitDocumentTransaction: (options) => {
+    const committed = useHistoryStore.getState().commitTransaction();
+    if (!committed) {
+      set({ saveStatus: get().dirty ? "idle" : "saved", saveError: null });
+      return false;
+    }
+
+    documentRevision += 1;
+    const nextSnapshot = cloneSnapshot(committed);
+    setCommittedSnapshot(set, nextSnapshot, true);
+    set({
+      activeWorkspaceId: reconcileActiveWorkspace(
+        nextSnapshot.activeWorkspaceId,
+        nextSnapshot.workspaceIndex,
+        nextSnapshot.workspacesById
+      ),
+      canUndo: useHistoryStore.getState().canUndo,
+      canRedo: useHistoryStore.getState().canRedo,
+    });
+    scheduleAutosave(options?.service, options?.autosaveDelayMs, get().saveAll);
+    return true;
+  },
+  commitDocumentSnapshot: (snapshot, kind, options) =>
+    commitSnapshot(set, get, snapshot, kind, options),
+  undo: (options) => {
+    clearAutosaveTimer();
+    const committed = useHistoryStore.getState().undo();
+    if (!committed) {
+      return false;
+    }
+
+    documentRevision += 1;
+    const nextSnapshot = cloneSnapshot(committed);
+    setCommittedSnapshot(set, nextSnapshot, true);
+    set({
+      activeWorkspaceId: reconcileActiveWorkspace(
+        nextSnapshot.activeWorkspaceId,
+        nextSnapshot.workspaceIndex,
+        nextSnapshot.workspacesById
+      ),
+      canUndo: useHistoryStore.getState().canUndo,
+      canRedo: useHistoryStore.getState().canRedo,
+    });
+    scheduleAutosave(options?.service, options?.autosaveDelayMs, get().saveAll);
+    return true;
+  },
+  redo: (options) => {
+    clearAutosaveTimer();
+    const committed = useHistoryStore.getState().redo();
+    if (!committed) {
+      return false;
+    }
+
+    documentRevision += 1;
+    const nextSnapshot = cloneSnapshot(committed);
+    setCommittedSnapshot(set, nextSnapshot, true);
+    set({
+      activeWorkspaceId: reconcileActiveWorkspace(
+        nextSnapshot.activeWorkspaceId,
+        nextSnapshot.workspaceIndex,
+        nextSnapshot.workspacesById
+      ),
+      canUndo: useHistoryStore.getState().canUndo,
+      canRedo: useHistoryStore.getState().canRedo,
+    });
+    scheduleAutosave(options?.service, options?.autosaveDelayMs, get().saveAll);
+    return true;
+  },
+  createWorkspace: (title, options) => {
+    const state = get();
+    if (!state.settings) {
+      return false;
+    }
+
+    const created = createDefaultWorkspaceState(title ?? getDefaultWorkspaceTitle(state.workspaceIndex.length));
+    const nextWorkspaceIndex = reindexSnapshotWorkspaces([
+      ...structuredClone(state.workspaceIndex),
+      created.workspaceIndexEntry,
+    ]);
+    const nextWorkspacesById = replaceWorkspaceDocument(structuredClone(state.workspacesById), created.workspace);
+    const nextSnapshot: AppDocumentSnapshot = {
+      settings: structuredClone(state.settings),
+      workspaceIndex: nextWorkspaceIndex,
+      workspacesById: nextWorkspacesById,
+      activeWorkspaceId: created.workspace.id,
+      loadedWorkspaceIds: [...nextWorkspaceIndex.map((entry) => entry.id)],
+    };
+
+    return commitSnapshot(set, get, nextSnapshot, "formatting", options);
+  },
+  selectWorkspace: (workspaceId) => {
+    const state = get();
+    if (workspaceId !== null && !state.workspaceIndex.some((entry) => entry.id === workspaceId)) {
+      return;
+    }
+
+    set({ activeWorkspaceId: workspaceId });
+  },
+  renameWorkspace: (workspaceId, title, options) => {
+    const state = get();
+    if (!state.settings) {
+      return false;
+    }
+
+    const trimmed = title.trim();
+    if (!trimmed) {
+      return false;
+    }
+
+    const nextWorkspaceIndex = state.workspaceIndex.map((entry) =>
+      entry.id === workspaceId ? { ...structuredClone(entry), title: trimmed } : structuredClone(entry)
+    );
+
+    if (!nextWorkspaceIndex.some((entry) => entry.id === workspaceId)) {
+      return false;
+    }
+
+    const nextSnapshot: AppDocumentSnapshot = {
+      settings: structuredClone(state.settings),
+      workspaceIndex: updateWorkspaceIndexOrder(nextWorkspaceIndex),
+      workspacesById: structuredClone(state.workspacesById),
+      activeWorkspaceId: state.activeWorkspaceId,
+      loadedWorkspaceIds: structuredClone(state.loadedWorkspaceIds),
+    };
+
+    return commitSnapshot(set, get, nextSnapshot, "typing", options);
+  },
+  deleteWorkspace: (workspaceId, options) => {
+    const state = get();
+    if (!state.settings) {
+      return false;
+    }
+
+    if (!state.workspaceIndex.some((entry) => entry.id === workspaceId)) {
+      return false;
+    }
+
+    const remainingIndex = state.workspaceIndex.filter((entry) => entry.id !== workspaceId);
+    const remainingWorkspaces = removeWorkspaceDocument(state.workspacesById, workspaceId);
+
+    let nextWorkspaceIndex = reindexSnapshotWorkspaces(remainingIndex);
+    let nextWorkspacesById = remainingWorkspaces;
+    let nextActiveWorkspaceId = reconcileActiveWorkspace(state.activeWorkspaceId, nextWorkspaceIndex, nextWorkspacesById);
+
+    if (nextWorkspaceIndex.length === 0) {
+      const replacement = createDefaultWorkspaceState("Home");
+      nextWorkspaceIndex = [replacement.workspaceIndexEntry];
+      nextWorkspacesById = replaceWorkspaceDocument({}, replacement.workspace);
+      nextActiveWorkspaceId = replacement.workspace.id;
+    }
+
+    const nextSnapshot: AppDocumentSnapshot = {
+      settings: structuredClone(state.settings),
+      workspaceIndex: nextWorkspaceIndex,
+      workspacesById: nextWorkspacesById,
+      activeWorkspaceId: nextActiveWorkspaceId,
+      loadedWorkspaceIds: nextWorkspaceIndex.map((entry) => entry.id),
+    };
+
+    return commitSnapshot(set, get, nextSnapshot, "formatting", options);
+  },
+  updateWorkspaceStyle: (workspaceId, stylePatch, options) => {
+    const state = get();
+    if (!state.settings) {
+      return false;
+    }
+
+    const target = state.workspaceIndex.find((entry) => entry.id === workspaceId);
+    if (!target) {
+      return false;
+    }
+
+    const nextWorkspaceIndex = state.workspaceIndex.map((entry) => {
+      if (entry.id !== workspaceId) {
+        return structuredClone(entry);
+      }
+
+      const nextAccentStripe = {
+        ...structuredClone(entry.style.accentStripe ?? {}),
+        ...structuredClone(stylePatch.accentStripe ?? {}),
+      };
+
+      return {
+        ...structuredClone(entry),
+        style: {
+          ...structuredClone(entry.style),
+          ...structuredClone(stylePatch),
+          accentStripe: nextAccentStripe,
+        },
+      };
+    });
+
+    const nextSnapshot: AppDocumentSnapshot = {
+      settings: structuredClone(state.settings),
+      workspaceIndex: updateWorkspaceIndexOrder(nextWorkspaceIndex),
+      workspacesById: structuredClone(state.workspacesById),
+      activeWorkspaceId: state.activeWorkspaceId,
+      loadedWorkspaceIds: structuredClone(state.loadedWorkspaceIds),
+    };
+
+    return commitSnapshot(set, get, nextSnapshot, "formatting", options);
+  },
+  reorderWorkspaces: (sourceWorkspaceId, targetWorkspaceId, options) => {
+    const state = get();
+    if (!state.settings) {
+      return false;
+    }
+
+    if (sourceWorkspaceId === targetWorkspaceId) {
+      return false;
+    }
+
+    const sourceIndex = state.workspaceIndex.findIndex((entry) => entry.id === sourceWorkspaceId);
+    const targetIndex = state.workspaceIndex.findIndex((entry) => entry.id === targetWorkspaceId);
+    if (sourceIndex < 0 || targetIndex < 0) {
+      return false;
+    }
+
+    const nextWorkspaceIndex = structuredClone(state.workspaceIndex);
+    const [moved] = nextWorkspaceIndex.splice(sourceIndex, 1);
+    if (!moved) {
+      return false;
+    }
+
+    const adjustedTargetIndex = sourceIndex < targetIndex ? targetIndex - 1 : targetIndex;
+    nextWorkspaceIndex.splice(adjustedTargetIndex, 0, moved);
+
+    const nextSnapshot: AppDocumentSnapshot = {
+      settings: structuredClone(state.settings),
+      workspaceIndex: reindexSnapshotWorkspaces(nextWorkspaceIndex),
+      workspacesById: structuredClone(state.workspacesById),
+      activeWorkspaceId: state.activeWorkspaceId,
+      loadedWorkspaceIds: structuredClone(state.loadedWorkspaceIds),
+    };
+
+    return commitSnapshot(set, get, nextSnapshot, "drag", options);
+  },
 }));
+
+export { DEFAULT_AUTOSAVE_DELAY_MS };

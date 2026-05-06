@@ -42,3 +42,8 @@ export interface AppDocument {
   dirty: boolean;
   lastSaveAt: string | null;
 }
+
+export type AppDocumentSnapshot = Pick<
+  AppDocument,
+  "settings" | "workspaceIndex" | "workspacesById" | "activeWorkspaceId" | "loadedWorkspaceIds"
+>;
