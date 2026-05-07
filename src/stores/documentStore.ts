@@ -1,7 +1,8 @@
 import { create } from "zustand";
 import type { AppDocument, AppDocumentSnapshot, LoadedAppData, SaveFailure, SaveOutcome, SaveStatus } from "../types/app";
 import type { WorkspaceDocument, WorkspaceIndexEntry } from "../types/workspace";
-import type { WorkspaceId } from "../domain/ids";
+import type { Block } from "../types/block";
+import type { BlockId, WorkspaceId } from "../domain/ids";
 import { createId } from "../domain/ids.js";
 import type { Settings } from "../types/settings";
 import type { WorkspaceStyle } from "../types/formatting";
@@ -71,6 +72,34 @@ export interface DocumentStoreState {
   ) => boolean;
   createBlockFromTemplate: (
     templateType: (typeof BLOCK_TEMPLATES)[number]["type"],
+    options?: DocumentMutationOptions
+  ) => boolean;
+  updateBlockTitle: (
+    workspaceId: WorkspaceId,
+    blockId: BlockId,
+    title: string,
+    options?: DocumentMutationOptions
+  ) => boolean;
+  toggleBlockCollapsed: (
+    workspaceId: WorkspaceId,
+    blockId: BlockId,
+    options?: DocumentMutationOptions
+  ) => boolean;
+  reorderBlocks: (
+    workspaceId: WorkspaceId,
+    sourceBlockId: BlockId,
+    targetBlockId: BlockId,
+    options?: DocumentMutationOptions
+  ) => boolean;
+  moveBlockToWorkspace: (
+    sourceWorkspaceId: WorkspaceId,
+    blockId: BlockId,
+    targetWorkspaceId: WorkspaceId,
+    options?: DocumentMutationOptions
+  ) => boolean;
+  deleteBlock: (
+    workspaceId: WorkspaceId,
+    blockId: BlockId,
     options?: DocumentMutationOptions
   ) => boolean;
 }
@@ -325,6 +354,24 @@ function appendBlockToWorkspace(
   return {
     ...structuredClone(workspace),
     blocks: [...structuredClone(workspace.blocks), nextBlock],
+  };
+}
+
+function sortBlocksByOrder(blocks: Block[]): Block[] {
+  return structuredClone(blocks).sort((left, right) => left.order - right.order);
+}
+
+function reindexBlocks(blocks: Block[]): Block[] {
+  return blocks.map((block, index) => ({
+    ...structuredClone(block),
+    order: index,
+  }));
+}
+
+function replaceWorkspaceBlocks(workspace: WorkspaceDocument, blocks: Block[]): WorkspaceDocument {
+  return {
+    ...structuredClone(workspace),
+    blocks: reindexBlocks(blocks),
   };
 }
 
@@ -801,6 +848,202 @@ export const useDocumentStore = create<DocumentStoreState>()((set, get) => ({
       workspaceIndex: structuredClone(state.workspaceIndex),
       workspacesById: replaceWorkspaceDocument(state.workspacesById, nextWorkspace),
       activeWorkspaceId: workspaceId,
+      loadedWorkspaceIds: structuredClone(state.loadedWorkspaceIds),
+    };
+
+    return commitSnapshot(set, get, nextSnapshot, "formatting", options);
+  },
+  updateBlockTitle: (workspaceId, blockId, title, options) => {
+    const state = get();
+    if (!state.settings) {
+      return false;
+    }
+
+    const trimmedTitle = title.trim();
+    if (!trimmedTitle) {
+      return false;
+    }
+
+    const workspace = state.workspacesById[workspaceId];
+    if (!workspace) {
+      return false;
+    }
+
+    let found = false;
+    const nextBlocks = workspace.blocks.map((block) => {
+      if (block.id !== blockId) {
+        return structuredClone(block);
+      }
+
+      found = true;
+      return {
+        ...structuredClone(block),
+        title: trimmedTitle,
+      };
+    });
+
+    if (!found) {
+      return false;
+    }
+
+    const nextSnapshot: AppDocumentSnapshot = {
+      settings: structuredClone(state.settings),
+      workspaceIndex: structuredClone(state.workspaceIndex),
+      workspacesById: replaceWorkspaceDocument(state.workspacesById, replaceWorkspaceBlocks(workspace, nextBlocks)),
+      activeWorkspaceId: state.activeWorkspaceId,
+      loadedWorkspaceIds: structuredClone(state.loadedWorkspaceIds),
+    };
+
+    return commitSnapshot(set, get, nextSnapshot, "typing", options);
+  },
+  toggleBlockCollapsed: (workspaceId, blockId, options) => {
+    const state = get();
+    if (!state.settings) {
+      return false;
+    }
+
+    const workspace = state.workspacesById[workspaceId];
+    if (!workspace) {
+      return false;
+    }
+
+    let found = false;
+    const nextBlocks = workspace.blocks.map((block) => {
+      if (block.id !== blockId) {
+        return structuredClone(block);
+      }
+
+      found = true;
+      return {
+        ...structuredClone(block),
+        collapsed: !block.collapsed,
+      };
+    });
+
+    if (!found) {
+      return false;
+    }
+
+    const nextSnapshot: AppDocumentSnapshot = {
+      settings: structuredClone(state.settings),
+      workspaceIndex: structuredClone(state.workspaceIndex),
+      workspacesById: replaceWorkspaceDocument(state.workspacesById, replaceWorkspaceBlocks(workspace, nextBlocks)),
+      activeWorkspaceId: state.activeWorkspaceId,
+      loadedWorkspaceIds: structuredClone(state.loadedWorkspaceIds),
+    };
+
+    return commitSnapshot(set, get, nextSnapshot, "formatting", options);
+  },
+  reorderBlocks: (workspaceId, sourceBlockId, targetBlockId, options) => {
+    const state = get();
+    if (!state.settings) {
+      return false;
+    }
+
+    if (sourceBlockId === targetBlockId) {
+      return false;
+    }
+
+    const workspace = state.workspacesById[workspaceId];
+    if (!workspace) {
+      return false;
+    }
+
+    const nextBlocks = sortBlocksByOrder(workspace.blocks);
+    const sourceIndex = nextBlocks.findIndex((block) => block.id === sourceBlockId);
+    const targetIndex = nextBlocks.findIndex((block) => block.id === targetBlockId);
+
+    if (sourceIndex < 0 || targetIndex < 0) {
+      return false;
+    }
+
+    const [movedBlock] = nextBlocks.splice(sourceIndex, 1);
+    if (!movedBlock) {
+      return false;
+    }
+
+    const insertIndex = sourceIndex < targetIndex ? targetIndex - 1 : targetIndex;
+    nextBlocks.splice(insertIndex, 0, movedBlock);
+
+    const nextSnapshot: AppDocumentSnapshot = {
+      settings: structuredClone(state.settings),
+      workspaceIndex: structuredClone(state.workspaceIndex),
+      workspacesById: replaceWorkspaceDocument(state.workspacesById, replaceWorkspaceBlocks(workspace, nextBlocks)),
+      activeWorkspaceId: state.activeWorkspaceId,
+      loadedWorkspaceIds: structuredClone(state.loadedWorkspaceIds),
+    };
+
+    return commitSnapshot(set, get, nextSnapshot, "drag", options);
+  },
+  moveBlockToWorkspace: (sourceWorkspaceId, blockId, targetWorkspaceId, options) => {
+    const state = get();
+    if (!state.settings) {
+      return false;
+    }
+
+    if (sourceWorkspaceId === targetWorkspaceId) {
+      return false;
+    }
+
+    const sourceWorkspace = state.workspacesById[sourceWorkspaceId];
+    const targetWorkspace = state.workspacesById[targetWorkspaceId];
+    if (!sourceWorkspace || !targetWorkspace) {
+      return false;
+    }
+
+    const sourceBlocks = sortBlocksByOrder(sourceWorkspace.blocks);
+    const blockIndex = sourceBlocks.findIndex((block) => block.id === blockId);
+    if (blockIndex < 0) {
+      return false;
+    }
+
+    const [movedBlock] = sourceBlocks.splice(blockIndex, 1);
+    if (!movedBlock) {
+      return false;
+    }
+
+    const targetBlocks = sortBlocksByOrder(targetWorkspace.blocks);
+    targetBlocks.push({
+      ...structuredClone(movedBlock),
+      workspaceId: targetWorkspaceId,
+    });
+
+    const nextWorkspacesById = replaceWorkspaceDocument(
+      replaceWorkspaceDocument(state.workspacesById, replaceWorkspaceBlocks(sourceWorkspace, sourceBlocks)),
+      replaceWorkspaceBlocks(targetWorkspace, targetBlocks)
+    );
+
+    const nextSnapshot: AppDocumentSnapshot = {
+      settings: structuredClone(state.settings),
+      workspaceIndex: structuredClone(state.workspaceIndex),
+      workspacesById: nextWorkspacesById,
+      activeWorkspaceId: state.activeWorkspaceId,
+      loadedWorkspaceIds: structuredClone(state.loadedWorkspaceIds),
+    };
+
+    return commitSnapshot(set, get, nextSnapshot, "drag", options);
+  },
+  deleteBlock: (workspaceId, blockId, options) => {
+    const state = get();
+    if (!state.settings) {
+      return false;
+    }
+
+    const workspace = state.workspacesById[workspaceId];
+    if (!workspace) {
+      return false;
+    }
+
+    const nextBlocks = sortBlocksByOrder(workspace.blocks).filter((block) => block.id !== blockId);
+    if (nextBlocks.length === workspace.blocks.length) {
+      return false;
+    }
+
+    const nextSnapshot: AppDocumentSnapshot = {
+      settings: structuredClone(state.settings),
+      workspaceIndex: structuredClone(state.workspaceIndex),
+      workspacesById: replaceWorkspaceDocument(state.workspacesById, replaceWorkspaceBlocks(workspace, nextBlocks)),
+      activeWorkspaceId: state.activeWorkspaceId,
       loadedWorkspaceIds: structuredClone(state.loadedWorkspaceIds),
     };
 

@@ -80,6 +80,7 @@ Do not rewrite prior entries except to fix obvious mistakes.
    - `STATUS.md`
    - `WORKLOG.md`
 5. Before ending, leave the repo in a state that the next agent can understand without external context.
+6. Paths used in responses to user should be relative, not literal (example docs/TOD_APP_PLAN.md)
 
 ## Planning Artifacts
 

@@ -63,6 +63,21 @@ The planning artifacts have already been refined once in response to formal revi
   - first-launch bootstrap starter workspace behavior remains intact
 - Checkpoint 4 review outcome:
   - reviewed and accepted after the empty-workspace follow-up fix
+- Checkpoint 5 builder pass:
+  - block title inline edit
+  - block collapse / expand
+  - block reorder within workspace
+  - move block to another workspace
+  - block context menu
+  - block-management store coverage expansion
+- Checkpoint 5 review-fix pass:
+  - fixed downward block reorder insertion behavior
+  - cleared stale block drag state on settings navigation and `MainPane` unmount
+  - cleared stale workspace drag state on settings navigation and `LeftDock` unmount
+  - replaced window-level menu dismissal with explicit backdrops for block and workspace context menus
+  - added downward reorder coverage
+  - added UI-store coverage for block and workspace interaction reset
+  - added DOM regression coverage for safe outside-click menu dismissal
 
 ### Review State
 
@@ -70,6 +85,7 @@ The planning artifacts have already been refined once in response to formal revi
 - Checkpoint 2: reviewed; acceptable to continue, with note that transaction batching should stay coordinated through `documentStore`
 - Checkpoint 3: reviewed and refined; acceptable to continue
 - Checkpoint 4: reviewed and accepted
+- Checkpoint 5: reviewed and accepted on 2026-05-07 after follow-up fixes
 
 ## Current App Usability
 
@@ -77,7 +93,7 @@ The planning artifacts have already been refined once in response to formal revi
 - browser preview is available through the local Vite URL
 - local `tauri:dev` is not available on the user's work PC because Rust/MSVC tooling is unavailable there
 - native Windows desktop verification is being done through GitHub Actions artifacts
-- local `npm run typecheck`, `npm run test`, `npm run build`, and `npm run lint` pass after the checkpoint 3 review fixes on 2026-05-06
+- local `npm run typecheck`, `npm run test`, `npm run build`, and `npm run lint` pass after the latest checkpoint 5 review-fix pass on 2026-05-07
 
 ## Current Constraints
 
@@ -88,12 +104,13 @@ The planning artifacts have already been refined once in response to formal revi
 
 ## Recommended Next Work
 
-1. Start the next block-management checkpoint inside EPIC-06
-2. Prefer this sequence:
-   - `TICKET-026`
-   - `TICKET-027`
-   - `TICKET-028`
-   - `TICKET-029`
+1. Start EPIC-07 in this sequence:
+   - `TICKET-030`
+   - `TICKET-031`
+   - `TICKET-032`
+   - `TICKET-033`
+2. Keep note of the current residual testing gap:
+   - no end-to-end browser coverage yet for a full drag-reorder / move / delete user flow
 
 ## Notes
 

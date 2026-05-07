@@ -18,17 +18,10 @@ export function LeftDock() {
   const draggingWorkspaceId = useUiStore((state) => state.draggingWorkspaceId);
   const dropTargetWorkspaceId = useUiStore((state) => state.dropTargetWorkspaceId);
   const setWorkspaceDragState = useUiStore((state) => state.setWorkspaceDragState);
+  const resetWorkspaceInteractionState = useUiStore((state) => state.resetWorkspaceInteractionState);
   const showSettingsScreen = useUiStore((state) => state.showSettingsScreen);
 
-  useEffect(() => {
-    if (!workspaceMenu) {
-      return undefined;
-    }
-
-    const handlePointerDown = () => closeWorkspaceMenu();
-    window.addEventListener("pointerdown", handlePointerDown);
-    return () => window.removeEventListener("pointerdown", handlePointerDown);
-  }, [closeWorkspaceMenu, workspaceMenu]);
+  useEffect(() => () => resetWorkspaceInteractionState(), [resetWorkspaceInteractionState]);
 
   return (
     <aside className="flex min-h-screen w-[280px] flex-col border-r border-border bg-panel/90 px-4 py-4 backdrop-blur">
@@ -99,65 +92,73 @@ export function LeftDock() {
       </div>
 
       {workspaceMenu ? (
-        <div
-          className="fixed z-50 w-56 rounded-xl border border-border bg-panel px-2 py-2 shadow-soft"
-          style={{ left: `${workspaceMenu.x}px`, top: `${workspaceMenu.y}px` }}
-          onPointerDown={(event) => event.stopPropagation()}
-        >
-          <MenuButton label="Rename workspace" onClick={() => {
-            const entry = workspaceIndex.find((item) => item.id === workspaceMenu.workspaceId);
-            if (!entry) {
-              closeWorkspaceMenu();
-              return;
-            }
-            const nextTitle = window.prompt("Rename workspace", entry.title);
-            if (nextTitle !== null) {
-              void renameWorkspace(entry.id, nextTitle);
-            }
-            closeWorkspaceMenu();
-          }} />
-          <MenuButton label="Toggle accent stripe" onClick={() => {
-            const entry = workspaceIndex.find((item) => item.id === workspaceMenu.workspaceId);
-            if (entry) {
-              void updateWorkspaceStyle(entry.id, {
-                accentStripe: { enabled: !entry.style.accentStripe?.enabled },
-              });
-            }
-            closeWorkspaceMenu();
-          }} />
-          <div className="flex items-center justify-between gap-3 px-3 py-2">
-            <span className="text-sm text-text">Accent color</span>
-            <input
-              aria-label="Accent color"
-              className="h-9 w-14 rounded-md border border-border bg-transparent p-1"
-              defaultValue={
-                workspaceIndex.find((item) => item.id === workspaceMenu.workspaceId)?.style.accentStripe?.color ??
-                "#60A5FA"
+        <>
+          <div
+            aria-hidden="true"
+            className="fixed inset-0 z-40"
+            data-testid="workspace-menu-backdrop"
+            onPointerDown={() => closeWorkspaceMenu()}
+          />
+          <div
+            className="fixed z-50 w-56 rounded-xl border border-border bg-panel px-2 py-2 shadow-soft"
+            style={{ left: `${workspaceMenu.x}px`, top: `${workspaceMenu.y}px` }}
+            onPointerDown={(event) => event.stopPropagation()}
+          >
+            <MenuButton label="Rename workspace" onClick={() => {
+              const entry = workspaceIndex.find((item) => item.id === workspaceMenu.workspaceId);
+              if (!entry) {
+                closeWorkspaceMenu();
+                return;
               }
-              onChange={(event) => {
-                const entry = workspaceIndex.find((item) => item.id === workspaceMenu.workspaceId);
-                if (entry) {
-                  void updateWorkspaceStyle(entry.id, {
-                    accentStripe: { color: event.target.value },
-                  });
+              const nextTitle = window.prompt("Rename workspace", entry.title);
+              if (nextTitle !== null) {
+                void renameWorkspace(entry.id, nextTitle);
+              }
+              closeWorkspaceMenu();
+            }} />
+            <MenuButton label="Toggle accent stripe" onClick={() => {
+              const entry = workspaceIndex.find((item) => item.id === workspaceMenu.workspaceId);
+              if (entry) {
+                void updateWorkspaceStyle(entry.id, {
+                  accentStripe: { enabled: !entry.style.accentStripe?.enabled },
+                });
+              }
+              closeWorkspaceMenu();
+            }} />
+            <div className="flex items-center justify-between gap-3 px-3 py-2">
+              <span className="text-sm text-text">Accent color</span>
+              <input
+                aria-label="Accent color"
+                className="h-9 w-14 rounded-md border border-border bg-transparent p-1"
+                defaultValue={
+                  workspaceIndex.find((item) => item.id === workspaceMenu.workspaceId)?.style.accentStripe?.color ??
+                  "#60A5FA"
                 }
+                onChange={(event) => {
+                  const entry = workspaceIndex.find((item) => item.id === workspaceMenu.workspaceId);
+                  if (entry) {
+                    void updateWorkspaceStyle(entry.id, {
+                      accentStripe: { color: event.target.value },
+                    });
+                  }
+                }}
+                type="color"
+              />
+            </div>
+            <hr className="my-2 border-border" />
+            <MenuButton
+              label="Delete workspace"
+              danger
+              onClick={() => {
+                const entry = workspaceIndex.find((item) => item.id === workspaceMenu.workspaceId);
+                if (entry && window.confirm(`Delete workspace "${entry.title}"?`)) {
+                  void deleteWorkspace(entry.id);
+                }
+                closeWorkspaceMenu();
               }}
-              type="color"
             />
           </div>
-          <hr className="my-2 border-border" />
-          <MenuButton
-            label="Delete workspace"
-            danger
-            onClick={() => {
-              const entry = workspaceIndex.find((item) => item.id === workspaceMenu.workspaceId);
-              if (entry && window.confirm(`Delete workspace "${entry.title}"?`)) {
-                void deleteWorkspace(entry.id);
-              }
-              closeWorkspaceMenu();
-            }}
-          />
-        </div>
+        </>
       ) : null}
     </aside>
   );

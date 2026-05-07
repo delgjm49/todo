@@ -143,3 +143,101 @@
   - `docs/ai_sessions/STATUS.md`
   - `docs/ai_sessions/HANDOFF.md`
   - `docs/ai_sessions/WORKLOG.md`
+
+## 2026-05-07
+
+### Implementation Checkpoint 5
+
+- Completed the remaining EPIC-06 block management builder scope:
+  - `TICKET-026`
+  - `TICKET-027`
+  - `TICKET-028`
+  - `TICKET-029`
+- Implemented:
+  - inline block title editing
+  - persisted collapse / expand behavior
+  - block reorder within the active workspace
+  - move block to another workspace through the block menu
+  - block context menu with rename, move, collapse/expand, and delete
+- Kept block mutation logic in `documentStore` and extended transient UI state for block menu / drag coordination
+- Added block-management coverage to `src/tests/unit/documentStore.test.ts`
+- Verified locally:
+  - `npm run typecheck`
+  - `npm run test`
+  - `npm run build`
+  - `npm run lint`
+- Status:
+  - builder-complete
+  - not yet formally reviewed
+
+### Checkpoint 5 Review Follow-Up
+
+- Formal review of checkpoint 5 found two issues that needed fixes before acceptance:
+  - downward block reorder inserted one slot too low when dragging onto a later card
+  - block drag state could leak across screen changes because settings navigation did not clear it
+- Applied fixes in:
+  - `src/stores/documentStore.ts`
+  - `src/stores/uiStore.ts`
+  - `src/components/layout/MainPane.tsx`
+- Expanded coverage:
+  - added a downward block reorder assertion in `src/tests/unit/documentStore.test.ts`
+  - added `src/tests/unit/uiStore.test.ts` for block interaction reset on settings navigation
+- Re-ran local verification:
+  - `npm run typecheck`
+  - `npm run lint`
+  - `npm run test`
+  - `npm run build`
+- Status:
+  - follow-up fixes complete
+  - awaiting re-review for checkpoint 5 acceptance
+
+### Checkpoint 5 Review Follow-Up 2
+
+- A later review found one more transient-state leak:
+  - workspace drag state could survive navigation to Settings and reappear after remount
+- Applied fixes in:
+  - `src/stores/uiStore.ts`
+  - `src/components/layout/LeftDock.tsx`
+- Expanded coverage:
+  - updated `src/tests/unit/uiStore.test.ts` to verify settings navigation clears both block and workspace interaction state
+- Re-ran local verification:
+  - `npm run typecheck`
+  - `npm run lint`
+  - `npm run test`
+  - `npm run build`
+- Status:
+  - additional follow-up fix complete
+  - awaiting re-review for checkpoint 5 acceptance
+
+### Checkpoint 5 Review Follow-Up 3
+
+- Another review found that context menus dismissed from a window-level `pointerdown` listener could allow outside clicks to fall through to underlying workspace/block cards
+- Replaced that dismissal path with explicit full-screen backdrops for:
+  - workspace context menu
+  - block context menu
+- Added DOM regression coverage in `src/tests/unit/contextMenuDismissal.test.tsx`
+- Added a minimal local `jsdom` type declaration for the new test path:
+  - `src/tests/types/jsdom.d.ts`
+- Re-ran local verification:
+  - `npm run typecheck`
+  - `npm run lint`
+  - `npm run test`
+  - `npm run build`
+- Status:
+  - menu dismissal hardening complete
+  - awaiting re-review for checkpoint 5 acceptance
+
+### Checkpoint 5 Acceptance
+
+- Reviewer re-ran the checkpoint 5 review after the follow-up fixes and found no remaining issues
+- Accepted scope:
+  - `TICKET-026`
+  - `TICKET-027`
+  - `TICKET-028`
+  - `TICKET-029`
+- Review outcome:
+  - accepted
+- Residual risk noted by review:
+  - no end-to-end browser coverage yet for a full drag-reorder / move / delete user flow
+- Next recommended checkpoint:
+  - start EPIC-07 row and column engine work

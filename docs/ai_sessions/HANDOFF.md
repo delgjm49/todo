@@ -18,6 +18,7 @@ Foundation, storage, history/autosave, CI, and the reviewed workspace-shell pass
 
 Checkpoint 3 has now been formally reviewed in this primary session thread and refined where the builder pass missed acceptance behavior.
 Checkpoint 4 / EPIC-06 initial block creation and block-card shell work has now been formally reviewed and accepted after the empty-workspace follow-up fix.
+Checkpoint 5 / remaining EPIC-06 block management work has now been formally reviewed and accepted in this primary session thread after the follow-up fixes.
 
 ## Most Recent Meaningful Events
 
@@ -25,8 +26,10 @@ Checkpoint 4 / EPIC-06 initial block creation and block-card shell work has now 
 - The user can preview the web shell through `npm run dev`
 - The user cannot run local Tauri builds on this work PC because Rust/MSVC tooling is unavailable
 - A markdown-based continuity workflow has now been added for future agents
-- Local `npm run typecheck`, `npm run test`, `npm run build`, and `npm run lint` all pass after the checkpoint 3 review fixes
+- Local `npm run typecheck`, `npm run test`, `npm run build`, and `npm run lint` pass after the latest checkpoint 5 review-fix pass on 2026-05-07
 - Checkpoint 4 block template and block-card shell work has now been reviewed and accepted
+- Checkpoint 5 block title editing, collapse, reorder, move, and block context menu work is now implemented
+- Checkpoint 5 has now been accepted by review; residual risk is limited to missing end-to-end browser coverage for the full drag-reorder/move/delete flow
 
 ## Most Recent Review Outcome
 
@@ -81,24 +84,60 @@ Checkpoint 4 status:
   - normal user-created workspaces now start empty
   - first-launch bootstrap still seeds the starter Home workspace with a block
 
+Checkpoint 5 status:
+
+- reviewed and accepted in this thread
+- implemented scope:
+  - `TICKET-026` block title inline edit
+  - `TICKET-026` collapse / expand with persisted collapsed state
+  - `TICKET-027` block reorder within the active workspace
+  - `TICKET-028` move block to another workspace through the block menu
+  - `TICKET-029` block context menu with rename, move, collapse/expand, and delete
+- local verification run on 2026-05-07:
+  - `npm run typecheck`
+  - `npm run test`
+  - `npm run build`
+  - `npm run lint`
+- review findings fixed on 2026-05-07 before acceptance:
+  - downward block reorder now inserts before the hovered target instead of one slot too low
+  - block drag state is now cleared when switching to settings and again on `MainPane` unmount
+  - workspace drag state is now cleared when switching to settings and again on `LeftDock` unmount
+  - block and workspace context menus now dismiss through full-screen backdrops so outside clicks do not fall through to underlying cards
+- accepted residual risk:
+  - no end-to-end browser coverage yet for a complete drag-reorder / move / delete user flow
+- changed files:
+  - `src/stores/documentStore.ts`
+  - `src/stores/uiStore.ts`
+  - `src/types/ui.ts`
+  - `src/components/layout/MainPane.tsx`
+  - `src/components/layout/LeftDock.tsx`
+  - `src/components/block/BlockCard.tsx`
+  - `src/components/block/BlockContextMenu.tsx`
+  - `src/tests/unit/documentStore.test.ts`
+  - `src/tests/unit/uiStore.test.ts`
+  - `src/tests/unit/contextMenuDismissal.test.tsx`
+  - `src/tests/types/jsdom.d.ts`
+
 ## Immediate Next Step
 
-Start the next checkpoint for the remaining EPIC-06 block management work.
+Start EPIC-07 row and column engine work now that the remaining EPIC-06 block-management checkpoint is accepted.
 
 Recommended tickets:
 
-- `TICKET-026` block title edit and collapse/expand
-- `TICKET-027` block reorder within workspace
-- `TICKET-028` move block to another workspace
-- `TICKET-029` block context menu
+- `TICKET-030` implement column domain helpers
+- `TICKET-031` render column header row
+- `TICKET-032` implement row domain helpers
+- `TICKET-033` render rows and base cell grid
 
 Recommended first files to touch:
 
-- `src/stores/documentStore.ts`
-- `src/components/layout/TopBar.tsx`
-- `src/components/layout/MainPane.tsx`
+- `src/types/column.ts`
+- `src/types/row.ts`
+- `src/domain/columns/*`
+- `src/domain/rows/*`
 - `src/components/block/*`
-- `src/tests/unit/*` for block/store coverage
+- `src/components/row/*`
+- `src/tests/unit/*` for row/column helper coverage
 
 ## Constraints To Preserve
 
@@ -108,6 +147,7 @@ Recommended first files to touch:
 - preserve the refined persistence and save semantics
 - use GitHub Actions as the Windows native build gate
 - keep block creation/menu flows aligned with the plan and UI spec instead of extending row/cell editing early
+- keep block mutation logic in `documentStore` instead of pushing it down into React components
 
 ## Files To Update At Session End
 

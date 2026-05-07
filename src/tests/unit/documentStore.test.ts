@@ -215,6 +215,123 @@ describe("document store autosave", () => {
     assert.equal(useDocumentStore.getState().saveStatus, "saved");
   });
 
+  test("supports block title edit, collapse, reorder, move, and delete flows", async () => {
+    const service = await createMemoryStorageService();
+    const calls: AppDocumentSnapshot[] = [];
+
+    service.saveAppData = async (document) => {
+      calls.push({
+        settings: structuredClone(document.settings),
+        workspaceIndex: structuredClone(document.workspaceIndex),
+        workspacesById: structuredClone(document.workspacesById),
+        activeWorkspaceId: document.activeWorkspaceId,
+        loadedWorkspaceIds: [...document.loadedWorkspaceIds],
+      });
+
+      return createSavedOutcome(document);
+    };
+
+    await useDocumentStore.getState().initializeAppData(service);
+    const primaryWorkspaceId = useDocumentStore.getState().activeWorkspaceId;
+    assert.ok(primaryWorkspaceId);
+
+    const createdWorkspace = useDocumentStore.getState().createWorkspace("Archive", { service, autosaveDelayMs: 5 });
+    assert.equal(createdWorkspace, true);
+    const secondaryWorkspaceId =
+      useDocumentStore.getState().workspaceIndex.find((entry) => entry.title === "Archive")?.id ?? null;
+    assert.ok(secondaryWorkspaceId);
+
+    useDocumentStore.getState().selectWorkspace(primaryWorkspaceId);
+
+    const createdBullet = useDocumentStore.getState().createBlockFromTemplate("bulleted_list", {
+      service,
+      autosaveDelayMs: 5,
+    });
+    const createdNumbered = useDocumentStore.getState().createBlockFromTemplate("numbered_list", {
+      service,
+      autosaveDelayMs: 5,
+    });
+
+    assert.equal(createdBullet, true);
+    assert.equal(createdNumbered, true);
+
+    const initialBlocks = useDocumentStore.getState().workspacesById[primaryWorkspaceId]?.blocks ?? [];
+    assert.equal(initialBlocks.length, 3);
+    const starterBlockId = initialBlocks[0]?.id;
+    const bulletBlockId = initialBlocks.find((block) => block.blockType === "bulleted_list")?.id;
+    const numberedBlockId = initialBlocks.find((block) => block.blockType === "numbered_list")?.id;
+    assert.ok(starterBlockId);
+    assert.ok(bulletBlockId);
+    assert.ok(numberedBlockId);
+
+    const renamed = useDocumentStore
+      .getState()
+      .updateBlockTitle(primaryWorkspaceId, bulletBlockId, "Reference Notes", { service, autosaveDelayMs: 5 });
+    assert.equal(renamed, true);
+
+    const collapsed = useDocumentStore
+      .getState()
+      .toggleBlockCollapsed(primaryWorkspaceId, bulletBlockId, { service, autosaveDelayMs: 5 });
+    assert.equal(collapsed, true);
+    assert.equal(
+      useDocumentStore
+        .getState()
+        .workspacesById[primaryWorkspaceId]?.blocks.find((block) => block.id === bulletBlockId)?.collapsed,
+      true
+    );
+
+    const reordered = useDocumentStore
+      .getState()
+      .reorderBlocks(primaryWorkspaceId, numberedBlockId, starterBlockId, { service, autosaveDelayMs: 5 });
+    assert.equal(reordered, true);
+    assert.deepEqual(
+      useDocumentStore.getState().workspacesById[primaryWorkspaceId]?.blocks.map((block) => block.id),
+      [numberedBlockId, starterBlockId, bulletBlockId]
+    );
+    assert.deepEqual(
+      useDocumentStore.getState().workspacesById[primaryWorkspaceId]?.blocks.map((block) => block.order),
+      [0, 1, 2]
+    );
+
+    const reorderedDownward = useDocumentStore
+      .getState()
+      .reorderBlocks(primaryWorkspaceId, numberedBlockId, bulletBlockId, { service, autosaveDelayMs: 5 });
+    assert.equal(reorderedDownward, true);
+    assert.deepEqual(
+      useDocumentStore.getState().workspacesById[primaryWorkspaceId]?.blocks.map((block) => block.id),
+      [starterBlockId, numberedBlockId, bulletBlockId]
+    );
+    assert.deepEqual(
+      useDocumentStore.getState().workspacesById[primaryWorkspaceId]?.blocks.map((block) => block.order),
+      [0, 1, 2]
+    );
+
+    const moved = useDocumentStore
+      .getState()
+      .moveBlockToWorkspace(primaryWorkspaceId, bulletBlockId, secondaryWorkspaceId, { service, autosaveDelayMs: 5 });
+    assert.equal(moved, true);
+    assert.deepEqual(
+      useDocumentStore.getState().workspacesById[primaryWorkspaceId]?.blocks.map((block) => block.id),
+      [starterBlockId, numberedBlockId]
+    );
+    const movedBlock = useDocumentStore.getState().workspacesById[secondaryWorkspaceId]?.blocks[0];
+    assert.equal(movedBlock?.id, bulletBlockId);
+    assert.equal(movedBlock?.workspaceId, secondaryWorkspaceId);
+    assert.equal(movedBlock?.title, "Reference Notes");
+    assert.equal(movedBlock?.order, 0);
+
+    const deleted = useDocumentStore
+      .getState()
+      .deleteBlock(secondaryWorkspaceId, bulletBlockId, { service, autosaveDelayMs: 5 });
+    assert.equal(deleted, true);
+    assert.equal(useDocumentStore.getState().workspacesById[secondaryWorkspaceId]?.blocks.length, 0);
+
+    await wait(20);
+    assert.equal(calls.length, 1);
+    assert.equal(useDocumentStore.getState().saveStatus, "saved");
+    assert.equal(useHistoryStore.getState().canUndo, true);
+  });
+
   test("debounces autosave after committed changes and after undo/redo", async () => {
     const service = await createMemoryStorageService();
     const calls: AppDocumentSnapshot[] = [];
