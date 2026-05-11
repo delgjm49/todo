@@ -1,0 +1,87 @@
+import assert from "node:assert/strict";
+import { describe, test } from "node:test";
+import { renderToStaticMarkup } from "react-dom/server";
+import { createColumn } from "../../domain/columns/createColumn.js";
+import { BlockCard } from "../../components/block/BlockCard.js";
+import type { Block } from "../../types/block.js";
+
+function createBlockFixture(): Block {
+  const colTextB = createColumn("text", { id: "col_text_b", order: 1, width: 220, label: "Task" });
+  const colNum = createColumn("numbered", { id: "col_num", order: 0, width: 44, label: "" });
+  const colCheck = createColumn("checkbox", { id: "col_check", order: 2, width: 44, label: "" });
+
+  return {
+    id: "block_1",
+    workspaceId: "ws_1",
+    title: "Checklist",
+    blockType: "basic_checklist",
+    order: 0,
+    collapsed: false,
+    border: {
+      borderWidth: 1,
+      borderColor: "#374151",
+      edges: ["top", "right", "bottom", "left"],
+    },
+    sort: null,
+    format: {},
+    columns: [colTextB, colNum, colCheck],
+    rows: [
+      {
+        id: "row_2",
+        order: 1,
+        format: {},
+        cells: {
+          col_num: { value: null, format: {} },
+          col_text_b: { value: "Second", format: {} },
+          col_check: { value: true, format: {} },
+        },
+      },
+      {
+        id: "row_1",
+        order: 0,
+        format: {},
+        cells: {
+          col_num: { value: null, format: {} },
+          col_text_b: { value: "First", format: {} },
+          col_check: { value: false, format: {} },
+        },
+      },
+    ],
+  };
+}
+
+describe("block grid render", () => {
+  test("renders header and row grid using stored column and row order", () => {
+    const block = createBlockFixture();
+    const html = renderToStaticMarkup(
+      <BlockCard
+        block={block}
+        dragging={false}
+        dropTarget={false}
+        isEditing={false}
+        isSelected={false}
+        onCancelEditing={() => {}}
+        onCommitTitle={() => {}}
+        onDragEnd={() => {}}
+        onDragOver={(event) => {
+          void event;
+        }}
+        onDragStart={() => {}}
+        onDrop={() => {}}
+        onOpenMenu={() => {}}
+        onSelectBlock={() => {}}
+        onStartEditing={() => {}}
+        onToggleCollapsed={() => {}}
+        onAddRow={() => {}}
+      />
+    );
+
+    assert.notEqual(html.includes("Row and cell editing land in the next checkpoint"), true);
+    assert.equal(html.indexOf("NUM"), html.lastIndexOf("NUM"));
+    assert.ok(html.indexOf("NUM") < html.indexOf("Task"));
+    assert.ok(html.indexOf("First") < html.indexOf("Second"));
+    assert.ok(html.includes('data-testid="column-header-col_num"'));
+    assert.ok(html.includes('data-testid="column-header-col_text_b"'));
+    assert.ok(html.includes('data-testid="column-header-col_check"'));
+  });
+});

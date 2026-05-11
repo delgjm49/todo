@@ -427,4 +427,415 @@ describe("document store autosave", () => {
     assert.equal(useDocumentStore.getState().dirty, false);
     assert.equal(useHistoryStore.getState().canUndo, true);
   });
+
+  test("supports base cell edits and row add/insert/delete flows", async () => {
+    const service = await createMemoryStorageService();
+    const calls: AppDocumentSnapshot[] = [];
+
+    service.saveAppData = async (document) => {
+      calls.push({
+        settings: structuredClone(document.settings),
+        workspaceIndex: structuredClone(document.workspaceIndex),
+        workspacesById: structuredClone(document.workspacesById),
+        activeWorkspaceId: document.activeWorkspaceId,
+        loadedWorkspaceIds: [...document.loadedWorkspaceIds],
+      });
+
+      return createSavedOutcome(document);
+    };
+
+    await useDocumentStore.getState().initializeAppData(service);
+    const workspaceId = useDocumentStore.getState().activeWorkspaceId;
+    assert.ok(workspaceId);
+    const workspace = useDocumentStore.getState().workspacesById[workspaceId];
+    assert.ok(workspace);
+    const block = workspace.blocks[0];
+    assert.ok(block);
+    const textColumn = block.columns.find((column) => column.type === "text");
+    const checkboxColumn = block.columns.find((column) => column.type === "checkbox");
+    const baseRowId = block.rows[0]?.id;
+    assert.ok(textColumn);
+    assert.ok(checkboxColumn);
+    assert.ok(baseRowId);
+
+    const textEdited = useDocumentStore
+      .getState()
+      .updateTextCellValue(workspaceId, block.id, baseRowId, textColumn.id, "Prepare report", {
+        service,
+        autosaveDelayMs: 5,
+      });
+    assert.equal(textEdited, true);
+    assert.equal(
+      useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.rows[0]?.cells[textColumn.id]?.value,
+      "Prepare report"
+    );
+
+    const checkboxToggled = useDocumentStore
+      .getState()
+      .toggleCheckboxCellValue(workspaceId, block.id, baseRowId, checkboxColumn.id, {
+        service,
+        autosaveDelayMs: 5,
+      });
+    assert.equal(checkboxToggled, true);
+    assert.equal(
+      useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.rows[0]?.cells[checkboxColumn.id]?.value,
+      true
+    );
+
+    const added = useDocumentStore
+      .getState()
+      .appendRowToBlock(workspaceId, block.id, { service, autosaveDelayMs: 5 });
+    assert.equal(added, true);
+    const addedRows = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.rows ?? [];
+    assert.equal(addedRows.length, 2);
+    const insertedRowId = addedRows[1]?.id;
+    assert.ok(insertedRowId);
+    assert.equal(addedRows[1]?.cells[textColumn.id]?.value, "");
+    assert.equal(addedRows[1]?.cells[checkboxColumn.id]?.value, false);
+
+    const insertedAbove = useDocumentStore
+      .getState()
+      .insertRowInBlock(workspaceId, block.id, insertedRowId, "above", { service, autosaveDelayMs: 5 });
+    assert.equal(insertedAbove, true);
+    const rowsAfterInsert = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.rows ?? [];
+    assert.equal(rowsAfterInsert.length, 3);
+    assert.equal(rowsAfterInsert[0]?.id, baseRowId);
+    assert.notEqual(rowsAfterInsert[1]?.id, insertedRowId);
+    assert.equal(rowsAfterInsert[2]?.id, insertedRowId);
+    assert.deepEqual(
+      rowsAfterInsert.map((row) => row.order),
+      [0, 1, 2]
+    );
+
+    const rowToDelete = rowsAfterInsert[1]?.id;
+    assert.ok(rowToDelete);
+    const deleted = useDocumentStore
+      .getState()
+      .deleteRowFromBlock(workspaceId, block.id, rowToDelete, { service, autosaveDelayMs: 5 });
+    assert.equal(deleted, true);
+    const rowsAfterDelete = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.rows ?? [];
+    assert.equal(rowsAfterDelete.length, 2);
+    assert.equal(rowsAfterDelete.some((row) => row.id === rowToDelete), false);
+    assert.deepEqual(
+      rowsAfterDelete.map((row) => row.order),
+      [0, 1]
+    );
+
+    await wait(20);
+    assert.equal(calls.length, 1);
+    assert.equal(useDocumentStore.getState().saveStatus, "saved");
+    assert.equal(useHistoryStore.getState().canUndo, true);
+  });
+
+  test("persists date, time, and dropdown cell edits", async () => {
+    const service = await createMemoryStorageService();
+    const calls: AppDocumentSnapshot[] = [];
+
+    service.saveAppData = async (document) => {
+      calls.push({
+        settings: structuredClone(document.settings),
+        workspaceIndex: structuredClone(document.workspaceIndex),
+        workspacesById: structuredClone(document.workspacesById),
+        activeWorkspaceId: document.activeWorkspaceId,
+        loadedWorkspaceIds: [...document.loadedWorkspaceIds],
+      });
+
+      return createSavedOutcome(document);
+    };
+
+    await useDocumentStore.getState().initializeAppData(service);
+    const workspaceId = useDocumentStore.getState().activeWorkspaceId;
+    assert.ok(workspaceId);
+
+    const workspace = useDocumentStore.getState().workspacesById[workspaceId];
+    assert.ok(workspace);
+
+    const block = workspace.blocks[0];
+    assert.ok(block);
+    const baseRowId = block.rows[0]?.id;
+    assert.ok(baseRowId);
+
+    const dateColumnId = "col_date";
+    const timeColumnId = "col_time";
+    const dropdownColumnId = "col_dropdown";
+
+    const extendedColumns = [
+      ...block.columns,
+      {
+        id: dateColumnId,
+        type: "date" as const,
+        label: "Due",
+        order: block.columns.length,
+        width: 120,
+        visible: true,
+        settings: { alertsEnabled: false },
+        format: {},
+      },
+      {
+        id: timeColumnId,
+        type: "time" as const,
+        label: "At",
+        order: block.columns.length + 1,
+        width: 80,
+        visible: true,
+        settings: { alertsEnabled: false },
+        format: {},
+      },
+      {
+        id: dropdownColumnId,
+        type: "dropdown" as const,
+        label: "Status",
+        order: block.columns.length + 2,
+        width: 120,
+        visible: true,
+        settings: { options: ["Open", "Done"] },
+        format: {},
+      },
+    ];
+
+    const extendedRows = block.rows.map((row) => ({
+      ...structuredClone(row),
+      cells: {
+        ...structuredClone(row.cells),
+        [dateColumnId]: { value: null, format: {} },
+        [timeColumnId]: { value: null, format: {} },
+        [dropdownColumnId]: { value: null, format: {} },
+      },
+    }));
+
+    useDocumentStore.setState({
+      workspacesById: {
+        ...structuredClone(useDocumentStore.getState().workspacesById),
+        [workspaceId]: {
+          ...structuredClone(workspace),
+          blocks: workspace.blocks.map((b) =>
+            b.id === block.id
+              ? { ...structuredClone(b), columns: extendedColumns, rows: extendedRows }
+              : structuredClone(b)
+          ),
+        },
+      },
+    });
+
+    const dateEdited = useDocumentStore
+      .getState()
+      .updateDateCellValue(workspaceId, block.id, baseRowId, dateColumnId, "2026-05-11", {
+        service,
+        autosaveDelayMs: 5,
+      });
+    assert.equal(dateEdited, true);
+    assert.equal(
+      useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.rows[0]?.cells[dateColumnId]?.value,
+      "2026-05-11"
+    );
+
+    const dateCleared = useDocumentStore
+      .getState()
+      .updateDateCellValue(workspaceId, block.id, baseRowId, dateColumnId, null, {
+        service,
+        autosaveDelayMs: 5,
+      });
+    assert.equal(dateCleared, true);
+    assert.equal(
+      useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.rows[0]?.cells[dateColumnId]?.value,
+      null
+    );
+
+    const timeEdited = useDocumentStore
+      .getState()
+      .updateTimeCellValue(workspaceId, block.id, baseRowId, timeColumnId, "14:30", {
+        service,
+        autosaveDelayMs: 5,
+      });
+    assert.equal(timeEdited, true);
+    assert.equal(
+      useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.rows[0]?.cells[timeColumnId]?.value,
+      "14:30"
+    );
+
+    const dropdownEdited = useDocumentStore
+      .getState()
+      .updateDropdownCellValue(workspaceId, block.id, baseRowId, dropdownColumnId, "Done", {
+        service,
+        autosaveDelayMs: 5,
+      });
+    assert.equal(dropdownEdited, true);
+    assert.equal(
+      useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.rows[0]?.cells[dropdownColumnId]?.value,
+      "Done"
+    );
+
+    const dropdownCleared = useDocumentStore
+      .getState()
+      .updateDropdownCellValue(workspaceId, block.id, baseRowId, dropdownColumnId, null, {
+        service,
+        autosaveDelayMs: 5,
+      });
+    assert.equal(dropdownCleared, true);
+    assert.equal(
+      useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.rows[0]?.cells[dropdownColumnId]?.value,
+      null
+    );
+
+    await wait(20);
+    assert.equal(calls.length, 1);
+    assert.equal(useDocumentStore.getState().saveStatus, "saved");
+  });
+
+  test("reorders rows within a block and persists", async () => {
+    const service = await createMemoryStorageService();
+    const calls: AppDocumentSnapshot[] = [];
+
+    service.saveAppData = async (document) => {
+      calls.push({
+        settings: structuredClone(document.settings),
+        workspaceIndex: structuredClone(document.workspaceIndex),
+        workspacesById: structuredClone(document.workspacesById),
+        activeWorkspaceId: document.activeWorkspaceId,
+        loadedWorkspaceIds: [...document.loadedWorkspaceIds],
+      });
+
+      return createSavedOutcome(document);
+    };
+
+    await useDocumentStore.getState().initializeAppData(service);
+    const workspaceId = useDocumentStore.getState().activeWorkspaceId;
+    assert.ok(workspaceId);
+
+    const workspace = useDocumentStore.getState().workspacesById[workspaceId];
+    assert.ok(workspace);
+    const block = workspace.blocks[0];
+    assert.ok(block);
+
+    const added = useDocumentStore.getState().appendRowToBlock(workspaceId, block.id, { service, autosaveDelayMs: 5 });
+    assert.equal(added, true);
+
+    const rows = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.rows ?? [];
+    assert.equal(rows.length, 2);
+    const firstRowId = rows[0]?.id;
+    const secondRowId = rows[1]?.id;
+    assert.ok(firstRowId);
+    assert.ok(secondRowId);
+
+    const reordered = useDocumentStore
+      .getState()
+      .reorderRows(workspaceId, block.id, secondRowId, firstRowId, { service, autosaveDelayMs: 5 });
+    assert.equal(reordered, true);
+
+    const rowsAfterReorder = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.rows ?? [];
+    assert.equal(rowsAfterReorder.length, 2);
+    assert.equal(rowsAfterReorder[0]?.id, secondRowId);
+    assert.equal(rowsAfterReorder[1]?.id, firstRowId);
+    assert.deepEqual(rowsAfterReorder.map((row) => row.order), [0, 1]);
+
+    await wait(20);
+    assert.equal(calls.length, 1);
+    assert.equal(useDocumentStore.getState().saveStatus, "saved");
+    assert.equal(useHistoryStore.getState().canUndo, true);
+  });
+
+  test("supports column rename, add, delete, move, change type, and settings flows", async () => {
+    const service = await createMemoryStorageService();
+    const calls: AppDocumentSnapshot[] = [];
+
+    service.saveAppData = async (document) => {
+      calls.push({
+        settings: structuredClone(document.settings),
+        workspaceIndex: structuredClone(document.workspaceIndex),
+        workspacesById: structuredClone(document.workspacesById),
+        activeWorkspaceId: document.activeWorkspaceId,
+        loadedWorkspaceIds: [...document.loadedWorkspaceIds],
+      });
+
+      return createSavedOutcome(document);
+    };
+
+    await useDocumentStore.getState().initializeAppData(service);
+    const workspaceId = useDocumentStore.getState().activeWorkspaceId;
+    assert.ok(workspaceId);
+
+    const workspace = useDocumentStore.getState().workspacesById[workspaceId];
+    assert.ok(workspace);
+    const block = workspace.blocks[0];
+    assert.ok(block);
+
+    const textColumn = block.columns.find((column) => column.type === "text");
+    assert.ok(textColumn);
+
+    const renamed = useDocumentStore
+      .getState()
+      .renameColumn(workspaceId, block.id, textColumn.id, "Task name", { service, autosaveDelayMs: 5 });
+    assert.equal(renamed, true);
+    assert.equal(
+      useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.columns.find((c) => c.id === textColumn.id)
+        ?.label,
+      "Task name"
+    );
+
+    const addedRight = useDocumentStore
+      .getState()
+      .addColumnRight(workspaceId, block.id, textColumn.id, "date", { service, autosaveDelayMs: 5 });
+    assert.equal(addedRight, true);
+    const columnsAfterAdd = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.columns ?? [];
+    assert.equal(columnsAfterAdd.length, block.columns.length + 1);
+    const newDateColumn = columnsAfterAdd.find((c) => c.type === "date" && c.id !== textColumn.id);
+    assert.ok(newDateColumn);
+    const rowsAfterAdd = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.rows ?? [];
+    assert.ok(rowsAfterAdd.every((row) => newDateColumn.id in row.cells));
+
+    const movedLeft = useDocumentStore
+      .getState()
+      .moveColumnLeft(workspaceId, block.id, newDateColumn.id, { service, autosaveDelayMs: 5 });
+    assert.equal(movedLeft, true);
+    const columnsAfterMove = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.columns ?? [];
+    const dateIndex = columnsAfterMove.findIndex((c) => c.id === newDateColumn.id);
+    const textIndex = columnsAfterMove.findIndex((c) => c.id === textColumn.id);
+    assert.ok(dateIndex < textIndex);
+
+    const changedType = useDocumentStore
+      .getState()
+      .changeColumnType(workspaceId, block.id, newDateColumn.id, "checkbox", { service, autosaveDelayMs: 5 });
+    assert.equal(changedType, true);
+    const changedColumn = useDocumentStore
+      .getState()
+      .workspacesById[workspaceId]?.blocks[0]?.columns.find((c) => c.id === newDateColumn.id);
+    assert.equal(changedColumn?.type, "checkbox");
+    assert.equal(
+      useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.rows[0]?.cells[newDateColumn.id]?.value,
+      false
+    );
+
+    const settingsUpdated = useDocumentStore
+      .getState()
+      .updateColumnSettings(workspaceId, block.id, newDateColumn.id, { moveCheckedRowsToBottom: true }, {
+        service,
+        autosaveDelayMs: 5,
+      });
+    assert.equal(settingsUpdated, true);
+    assert.equal(
+      (
+        useDocumentStore
+          .getState()
+          .workspacesById[workspaceId]?.blocks[0]?.columns.find((c) => c.id === newDateColumn.id)
+          ?.settings as { moveCheckedRowsToBottom?: boolean }
+      )?.moveCheckedRowsToBottom,
+      true
+    );
+
+    const deleted = useDocumentStore
+      .getState()
+      .deleteColumn(workspaceId, block.id, newDateColumn.id, { service, autosaveDelayMs: 5 });
+    assert.equal(deleted, true);
+    const columnsAfterDelete = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.columns ?? [];
+    assert.equal(columnsAfterDelete.some((c) => c.id === newDateColumn.id), false);
+    assert.equal(
+      useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.rows[0]?.cells[newDateColumn.id],
+      undefined
+    );
+
+    await wait(20);
+    assert.equal(calls.length, 1);
+    assert.equal(useDocumentStore.getState().saveStatus, "saved");
+    assert.equal(useHistoryStore.getState().canUndo, true);
+  });
 });

@@ -8,6 +8,7 @@ import { MainPane } from "../../components/layout/MainPane.js";
 import { createBlockTemplate } from "../../domain/templates/blockTemplates.js";
 import { useDocumentStore } from "../../stores/documentStore.js";
 import { useUiStore } from "../../stores/uiStore.js";
+import { createColumn } from "../../domain/columns/createColumn.js";
 
 const initialDocumentState = useDocumentStore.getState();
 const initialUiState = useUiStore.getState();
@@ -210,5 +211,69 @@ describe("context menu dismissal", () => {
       ]
     );
     assert.equal(document.querySelector('[data-testid="block-menu-backdrop"]'), null);
+  });
+
+  test("column menu uses a backdrop so outside dismissal does not mutate column state", async () => {
+    const checklist = createBlockTemplate("basic_checklist", "ws_home", {
+      blockId: "block_home",
+      title: "Today",
+      order: 0,
+    });
+    const customColumn = createColumn("text", { id: "col_custom", order: 3, label: "Custom" });
+    checklist.columns = [...checklist.columns, customColumn];
+    checklist.rows = checklist.rows.map((row) => ({
+      ...row,
+      cells: { ...row.cells, col_custom: { value: "", format: {} } },
+    }));
+
+    useDocumentStore.setState({
+      workspaceIndex: [
+        {
+          id: "ws_home",
+          title: "Home",
+          order: 0,
+          style: {
+            background: "#1F2937",
+            textColor: "#F9FAFB",
+            accentStripe: { enabled: true, color: "#60A5FA" },
+          },
+        },
+      ],
+      workspacesById: {
+        ws_home: {
+          id: "ws_home",
+          blocks: [checklist],
+        },
+      },
+      loadedWorkspaceIds: ["ws_home"],
+      activeWorkspaceId: "ws_home",
+    });
+    useUiStore.setState({
+      workspaceMenu: null,
+      blockMenu: null,
+      columnMenu: null,
+      draggingWorkspaceId: null,
+      dropTargetWorkspaceId: null,
+      draggingBlockId: null,
+      dropTargetBlockId: null,
+      screen: "main",
+      inspectorOpen: false,
+    });
+
+    await renderNode(<MainPane />);
+
+    await act(async () => {
+      useUiStore.getState().openColumnMenu("ws_home", "block_home", "col_custom", 36, 36);
+    });
+
+    const backdrop = document.querySelector('[data-testid="column-menu-backdrop"]');
+    assert.ok(backdrop);
+
+    await dispatchPointerDown(backdrop);
+
+    assert.equal(useUiStore.getState().columnMenu, null);
+    const columns = useDocumentStore.getState().workspacesById.ws_home?.blocks[0]?.columns ?? [];
+    assert.equal(columns.find((c) => c.id === "col_custom")?.label, "Custom");
+    assert.equal(document.querySelector('[data-testid="column-menu-backdrop"]'), null);
   });
 });

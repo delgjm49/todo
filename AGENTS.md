@@ -13,6 +13,98 @@ The continuity system in this repo is intentionally lightweight:
 - `docs/ai_sessions/WORKLOG.md`
 - the planning artifacts under `docs/`
 
+## Agent Roles
+
+This repo now uses a three-role workflow:
+
+1. Main agent
+2. Dev agent
+3. Review agent
+
+### Main agent
+
+Responsibilities:
+
+- primary user-facing entry point
+- orients to project state and current checkpoint
+- brainstorms, troubleshoots, and helps define scope
+- creates dispatch artifacts
+- sends copy/paste prompts directly to the user
+- makes workflow/process changes
+- handles commits and pushes
+- updates session docs at a high level and as needed
+
+### Dev agent
+
+Responsibilities:
+
+- implements one dispatched checkpoint
+- stays inside the checkpoint boundary
+- updates the dispatch channel for the checkpoint
+- when done, hands off to Review with a user-facing prompt
+- must use the actual local shell available in the environment for required verification; in this repo that normally means PowerShell, so lack of bash is not a valid reason to skip commands
+
+### Review agent
+
+Responsibilities:
+
+- reviews Dev work against the dispatch, backlog, and specs
+- decides whether the checkpoint returns to Dev or passes back to Main
+- when passing, there should be no blockers, no scope-critical regressions, no required test gaps, and no trivial low-effort cleanup that should still be done inside the same checkpoint
+- does not edit implementation or test files under the normal workflow
+- may update the dispatch channel artifact with findings and routing
+- must run the required verification commands for the checkpoint unless a real environment blocker prevents it
+- should treat React/jsdom controlled-input tests as high-risk and should not trust static review alone for those paths
+- must use the actual local shell available in the environment for required verification; in this repo that normally means PowerShell, so lack of bash is not a valid reason to skip commands
+
+## Routing
+
+Default routing is:
+
+1. Main -> Dev
+2. Dev -> Review
+3. Review -> Dev or Main
+
+Dev should not return directly to Main for checkpoint acceptance.
+Review should not silently fix code and then self-pass the checkpoint.
+If Review finds a defect that requires code changes, route back to Dev with a concrete fix prompt.
+If a required command fails because of a known sandbox restriction such as `spawn EPERM`, Review should rerun it with the approved escalation path before deciding pass/fail.
+
+## Dispatch Artifacts
+
+Dispatched checkpoint work should normally use two artifacts under `docs/ai_sessions/`:
+
+1. Dispatch artifact
+2. Dispatch channel artifact
+
+### Dispatch artifact
+
+Purpose:
+
+- immutable checkpoint scope
+- guardrails
+- required reads
+- suggested files
+- required tests
+
+### Dispatch channel artifact
+
+Purpose:
+
+- mutable handoff record for one checkpoint
+- current owner and routing state
+- implementation summary
+- review findings/outcome
+- next hop
+
+Agents should update the channel artifact as work moves:
+
+- Main initializes it
+- Dev updates the `Dev -> Review` section
+- Review updates the `Review -> Dev or Main` section
+
+Prompts should stay in chat for user copy/paste, not inside repo artifacts.
+
 ## Read Order At Session Start
 
 Every new agent should read in this order before changing code:
@@ -103,6 +195,9 @@ Agents should:
 - keep work inside the named checkpoint
 - stop at the checkpoint boundary
 - report completed tickets, changed files, checks run, gaps, and deviations
+- respect the Main -> Dev -> Review routing model
+- treat the dispatch artifact as immutable scope
+- treat the dispatch channel artifact as the live chain-of-custody record
 
 ## Current Working Style
 
@@ -111,3 +206,4 @@ Agents should:
 - JSON storage
 - GitHub Actions is the current native Windows build verification path
 - local Rust/MSVC is not available on the user's work PC, so do not rely on local Tauri execution
+- PowerShell is the expected local shell for verification in this repo; lack of bash is not a valid reason to skip required local commands

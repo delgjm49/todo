@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { BlockCard } from "../block/BlockCard.js";
 import { BlockContextMenu } from "../block/BlockContextMenu.js";
+import { ColumnContextMenu } from "../block/ColumnContextMenu.js";
 import { BLOCK_TEMPLATES } from "../../domain/templates/blockTemplates.js";
 import { useDocumentStore } from "../../stores/documentStore.js";
 import { useUiStore } from "../../stores/uiStore.js";
+import { getVisibleColumnsInDisplayOrder } from "../../domain/columns/createColumn.js";
 
 export function MainPane() {
   const workspaceIndex = useDocumentStore((state) => state.workspaceIndex);
@@ -14,16 +16,32 @@ export function MainPane() {
   const reorderBlocks = useDocumentStore((state) => state.reorderBlocks);
   const moveBlockToWorkspace = useDocumentStore((state) => state.moveBlockToWorkspace);
   const deleteBlock = useDocumentStore((state) => state.deleteBlock);
+  const appendRowToBlock = useDocumentStore((state) => state.appendRowToBlock);
+  const renameColumn = useDocumentStore((state) => state.renameColumn);
+  const moveColumnLeft = useDocumentStore((state) => state.moveColumnLeft);
+  const moveColumnRight = useDocumentStore((state) => state.moveColumnRight);
+  const addColumnLeft = useDocumentStore((state) => state.addColumnLeft);
+  const addColumnRight = useDocumentStore((state) => state.addColumnRight);
+  const deleteColumn = useDocumentStore((state) => state.deleteColumn);
+  const changeColumnType = useDocumentStore((state) => state.changeColumnType);
+  const updateColumnSettings = useDocumentStore((state) => state.updateColumnSettings);
   const activeWorkspaceId = useDocumentStore((state) => state.activeWorkspaceId);
   const activeWorkspace = workspaceIndex.find((entry) => entry.id === activeWorkspaceId) ?? workspaceIndex[0] ?? null;
   const inspectorOpen = useUiStore((state) => state.inspectorOpen);
   const blockMenu = useUiStore((state) => state.blockMenu);
+  const columnMenu = useUiStore((state) => state.columnMenu);
   const openBlockMenu = useUiStore((state) => state.openBlockMenu);
   const closeBlockMenu = useUiStore((state) => state.closeBlockMenu);
+  const openColumnMenu = useUiStore((state) => state.openColumnMenu);
+  const closeColumnMenu = useUiStore((state) => state.closeColumnMenu);
   const draggingBlockId = useUiStore((state) => state.draggingBlockId);
   const dropTargetBlockId = useUiStore((state) => state.dropTargetBlockId);
   const setBlockDragState = useUiStore((state) => state.setBlockDragState);
   const resetBlockInteractionState = useUiStore((state) => state.resetBlockInteractionState);
+  const resetRowInteractionState = useUiStore((state) => state.resetRowInteractionState);
+  const selection = useUiStore((state) => state.selection);
+  const selectBlock = useUiStore((state) => state.selectBlock);
+  const clearSelection = useUiStore((state) => state.clearSelection);
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
 
   const workspaceDocument = activeWorkspace ? workspaceById[activeWorkspace.id] ?? null : null;
@@ -31,6 +49,14 @@ export function MainPane() {
   const blockCount = blocks.length;
   const activeBlockMenuBlock = blockMenu
     ? workspaceById[blockMenu.workspaceId]?.blocks.find((block) => block.id === blockMenu.blockId) ?? null
+    : null;
+  const activeColumnMenuColumn = columnMenu
+    ? (workspaceById[columnMenu.workspaceId]?.blocks.find((block) => block.id === columnMenu.blockId)?.columns.find(
+        (column) => column.id === columnMenu.columnId
+      ) ?? null)
+    : null;
+  const activeColumnMenuBlock = columnMenu
+    ? workspaceById[columnMenu.workspaceId]?.blocks.find((block) => block.id === columnMenu.blockId) ?? null
     : null;
 
   useEffect(() => {
@@ -41,11 +67,15 @@ export function MainPane() {
 
   useEffect(() => {
     closeBlockMenu();
+    closeColumnMenu();
     setEditingBlockId(null);
     setBlockDragState(null);
-  }, [activeWorkspaceId, closeBlockMenu, setBlockDragState]);
+    resetRowInteractionState();
+    clearSelection();
+  }, [activeWorkspaceId, closeBlockMenu, closeColumnMenu, setBlockDragState, resetRowInteractionState, clearSelection]);
 
   useEffect(() => () => resetBlockInteractionState(), [resetBlockInteractionState]);
+  useEffect(() => () => resetRowInteractionState(), [resetRowInteractionState]);
 
   return (
     <section className="min-h-0 min-w-0 bg-canvas px-5 py-5">
@@ -95,6 +125,7 @@ export function MainPane() {
                 dragging={block.id === draggingBlockId}
                 dropTarget={block.id === dropTargetBlockId}
                 isEditing={block.id === editingBlockId}
+                isSelected={selection.kind === "block" && selection.blockId === block.id}
                 onCancelEditing={() => setEditingBlockId(null)}
                 onCommitTitle={(title) => {
                   void updateBlockTitle(block.workspaceId, block.id, title);
@@ -121,6 +152,11 @@ export function MainPane() {
                   setEditingBlockId(null);
                   openBlockMenu(block.workspaceId, block.id, x, y);
                 }}
+                onSelectBlock={() => {
+                  if (activeWorkspace) {
+                    selectBlock(activeWorkspace.id, block.id);
+                  }
+                }}
                 onStartEditing={() => {
                   closeBlockMenu();
                   setEditingBlockId(block.id);
@@ -128,6 +164,13 @@ export function MainPane() {
                 onToggleCollapsed={() => {
                   setEditingBlockId(null);
                   void toggleBlockCollapsed(block.workspaceId, block.id);
+                }}
+                onAddRow={() => {
+                  void appendRowToBlock(block.workspaceId, block.id);
+                }}
+                onOpenColumnMenu={(columnId, x, y) => {
+                  setEditingBlockId(null);
+                  openColumnMenu(block.workspaceId, block.id, columnId, x, y);
                 }}
               />
             ))}
@@ -185,6 +228,70 @@ export function MainPane() {
                 closeBlockMenu();
               }}
               workspaces={workspaceIndex}
+            />
+          </div>
+        </>
+      ) : null}
+
+      {columnMenu && activeColumnMenuColumn && activeColumnMenuBlock && columnMenu.workspaceId ? (
+        <>
+          <div
+            aria-hidden="true"
+            className="fixed inset-0 z-40"
+            data-testid="column-menu-backdrop"
+            onPointerDown={() => closeColumnMenu()}
+          />
+          <div
+            className="fixed z-50"
+            onPointerDown={(event) => event.stopPropagation()}
+            style={{ left: `${columnMenu.x}px`, top: `${columnMenu.y}px` }}
+          >
+            <ColumnContextMenu
+              canMoveLeft={
+                getVisibleColumnsInDisplayOrder(activeColumnMenuBlock.columns).findIndex(
+                  (c) => c.id === activeColumnMenuColumn.id
+                ) > 0
+              }
+              canMoveRight={
+                getVisibleColumnsInDisplayOrder(activeColumnMenuBlock.columns).findIndex(
+                  (c) => c.id === activeColumnMenuColumn.id
+                ) <
+                getVisibleColumnsInDisplayOrder(activeColumnMenuBlock.columns).length - 1
+              }
+              column={activeColumnMenuColumn}
+              onAddLeft={(type) => {
+                void addColumnLeft(columnMenu.workspaceId, columnMenu.blockId, columnMenu.columnId, type);
+                closeColumnMenu();
+              }}
+              onAddRight={(type) => {
+                void addColumnRight(columnMenu.workspaceId, columnMenu.blockId, columnMenu.columnId, type);
+                closeColumnMenu();
+              }}
+              onChangeType={(type) => {
+                void changeColumnType(columnMenu.workspaceId, columnMenu.blockId, columnMenu.columnId, type);
+                closeColumnMenu();
+              }}
+              onClose={() => closeColumnMenu()}
+              onDelete={() => {
+                if (window.confirm("Delete this column?")) {
+                  void deleteColumn(columnMenu.workspaceId, columnMenu.blockId, columnMenu.columnId);
+                }
+                closeColumnMenu();
+              }}
+              onMoveLeft={() => {
+                void moveColumnLeft(columnMenu.workspaceId, columnMenu.blockId, columnMenu.columnId);
+                closeColumnMenu();
+              }}
+              onMoveRight={() => {
+                void moveColumnRight(columnMenu.workspaceId, columnMenu.blockId, columnMenu.columnId);
+                closeColumnMenu();
+              }}
+              onRename={(label) => {
+                void renameColumn(columnMenu.workspaceId, columnMenu.blockId, columnMenu.columnId, label);
+              }}
+              onUpdateSettings={(patch) => {
+                void updateColumnSettings(columnMenu.workspaceId, columnMenu.blockId, columnMenu.columnId, patch);
+              }}
             />
           </div>
         </>

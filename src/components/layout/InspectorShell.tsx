@@ -1,11 +1,13 @@
 import type { ReactNode } from "react";
 import { useDocumentStore } from "../../stores/documentStore.js";
+import { useUiStore } from "../../stores/uiStore.js";
 
 export function InspectorShell() {
   const workspaceIndex = useDocumentStore((state) => state.workspaceIndex);
   const activeWorkspaceId = useDocumentStore((state) => state.activeWorkspaceId);
   const updateWorkspaceStyle = useDocumentStore((state) => state.updateWorkspaceStyle);
   const activeWorkspace = workspaceIndex.find((entry) => entry.id === activeWorkspaceId) ?? workspaceIndex[0] ?? null;
+  const selection = useUiStore((state) => state.selection);
 
   if (!activeWorkspace) {
     return (
@@ -24,6 +26,17 @@ export function InspectorShell() {
         <h3 className="mt-2 text-lg font-semibold">{activeWorkspace.title}</h3>
         <p className="mt-2 text-sm leading-6 text-textMuted">
           Workspace styling is exposed here while block-level editing is still deferred.
+        </p>
+      </div>
+
+      <div className="mt-4 rounded-2xl border border-border bg-panelMuted/60 px-4 py-4">
+        <div className="text-xs uppercase tracking-[0.24em] text-textMuted">Selection</div>
+        <p className="mt-2 text-sm text-text">
+          {selection.kind === "none" && "Nothing selected"}
+          {selection.kind === "block" && "Block selected"}
+          {selection.kind === "column" && "Column selected"}
+          {selection.kind === "row" && "Row selected"}
+          {selection.kind === "cell" && "Cell selected"}
         </p>
       </div>
 
