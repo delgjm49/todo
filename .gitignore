@@ -7,3 +7,8 @@ src-tauri/target
 .vite
 .DS_Store
 .test-dist/
+
+# Per-machine Pi config (each machine maintains its own).
+# Canonical statusline source lives at .pi/install/ and is replicated to
+# ~/.pi/agent/extensions/ on each machine via the install README.
+.pi/settings.json
