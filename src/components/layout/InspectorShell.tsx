@@ -2,6 +2,7 @@ import { useDocumentStore } from "../../stores/documentStore.js";
 import { useUiStore } from "../../stores/uiStore.js";
 import { buildInspectorTargetSummary } from "./inspectorTargetSummary.js";
 import { TextFormattingControls } from "./TextFormattingControls.js";
+import { BorderFormattingControls } from "./BorderFormattingControls.js";
 import { FieldCard } from "./FieldCard.js";
 
 export function InspectorShell() {
@@ -60,6 +61,8 @@ export function InspectorShell() {
       </div>
 
       <TextFormattingControls selection={selection} />
+
+      <BorderFormattingControls selection={selection} />
 
       <div className="mt-4 space-y-4">
         <FieldCard label="Background color">

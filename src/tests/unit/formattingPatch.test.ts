@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import { applyFormattingPatch } from "../../domain/formatting/applyFormattingPatch.js";
 import type { FormattingLayer } from "../../domain/formatting/mergeFormatting.js";
+import type { BorderEdge } from "../../types/formatting.js";
 
 describe("applyFormattingPatch", () => {
   test("sets a property on an empty object", () => {
@@ -66,5 +67,46 @@ describe("applyFormattingPatch", () => {
   test("sets background color", () => {
     const result = applyFormattingPatch(undefined, { backgroundColor: "#00ff00" });
     assert.equal(result.backgroundColor, "#00ff00");
+  });
+
+  test("sets border width", () => {
+    const result = applyFormattingPatch(undefined, { borderWidth: 3 });
+    assert.equal(result.borderWidth, 3);
+  });
+
+  test("sets border color", () => {
+    const result = applyFormattingPatch(undefined, { borderColor: "#ff00ff" });
+    assert.equal(result.borderColor, "#ff00ff");
+  });
+
+  test("sets edges", () => {
+    const result = applyFormattingPatch(undefined, { edges: ["top", "left"] });
+    assert.deepEqual(result.edges, ["top", "left"]);
+  });
+
+  test("resets border width", () => {
+    const result = applyFormattingPatch({ borderWidth: 2, borderColor: "#000" }, { borderWidth: undefined });
+    assert.equal("borderWidth" in result, false);
+    assert.equal(result.borderColor, "#000");
+  });
+
+  test("resets border color", () => {
+    const result = applyFormattingPatch({ borderWidth: 2, borderColor: "#000" }, { borderColor: undefined });
+    assert.equal("borderColor" in result, false);
+    assert.equal(result.borderWidth, 2);
+  });
+
+  test("resets edges", () => {
+    const result = applyFormattingPatch({ edges: ["top"], borderWidth: 1 }, { edges: undefined });
+    assert.equal("edges" in result, false);
+    assert.equal(result.borderWidth, 1);
+  });
+
+  test("does not mutate input edges array", () => {
+    const originalEdges: BorderEdge[] = ["top", "bottom"];
+    const original = { edges: originalEdges };
+    const result = applyFormattingPatch(original, { edges: ["left"] as BorderEdge[] });
+    assert.deepEqual(original.edges, ["top", "bottom"]);
+    assert.deepEqual(result.edges, ["left"]);
   });
 });

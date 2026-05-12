@@ -14,7 +14,7 @@ See [`agents/CLOSING.md`](../agents/CLOSING.md) for the entry format and rules.
 | Epic 08 (checkpoints 10–11) | Complete | Pre-dating the new 4-agent workflow; see `docs/ai_sessions/legacy/` |
 | TICKET-041 Inspector shell | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 | TICKET-042 Text formatting controls | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
-| TICKET-043 Border formatting controls | Dispatched | Dispatch created for next Main → Plan → Dev → Review workflow |
+| TICKET-043 Border formatting controls | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 
 ---
 
@@ -232,3 +232,72 @@ Selected `TICKET-043` border formatting controls as the next EPIC-08 checkpoint 
 
 ### Outcome
 Border formatting controls are dispatched to Plan. The next session should use pickup mode and continue from `agents/channels/003-border-formatting-controls-channel.md`.
+
+## Session 14 — 2026-05-12
+
+### Agent Type
+plan
+
+### Artifacts
+- Channel: `agents/channels/003-border-formatting-controls-channel.md`
+- Dispatch: `agents/artifacts/003-border-formatting-controls-dispatch.md`
+- Plan: `agents/artifacts/003-border-formatting-controls-plan.md`
+
+### Summary
+Created the implementation plan for `TICKET-043`, focused on inspector-driven border width, border color, and edge controls for block, column, row, and cell selections. The plan defines sparse formatting mutation flow through documentStore, reset-to-inherited behavior, immediate grid border rendering through resolved formatting, and required unit coverage.
+
+### Outcome
+Plan is ready for Dev. The dispatch channel has been appended with the next Dev pickup message.
+
+## Session 15 — 2026-05-12
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: `agents/channels/003-border-formatting-controls-channel.md`
+- Dispatch: `agents/artifacts/003-border-formatting-controls-dispatch.md`
+- Plan: `agents/artifacts/003-border-formatting-controls-plan.md`
+- Complete: `agents/artifacts/003-border-formatting-controls-complete.md`
+
+### Summary
+Implemented `TICKET-043` border formatting controls. Added `formattingToBorderStyle` domain helper, `BorderFormattingControls` inspector component, integrated into `InspectorShell`, wired effective border rendering into `RowView`, and refactored `documentStore` to share formatting patch logic between text and border actions. Added 19 new unit tests across border style conversion, patch behavior, and store mutations.
+
+### Outcome
+Implementation complete. All verification commands pass: typecheck, 127/127 tests, build, lint. Channel ready for Review pickup.
+
+## Session 16 — 2026-05-12
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: `agents/channels/003-border-formatting-controls-channel.md`
+- Dispatch: `agents/artifacts/003-border-formatting-controls-dispatch.md`
+- Plan: `agents/artifacts/003-border-formatting-controls-plan.md`
+- Complete: `agents/artifacts/003-border-formatting-controls-complete.md`
+- Review: `agents/artifacts/003-border-formatting-controls-review.md`
+
+### Summary
+Reviewed the `TICKET-043` border formatting controls implementation against the plan and acceptance criteria. Verified inspector controls for block/column/row/cell selections, guarded no-selection/stale states, set/reset behavior for width/color/edges, sparse override storage, immediate grid rendering via `resolveCellFormatting` → `formattingToBorderStyle`, formatting history transactions, and no regression in existing text/fill formatting. Independently confirmed `npm run typecheck`, `npm run test` (127/127), `npm run build`, and `npm run lint` all pass.
+
+### Outcome
+Review verdict: PASS. Ready for Main to close the dispatch.
+
+## Session 17 — 2026-05-12
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: `agents/channels/003-border-formatting-controls-channel.md`
+- Dispatch: `agents/artifacts/003-border-formatting-controls-dispatch.md`
+- Plan: `agents/artifacts/003-border-formatting-controls-plan.md`
+- Complete: `agents/artifacts/003-border-formatting-controls-complete.md`
+- Review: `agents/artifacts/003-border-formatting-controls-review.md`
+
+### Summary
+Closed the TICKET-043 border formatting controls dispatch after confirming the latest channel message was Review → Main with `State = review-pass` and the review artifact verdict was PASS. Marked the channel closed and updated phase status for the completed border formatting checkpoint.
+
+### Outcome
+TICKET-043 is complete and ready to commit/push. Next recommended checkpoint is `TICKET-044` row/cell/column/block formatting persistence.

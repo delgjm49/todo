@@ -2,6 +2,7 @@ import { getVisibleColumnsInDisplayOrder } from "../../domain/columns/createColu
 import { getRowsInDisplayOrder } from "../../domain/rows/reorderRows.js";
 import { resolveCellFormatting } from "../../domain/formatting/resolveCellFormatting.js";
 import { formattingToCellStyle } from "../../domain/formatting/formattingToCellStyle.js";
+import { formattingToBorderStyle } from "../../domain/formatting/formattingToBorderStyle.js";
 import { useDocumentStore } from "../../stores/documentStore.js";
 import { useUiStore } from "../../stores/uiStore.js";
 import type { Block } from "../../types/block.js";
@@ -103,7 +104,10 @@ export function RowView({ block, workspaceId }: { block: Block; workspaceId: str
                         row.cells[column.id]?.format
                       )
                     : {};
-                  const cellStyle = formattingToCellStyle(effectiveFormat);
+                  const cellStyle = {
+                    ...formattingToCellStyle(effectiveFormat),
+                    ...formattingToBorderStyle(effectiveFormat),
+                  };
                   return (
                     <div
                       className={`min-h-8 rounded-md border px-2 py-1.5 text-sm text-text ${

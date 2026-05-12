@@ -235,6 +235,11 @@ export interface DocumentStoreState {
     patch: FormattingPatch,
     options?: DocumentMutationOptions
   ) => boolean;
+  updateSelectedBorderFormatting: (
+    selection: Selection,
+    patch: FormattingPatch,
+    options?: DocumentMutationOptions
+  ) => boolean;
 }
 
 let cachedDefaultService: Promise<StorageService> | null = null;
@@ -602,8 +607,98 @@ function currentSnapshotFromState(state: DocumentStoreState): AppDocumentSnapsho
   return createSnapshotFromState(state);
 }
 
-export const useDocumentStore = create<DocumentStoreState>()((set, get) => ({
-  isInitialized: false,
+export const useDocumentStore = create<DocumentStoreState>()((set, get) => {
+  const applySelectedFormattingPatch = (
+    selection: Selection,
+    patch: FormattingPatch,
+    options?: DocumentMutationOptions
+  ): boolean => {
+    const state = get();
+    if (!state.settings) {
+      return false;
+    }
+    if (selection.kind === "none") {
+      return false;
+    }
+
+    const workspace = state.workspacesById[selection.workspaceId];
+    if (!workspace) {
+      return false;
+    }
+
+    let nextWorkspace: WorkspaceDocument | null = null;
+
+    if (selection.kind === "block") {
+      nextWorkspace = updateBlockInWorkspace(workspace, selection.blockId, (block) => {
+        const nextFormat = applyFormattingPatch(block.format, patch);
+        if (formatLayersEqual(block.format, nextFormat)) return null;
+        return { ...structuredClone(block), format: nextFormat };
+      });
+    } else if (selection.kind === "column") {
+      nextWorkspace = updateBlockInWorkspace(workspace, selection.blockId, (block) => {
+        let columnChanged = false;
+        const nextColumns = block.columns.map((column) => {
+          if (column.id !== selection.columnId) return structuredClone(column);
+          const nextFormat = applyFormattingPatch(column.format, patch);
+          if (formatLayersEqual(column.format, nextFormat)) return structuredClone(column);
+          columnChanged = true;
+          return { ...structuredClone(column), format: nextFormat };
+        });
+        if (!columnChanged) return null;
+        return { ...structuredClone(block), columns: nextColumns };
+      });
+    } else if (selection.kind === "row") {
+      nextWorkspace = updateBlockInWorkspace(workspace, selection.blockId, (block) => {
+        const rows = getRowsInDisplayOrder(block.rows);
+        const rowIndex = rows.findIndex((row) => row.id === selection.rowId);
+        if (rowIndex < 0) return null;
+        const row = rows[rowIndex];
+        const nextFormat = applyFormattingPatch(row.format, patch);
+        if (formatLayersEqual(row.format, nextFormat)) return null;
+        rows[rowIndex] = { ...structuredClone(row), format: nextFormat };
+        return replaceBlockRows(block, rows);
+      });
+    } else if (selection.kind === "cell") {
+      nextWorkspace = updateBlockInWorkspace(workspace, selection.blockId, (block) => {
+        const rows = getRowsInDisplayOrder(block.rows);
+        const rowIndex = rows.findIndex((row) => row.id === selection.rowId);
+        if (rowIndex < 0) return null;
+        const row = rows[rowIndex];
+        const cell = row.cells[selection.columnId];
+        if (!cell) return null;
+        const nextFormat = applyFormattingPatch(cell.format, patch);
+        if (formatLayersEqual(cell.format, nextFormat)) return null;
+        rows[rowIndex] = {
+          ...structuredClone(row),
+          cells: {
+            ...structuredClone(row.cells),
+            [selection.columnId]: {
+              ...structuredClone(cell),
+              format: Object.keys(nextFormat).length === 0 ? undefined : nextFormat,
+            },
+          },
+        };
+        return replaceBlockRows(block, rows);
+      });
+    }
+
+    if (!nextWorkspace) {
+      return false;
+    }
+
+    const nextSnapshot: AppDocumentSnapshot = {
+      settings: structuredClone(state.settings),
+      workspaceIndex: structuredClone(state.workspaceIndex),
+      workspacesById: replaceWorkspaceDocument(state.workspacesById, nextWorkspace),
+      activeWorkspaceId: state.activeWorkspaceId,
+      loadedWorkspaceIds: structuredClone(state.loadedWorkspaceIds),
+    };
+
+    return commitSnapshot(set, get, nextSnapshot, "formatting", options);
+  };
+
+  return ({
+    isInitialized: false,
   isHydrating: false,
   loadError: null,
   saveStatus: "idle",
@@ -1992,90 +2087,11 @@ export const useDocumentStore = create<DocumentStoreState>()((set, get) => ({
 
     return commitSnapshot(set, get, nextSnapshot, "formatting", options);
   },
-  updateSelectedTextFormatting: (selection, patch, options) => {
-    const state = get();
-    if (!state.settings) {
-      return false;
-    }
-    if (selection.kind === "none") {
-      return false;
-    }
-
-    const workspace = state.workspacesById[selection.workspaceId];
-    if (!workspace) {
-      return false;
-    }
-
-    let nextWorkspace: WorkspaceDocument | null = null;
-
-    if (selection.kind === "block") {
-      nextWorkspace = updateBlockInWorkspace(workspace, selection.blockId, (block) => {
-        const nextFormat = applyFormattingPatch(block.format, patch);
-        if (formatLayersEqual(block.format, nextFormat)) return null;
-        return { ...structuredClone(block), format: nextFormat };
-      });
-    } else if (selection.kind === "column") {
-      nextWorkspace = updateBlockInWorkspace(workspace, selection.blockId, (block) => {
-        let columnChanged = false;
-        const nextColumns = block.columns.map((column) => {
-          if (column.id !== selection.columnId) return structuredClone(column);
-          const nextFormat = applyFormattingPatch(column.format, patch);
-          if (formatLayersEqual(column.format, nextFormat)) return structuredClone(column);
-          columnChanged = true;
-          return { ...structuredClone(column), format: nextFormat };
-        });
-        if (!columnChanged) return null;
-        return { ...structuredClone(block), columns: nextColumns };
-      });
-    } else if (selection.kind === "row") {
-      nextWorkspace = updateBlockInWorkspace(workspace, selection.blockId, (block) => {
-        const rows = getRowsInDisplayOrder(block.rows);
-        const rowIndex = rows.findIndex((row) => row.id === selection.rowId);
-        if (rowIndex < 0) return null;
-        const row = rows[rowIndex];
-        const nextFormat = applyFormattingPatch(row.format, patch);
-        if (formatLayersEqual(row.format, nextFormat)) return null;
-        rows[rowIndex] = { ...structuredClone(row), format: nextFormat };
-        return replaceBlockRows(block, rows);
-      });
-    } else if (selection.kind === "cell") {
-      nextWorkspace = updateBlockInWorkspace(workspace, selection.blockId, (block) => {
-        const rows = getRowsInDisplayOrder(block.rows);
-        const rowIndex = rows.findIndex((row) => row.id === selection.rowId);
-        if (rowIndex < 0) return null;
-        const row = rows[rowIndex];
-        const cell = row.cells[selection.columnId];
-        if (!cell) return null;
-        const nextFormat = applyFormattingPatch(cell.format, patch);
-        if (formatLayersEqual(cell.format, nextFormat)) return null;
-        rows[rowIndex] = {
-          ...structuredClone(row),
-          cells: {
-            ...structuredClone(row.cells),
-            [selection.columnId]: {
-              ...structuredClone(cell),
-              format: Object.keys(nextFormat).length === 0 ? undefined : nextFormat,
-            },
-          },
-        };
-        return replaceBlockRows(block, rows);
-      });
-    }
-
-    if (!nextWorkspace) {
-      return false;
-    }
-
-    const nextSnapshot: AppDocumentSnapshot = {
-      settings: structuredClone(state.settings),
-      workspaceIndex: structuredClone(state.workspaceIndex),
-      workspacesById: replaceWorkspaceDocument(state.workspacesById, nextWorkspace),
-      activeWorkspaceId: state.activeWorkspaceId,
-      loadedWorkspaceIds: structuredClone(state.loadedWorkspaceIds),
-    };
-
-    return commitSnapshot(set, get, nextSnapshot, "formatting", options);
-  },
-}));
+  updateSelectedTextFormatting: (selection, patch, options) =>
+    applySelectedFormattingPatch(selection, patch, options),
+  updateSelectedBorderFormatting: (selection, patch, options) =>
+    applySelectedFormattingPatch(selection, patch, options),
+  });
+});
 
 export { DEFAULT_AUTOSAVE_DELAY_MS };

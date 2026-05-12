@@ -1004,4 +1004,171 @@ describe("document store autosave", () => {
     assert.equal(result, false);
     assert.equal(useHistoryStore.getState().canUndo, false);
   });
+
+  test("applies block border formatting and resets one property", async () => {
+    const service = await createMemoryStorageService();
+    await useDocumentStore.getState().initializeAppData(service);
+    const workspaceId = useDocumentStore.getState().activeWorkspaceId;
+    assert.ok(workspaceId);
+
+    const block = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0];
+    assert.ok(block);
+
+    const blockSelection = {
+      kind: "block" as const,
+      workspaceId,
+      blockId: block.id,
+    };
+
+    const applied = useDocumentStore
+      .getState()
+      .updateSelectedBorderFormatting(blockSelection, { borderWidth: 4, borderColor: "#ff0000", edges: ["top", "bottom"] }, { service, autosaveDelayMs: 5 });
+    assert.equal(applied, true);
+    assert.equal(useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.format.borderWidth, 4);
+    assert.equal(useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.format.borderColor, "#ff0000");
+    assert.deepEqual(useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.format.edges, ["top", "bottom"]);
+    assert.equal(useHistoryStore.getState().canUndo, true);
+
+    const reset = useDocumentStore
+      .getState()
+      .updateSelectedBorderFormatting(blockSelection, { borderColor: undefined }, { service, autosaveDelayMs: 5 });
+    assert.equal(reset, true);
+    assert.equal(
+      useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.format.borderColor,
+      undefined
+    );
+    assert.equal(useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.format.borderWidth, 4);
+  });
+
+  test("applies column border formatting without altering other columns", async () => {
+    const service = await createMemoryStorageService();
+    await useDocumentStore.getState().initializeAppData(service);
+    const workspaceId = useDocumentStore.getState().activeWorkspaceId;
+    assert.ok(workspaceId);
+
+    const block = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0];
+    assert.ok(block);
+    const textColumn = block.columns.find((c) => c.type === "text");
+    const checkboxColumn = block.columns.find((c) => c.type === "checkbox");
+    assert.ok(textColumn);
+    assert.ok(checkboxColumn);
+
+    const columnSelection = {
+      kind: "column" as const,
+      workspaceId,
+      blockId: block.id,
+      columnId: textColumn.id,
+    };
+
+    const applied = useDocumentStore
+      .getState()
+      .updateSelectedBorderFormatting(columnSelection, { edges: ["left"] }, { service, autosaveDelayMs: 5 });
+    assert.equal(applied, true);
+    assert.deepEqual(
+      useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.columns.find((c) => c.id === textColumn.id)
+        ?.format.edges,
+      ["left"]
+    );
+    assert.equal(
+      useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.columns.find((c) => c.id === checkboxColumn.id)
+        ?.format.edges,
+      undefined
+    );
+  });
+
+  test("applies row border formatting without altering row order or cells", async () => {
+    const service = await createMemoryStorageService();
+    await useDocumentStore.getState().initializeAppData(service);
+    const workspaceId = useDocumentStore.getState().activeWorkspaceId;
+    assert.ok(workspaceId);
+
+    const block = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0];
+    assert.ok(block);
+    const rowId = block.rows[0]?.id;
+    assert.ok(rowId);
+
+    const rowSelection = {
+      kind: "row" as const,
+      workspaceId,
+      blockId: block.id,
+      rowId,
+    };
+
+    const applied = useDocumentStore
+      .getState()
+      .updateSelectedBorderFormatting(rowSelection, { borderWidth: 2 }, { service, autosaveDelayMs: 5 });
+    assert.equal(applied, true);
+    assert.equal(
+      useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.rows[0]?.format.borderWidth,
+      2
+    );
+    const textColumn = block.columns.find((c) => c.type === "text");
+    assert.ok(textColumn);
+    assert.equal(useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.rows[0]?.cells[textColumn.id]?.value, "");
+  });
+
+  test("applies cell border formatting without changing cell value", async () => {
+    const service = await createMemoryStorageService();
+    await useDocumentStore.getState().initializeAppData(service);
+    const workspaceId = useDocumentStore.getState().activeWorkspaceId;
+    assert.ok(workspaceId);
+
+    const block = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0];
+    assert.ok(block);
+    const rowId = block.rows[0]?.id;
+    const textColumnId = block.columns.find((c) => c.type === "text")?.id;
+    assert.ok(rowId);
+    assert.ok(textColumnId);
+
+    const cellSelection = {
+      kind: "cell" as const,
+      workspaceId,
+      blockId: block.id,
+      rowId,
+      columnId: textColumnId,
+    };
+
+    const applied = useDocumentStore
+      .getState()
+      .updateSelectedBorderFormatting(cellSelection, { borderColor: "#00ff00", edges: ["top"] }, { service, autosaveDelayMs: 5 });
+    assert.equal(applied, true);
+    const cell = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.rows[0]?.cells[textColumnId];
+    assert.equal(cell?.format?.borderColor, "#00ff00");
+    assert.deepEqual(cell?.format?.edges, ["top"]);
+    assert.equal(cell?.value, "");
+
+    const reset = useDocumentStore
+      .getState()
+      .updateSelectedBorderFormatting(cellSelection, { borderColor: undefined, edges: undefined }, { service, autosaveDelayMs: 5 });
+    assert.equal(reset, true);
+    const cellAfterReset = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.rows[0]?.cells[textColumnId];
+    assert.equal(cellAfterReset?.format, undefined);
+    assert.equal(cellAfterReset?.value, "");
+  });
+
+  test("returns false for none selection via border formatting", async () => {
+    const service = await createMemoryStorageService();
+    await useDocumentStore.getState().initializeAppData(service);
+
+    const result = useDocumentStore
+      .getState()
+      .updateSelectedBorderFormatting({ kind: "none" }, { borderWidth: 2 }, { service, autosaveDelayMs: 5 });
+    assert.equal(result, false);
+    assert.equal(useHistoryStore.getState().canUndo, false);
+  });
+
+  test("returns false for stale selection via border formatting", async () => {
+    const service = await createMemoryStorageService();
+    await useDocumentStore.getState().initializeAppData(service);
+    const workspaceId = useDocumentStore.getState().activeWorkspaceId;
+    assert.ok(workspaceId);
+
+    const result = useDocumentStore.getState().updateSelectedBorderFormatting(
+      { kind: "block" as const, workspaceId, blockId: "nonexistent" },
+      { borderWidth: 2 },
+      { service, autosaveDelayMs: 5 }
+    );
+    assert.equal(result, false);
+    assert.equal(useHistoryStore.getState().canUndo, false);
+  });
 });
