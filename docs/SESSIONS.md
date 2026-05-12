@@ -14,6 +14,7 @@ See [`agents/CLOSING.md`](../agents/CLOSING.md) for the entry format and rules.
 | Epic 08 (checkpoints 10–11) | Complete | Pre-dating the new 4-agent workflow; see `docs/ai_sessions/legacy/` |
 | TICKET-041 Inspector shell | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 | TICKET-042 Text formatting controls | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
+| TICKET-043 Border formatting controls | Dispatched | Dispatch created for next Main → Plan → Dev → Review workflow |
 
 ---
 
@@ -216,3 +217,18 @@ Closed the TICKET-042 text formatting controls dispatch after confirming the lat
 
 ### Outcome
 TICKET-042 is complete and ready to commit/push. Next recommended checkpoint is `TICKET-043` border formatting controls.
+
+## Session 13 — 2026-05-12
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: `agents/channels/003-border-formatting-controls-channel.md`
+- Dispatch: `agents/artifacts/003-border-formatting-controls-dispatch.md`
+
+### Summary
+Selected `TICKET-043` border formatting controls as the next EPIC-08 checkpoint after the completed text formatting controls dispatch. Created a scoped dispatch for inspector-driven border width, border color, and top/right/bottom/left edge toggles with immediate grid rendering.
+
+### Outcome
+Border formatting controls are dispatched to Plan. The next session should use pickup mode and continue from `agents/channels/003-border-formatting-controls-channel.md`.
