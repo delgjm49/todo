@@ -17,4 +17,17 @@ See [`agents/CLOSING.md`](../agents/CLOSING.md) for the entry format and rules.
 
 ## Session Entries
 
-(No entries yet under the new workflow. Start a session with `main`.)
+## Session 1 - 2026-05-12
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: none
+- Dispatch: none
+
+### Summary
+Pulled `origin/main` from the Mac-updated repo and reconciled the new Main -> Plan -> Dev -> Review workflow on the Windows machine. Added the missing tracked `agents/artifacts/` scaffold, created the local gitignored `.pi/settings.json` for this PC's PortableGit Bash path, and installed the Pi footer into the machine's global Pi config.
+
+### Outcome
+Workflow docs are now aligned locally with `main`, the shared repo layout now includes the expected artifacts directory, and Windows-only Pi setup was applied without changing the Mac-specific setup.
