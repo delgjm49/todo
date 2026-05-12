@@ -13,24 +13,14 @@ Pi auto-loads extensions from `.pi/extensions/` in the project directory. If the
 ## One-Time Install On A New Machine
 
 ```bash
-# 1. Copy the canonical source to your global Pi extensions dir
+# Copy the canonical source to your global Pi extensions dir
 mkdir -p ~/.pi/agent/extensions
 cp .pi/install/repo-statusline.ts ~/.pi/agent/extensions/repo-statusline.ts
 ```
 
-```bash
-# 2. Register it in your global Pi settings (~/.pi/agent/settings.json)
-#    by adding "~/.pi/agent/extensions/repo-statusline.ts" to the
-#    "extensions" array. Example settings:
-#
-# {
-#   "extensions": [
-#     "~/.pi/agent/extensions/repo-statusline.ts"
-#   ]
-# }
-```
+Pi auto-discovers extensions from `~/.pi/agent/extensions/`, so no `settings.json` edit is required for this statusline. After the next Pi session restart, the statusline applies to every repo on that machine, not just this one.
 
-After the next Pi session restart, the statusline applies to every repo on that machine, not just this one.
+If you do edit `~/.pi/agent/settings.json` for other reasons, save it as UTF-8 **without BOM**. Pi parses JSON with `JSON.parse`, and a leading BOM can cause startup warnings like `Unexpected token '﻿'`.
 
 ## Per-Machine Settings
 
@@ -57,4 +47,4 @@ If you ever need to seed a fresh machine, copy from the other one only as a loca
 
 ## Keeping The Statusline In Sync
 
-When the canonical source at `.pi/install/repo-statusline.ts` changes (and is pulled from `main`), re-run step 1 above on each machine to refresh the globally installed copy. Step 2 is only needed the very first time.
+When the canonical source at `.pi/install/repo-statusline.ts` changes (and is pulled from `main`), re-run the copy command above on each machine to refresh the globally installed copy.
