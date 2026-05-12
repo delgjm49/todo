@@ -1,6 +1,8 @@
 import { useDocumentStore } from "../../stores/documentStore.js";
 import { useUiStore } from "../../stores/uiStore.js";
 import { buildInspectorTargetSummary } from "./inspectorTargetSummary.js";
+import { TextFormattingControls } from "./TextFormattingControls.js";
+import { FieldCard } from "./FieldCard.js";
 
 export function InspectorShell() {
   const workspaceIndex = useDocumentStore((state) => state.workspaceIndex);
@@ -56,6 +58,8 @@ export function InspectorShell() {
           </dl>
         )}
       </div>
+
+      <TextFormattingControls selection={selection} />
 
       <div className="mt-4 space-y-4">
         <FieldCard label="Background color">
@@ -123,17 +127,3 @@ export function InspectorShell() {
   );
 }
 
-function FieldCard({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="rounded-2xl border border-border bg-panelMuted/60 px-4 py-4">
-      <div className="text-xs uppercase tracking-[0.24em] text-textMuted">{label}</div>
-      <div className="mt-3">{children}</div>
-    </section>
-  );
-}

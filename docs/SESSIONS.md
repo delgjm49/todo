@@ -13,7 +13,7 @@ See [`agents/CLOSING.md`](../agents/CLOSING.md) for the entry format and rules.
 | Epic 07 (checkpoints 6–9) | Complete | Pre-dating the new 4-agent workflow; see `docs/ai_sessions/legacy/` |
 | Epic 08 (checkpoints 10–11) | Complete | Pre-dating the new 4-agent workflow; see `docs/ai_sessions/legacy/` |
 | TICKET-041 Inspector shell | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
-| TICKET-042 Text formatting controls | Dispatched | New workflow dispatch: `agents/channels/002-text-formatting-controls-channel.md` |
+| TICKET-042 Text formatting controls | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 
 ---
 
@@ -147,3 +147,72 @@ Reviewed the current phase status after TICKET-041 closed and selected `TICKET-0
 
 ### Outcome
 Text formatting controls are dispatched to Plan. The next session should use pickup mode and continue from `agents/channels/002-text-formatting-controls-channel.md`.
+
+## Session 9 — 2026-05-12
+
+### Agent Type
+plan
+
+### Artifacts
+- Channel: agents/channels/002-text-formatting-controls-channel.md
+- Dispatch: agents/artifacts/002-text-formatting-controls-dispatch.md
+- Plan: agents/artifacts/002-text-formatting-controls-plan.md
+
+### Summary
+Created the implementation plan for `TICKET-042`, focused on inspector-driven text and fill formatting controls for block, column, row, and cell selections. The plan defines sparse formatting patch behavior, documentStore mutation flow, immediate grid rendering through existing formatting resolution helpers, and tests for application/reset behavior.
+
+### Outcome
+Plan is ready for Dev. The dispatch channel has been appended with the next Dev pickup message.
+
+## Session 10 — 2026-05-12
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: `agents/channels/002-text-formatting-controls-channel.md`
+- Dispatch: `agents/artifacts/002-text-formatting-controls-dispatch.md`
+- Plan: `agents/artifacts/002-text-formatting-controls-plan.md`
+- Complete: `agents/artifacts/002-text-formatting-controls-complete.md`
+
+### Summary
+Implemented `TICKET-042` inspector-driven text formatting controls. Created `applyFormattingPatch`, `formattingToCellStyle`, and `selectedFormattingTarget` domain helpers. Added `updateSelectedTextFormatting` to `documentStore` supporting block, column, row, and cell targets with sparse overrides and reset-to-inherited behavior. Built `TextFormattingControls` presentation component with font family, size, bold, italic, underline, text color, and fill color controls, each with explicit reset. Integrated into `InspectorShell` and wired effective formatting into `RowView` cell wrappers via inline styles. Added 10 unit tests for the patch helper and 6 unit tests for store formatting actions.
+
+### Outcome
+Implementation complete, all verification commands pass (typecheck, 107/107 tests, build, lint). Channel ready for Review pickup.
+
+## Session 11 — 2026-05-12
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: `agents/channels/002-text-formatting-controls-channel.md`
+- Dispatch: `agents/artifacts/002-text-formatting-controls-dispatch.md`
+- Plan: `agents/artifacts/002-text-formatting-controls-plan.md`
+- Complete: `agents/artifacts/002-text-formatting-controls-complete.md`
+- Review: `agents/artifacts/002-text-formatting-controls-review.md`
+
+### Summary
+Reviewed the TICKET-042 text formatting controls implementation. Verified all acceptance criteria are met: inspector shows formatting controls for block/column/row/cell, no-selection state is guarded, all 7 text/fill properties can be set and reset, mutations flow through documentStore with history integration, grid renders effective formatting immediately, and tests cover all target levels plus stale/missing edge cases. Independently confirmed `npm run typecheck`, `npm run test` (107/107), `npm run build`, and `npm run lint` all pass.
+
+### Outcome
+Review verdict: PASS. Ready for Main to close the dispatch.
+
+## Session 12 — 2026-05-12
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: `agents/channels/002-text-formatting-controls-channel.md`
+- Dispatch: `agents/artifacts/002-text-formatting-controls-dispatch.md`
+- Plan: `agents/artifacts/002-text-formatting-controls-plan.md`
+- Complete: `agents/artifacts/002-text-formatting-controls-complete.md`
+- Review: `agents/artifacts/002-text-formatting-controls-review.md`
+
+### Summary
+Closed the TICKET-042 text formatting controls dispatch after confirming the latest channel message was Review → Main with `State = review-pass` and the review artifact verdict was PASS. Marked the channel closed and updated phase status for the completed text formatting checkpoint.
+
+### Outcome
+TICKET-042 is complete and ready to commit/push. Next recommended checkpoint is `TICKET-043` border formatting controls.

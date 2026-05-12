@@ -24,6 +24,8 @@ import { updateColumnSettings } from "../domain/columns/updateColumnSettings.js"
 import type { ColumnType } from "../types/column.js";
 import type { HistoryTransactionKind } from "./historyStore.js";
 import { useHistoryStore } from "./historyStore.js";
+import type { Selection } from "../types/ui.js";
+import { applyFormattingPatch, type FormattingPatch } from "../domain/formatting/applyFormattingPatch.js";
 
 export interface DocumentMutationOptions {
   service?: StorageService;
@@ -228,6 +230,11 @@ export interface DocumentStoreState {
     settingsPatch: Partial<Record<string, unknown>>,
     options?: DocumentMutationOptions
   ) => boolean;
+  updateSelectedTextFormatting: (
+    selection: Selection,
+    patch: FormattingPatch,
+    options?: DocumentMutationOptions
+  ) => boolean;
 }
 
 let cachedDefaultService: Promise<StorageService> | null = null;
@@ -253,6 +260,26 @@ function cloneSnapshot(snapshot: AppDocumentSnapshot): AppDocumentSnapshot {
 
 function cloneWorkspaceDocument(workspace: WorkspaceDocument): WorkspaceDocument {
   return structuredClone(workspace);
+}
+
+function formatLayersEqual(
+  a: object | undefined,
+  b: object | undefined
+): boolean {
+  if (a === b) return true;
+  const aObj = (a ?? {}) as Record<string, unknown>;
+  const bObj = (b ?? {}) as Record<string, unknown>;
+  const aKeys = Object.keys(aObj);
+  const bKeys = Object.keys(bObj);
+  if (aKeys.length !== bKeys.length) return false;
+  return aKeys.every((key) => {
+    const av = aObj[key];
+    const bv = bObj[key];
+    if (Array.isArray(av) && Array.isArray(bv)) {
+      return av.length === bv.length && av.every((v, i) => v === bv[i]);
+    }
+    return av === bv;
+  });
 }
 
 function getDefaultWorkspaceTitle(index: number): string {
@@ -1950,6 +1977,90 @@ export const useDocumentStore = create<DocumentStoreState>()((set, get) => ({
         columns: updateColumnSettings(block.columns, columnId, settingsPatch),
       };
     });
+
+    if (!nextWorkspace) {
+      return false;
+    }
+
+    const nextSnapshot: AppDocumentSnapshot = {
+      settings: structuredClone(state.settings),
+      workspaceIndex: structuredClone(state.workspaceIndex),
+      workspacesById: replaceWorkspaceDocument(state.workspacesById, nextWorkspace),
+      activeWorkspaceId: state.activeWorkspaceId,
+      loadedWorkspaceIds: structuredClone(state.loadedWorkspaceIds),
+    };
+
+    return commitSnapshot(set, get, nextSnapshot, "formatting", options);
+  },
+  updateSelectedTextFormatting: (selection, patch, options) => {
+    const state = get();
+    if (!state.settings) {
+      return false;
+    }
+    if (selection.kind === "none") {
+      return false;
+    }
+
+    const workspace = state.workspacesById[selection.workspaceId];
+    if (!workspace) {
+      return false;
+    }
+
+    let nextWorkspace: WorkspaceDocument | null = null;
+
+    if (selection.kind === "block") {
+      nextWorkspace = updateBlockInWorkspace(workspace, selection.blockId, (block) => {
+        const nextFormat = applyFormattingPatch(block.format, patch);
+        if (formatLayersEqual(block.format, nextFormat)) return null;
+        return { ...structuredClone(block), format: nextFormat };
+      });
+    } else if (selection.kind === "column") {
+      nextWorkspace = updateBlockInWorkspace(workspace, selection.blockId, (block) => {
+        let columnChanged = false;
+        const nextColumns = block.columns.map((column) => {
+          if (column.id !== selection.columnId) return structuredClone(column);
+          const nextFormat = applyFormattingPatch(column.format, patch);
+          if (formatLayersEqual(column.format, nextFormat)) return structuredClone(column);
+          columnChanged = true;
+          return { ...structuredClone(column), format: nextFormat };
+        });
+        if (!columnChanged) return null;
+        return { ...structuredClone(block), columns: nextColumns };
+      });
+    } else if (selection.kind === "row") {
+      nextWorkspace = updateBlockInWorkspace(workspace, selection.blockId, (block) => {
+        const rows = getRowsInDisplayOrder(block.rows);
+        const rowIndex = rows.findIndex((row) => row.id === selection.rowId);
+        if (rowIndex < 0) return null;
+        const row = rows[rowIndex];
+        const nextFormat = applyFormattingPatch(row.format, patch);
+        if (formatLayersEqual(row.format, nextFormat)) return null;
+        rows[rowIndex] = { ...structuredClone(row), format: nextFormat };
+        return replaceBlockRows(block, rows);
+      });
+    } else if (selection.kind === "cell") {
+      nextWorkspace = updateBlockInWorkspace(workspace, selection.blockId, (block) => {
+        const rows = getRowsInDisplayOrder(block.rows);
+        const rowIndex = rows.findIndex((row) => row.id === selection.rowId);
+        if (rowIndex < 0) return null;
+        const row = rows[rowIndex];
+        const cell = row.cells[selection.columnId];
+        if (!cell) return null;
+        const nextFormat = applyFormattingPatch(cell.format, patch);
+        if (formatLayersEqual(cell.format, nextFormat)) return null;
+        rows[rowIndex] = {
+          ...structuredClone(row),
+          cells: {
+            ...structuredClone(row.cells),
+            [selection.columnId]: {
+              ...structuredClone(cell),
+              format: Object.keys(nextFormat).length === 0 ? undefined : nextFormat,
+            },
+          },
+        };
+        return replaceBlockRows(block, rows);
+      });
+    }
 
     if (!nextWorkspace) {
       return false;

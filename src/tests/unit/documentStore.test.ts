@@ -838,4 +838,170 @@ describe("document store autosave", () => {
     assert.equal(useDocumentStore.getState().saveStatus, "saved");
     assert.equal(useHistoryStore.getState().canUndo, true);
   });
+
+  test("applies block formatting and resets it", async () => {
+    const service = await createMemoryStorageService();
+    await useDocumentStore.getState().initializeAppData(service);
+    const workspaceId = useDocumentStore.getState().activeWorkspaceId;
+    assert.ok(workspaceId);
+
+    const block = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0];
+    assert.ok(block);
+
+    const blockSelection = {
+      kind: "block" as const,
+      workspaceId,
+      blockId: block.id,
+    };
+
+    const applied = useDocumentStore
+      .getState()
+      .updateSelectedTextFormatting(blockSelection, { bold: true, fontSize: 20 }, { service, autosaveDelayMs: 5 });
+    assert.equal(applied, true);
+    assert.equal(useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.format.bold, true);
+    assert.equal(useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.format.fontSize, 20);
+    assert.equal(useHistoryStore.getState().canUndo, true);
+
+    const reset = useDocumentStore
+      .getState()
+      .updateSelectedTextFormatting(blockSelection, { bold: undefined }, { service, autosaveDelayMs: 5 });
+    assert.equal(reset, true);
+    assert.equal(
+      useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.format.bold,
+      undefined
+    );
+    assert.equal(useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.format.fontSize, 20);
+  });
+
+  test("applies column formatting without altering other columns", async () => {
+    const service = await createMemoryStorageService();
+    await useDocumentStore.getState().initializeAppData(service);
+    const workspaceId = useDocumentStore.getState().activeWorkspaceId;
+    assert.ok(workspaceId);
+
+    const block = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0];
+    assert.ok(block);
+    const textColumn = block.columns.find((c) => c.type === "text");
+    const checkboxColumn = block.columns.find((c) => c.type === "checkbox");
+    assert.ok(textColumn);
+    assert.ok(checkboxColumn);
+
+    const columnSelection = {
+      kind: "column" as const,
+      workspaceId,
+      blockId: block.id,
+      columnId: textColumn.id,
+    };
+
+    const applied = useDocumentStore
+      .getState()
+      .updateSelectedTextFormatting(columnSelection, { textColor: "#ff0000" }, { service, autosaveDelayMs: 5 });
+    assert.equal(applied, true);
+    assert.equal(
+      useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.columns.find((c) => c.id === textColumn.id)
+        ?.format.textColor,
+      "#ff0000"
+    );
+    assert.equal(
+      useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.columns.find((c) => c.id === checkboxColumn.id)
+        ?.format.textColor,
+      undefined
+    );
+  });
+
+  test("applies row formatting without altering row order or cells", async () => {
+    const service = await createMemoryStorageService();
+    await useDocumentStore.getState().initializeAppData(service);
+    const workspaceId = useDocumentStore.getState().activeWorkspaceId;
+    assert.ok(workspaceId);
+
+    const block = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0];
+    assert.ok(block);
+    const rowId = block.rows[0]?.id;
+    assert.ok(rowId);
+
+    const rowSelection = {
+      kind: "row" as const,
+      workspaceId,
+      blockId: block.id,
+      rowId,
+    };
+
+    const applied = useDocumentStore
+      .getState()
+      .updateSelectedTextFormatting(rowSelection, { backgroundColor: "#eeeeee" }, { service, autosaveDelayMs: 5 });
+    assert.equal(applied, true);
+    assert.equal(
+      useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.rows[0]?.format.backgroundColor,
+      "#eeeeee"
+    );
+    const textColumn = block.columns.find((c) => c.type === "text");
+    assert.ok(textColumn);
+    assert.equal(useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.rows[0]?.cells[textColumn.id]?.value, "");
+  });
+
+  test("applies cell formatting without changing cell value", async () => {
+    const service = await createMemoryStorageService();
+    await useDocumentStore.getState().initializeAppData(service);
+    const workspaceId = useDocumentStore.getState().activeWorkspaceId;
+    assert.ok(workspaceId);
+
+    const block = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0];
+    assert.ok(block);
+    const rowId = block.rows[0]?.id;
+    const textColumnId = block.columns.find((c) => c.type === "text")?.id;
+    assert.ok(rowId);
+    assert.ok(textColumnId);
+
+    const cellSelection = {
+      kind: "cell" as const,
+      workspaceId,
+      blockId: block.id,
+      rowId,
+      columnId: textColumnId,
+    };
+
+    const applied = useDocumentStore
+      .getState()
+      .updateSelectedTextFormatting(cellSelection, { italic: true, textColor: "#0000ff" }, { service, autosaveDelayMs: 5 });
+    assert.equal(applied, true);
+    const cell = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.rows[0]?.cells[textColumnId];
+    assert.equal(cell?.format?.italic, true);
+    assert.equal(cell?.format?.textColor, "#0000ff");
+    assert.equal(cell?.value, "");
+
+    const reset = useDocumentStore
+      .getState()
+      .updateSelectedTextFormatting(cellSelection, { italic: undefined, textColor: undefined }, { service, autosaveDelayMs: 5 });
+    assert.equal(reset, true);
+    const cellAfterReset = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.rows[0]?.cells[textColumnId];
+    assert.equal(cellAfterReset?.format, undefined);
+    assert.equal(cellAfterReset?.value, "");
+  });
+
+  test("returns false for none selection and does not commit", async () => {
+    const service = await createMemoryStorageService();
+    await useDocumentStore.getState().initializeAppData(service);
+
+    const result = useDocumentStore
+      .getState()
+      .updateSelectedTextFormatting({ kind: "none" }, { bold: true }, { service, autosaveDelayMs: 5 });
+    assert.equal(result, false);
+    assert.equal(useHistoryStore.getState().canUndo, false);
+  });
+
+  test("returns false for stale selection and does not commit", async () => {
+    const service = await createMemoryStorageService();
+    await useDocumentStore.getState().initializeAppData(service);
+    const workspaceId = useDocumentStore.getState().activeWorkspaceId;
+    assert.ok(workspaceId);
+
+    const result = useDocumentStore.getState().updateSelectedTextFormatting(
+      { kind: "block" as const, workspaceId, blockId: "nonexistent" },
+      { bold: true },
+      { service, autosaveDelayMs: 5 }
+    );
+    assert.equal(result, false);
+    assert.equal(useHistoryStore.getState().canUndo, false);
+  });
 });

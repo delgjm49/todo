@@ -1,5 +1,7 @@
 import { getVisibleColumnsInDisplayOrder } from "../../domain/columns/createColumn.js";
 import { getRowsInDisplayOrder } from "../../domain/rows/reorderRows.js";
+import { resolveCellFormatting } from "../../domain/formatting/resolveCellFormatting.js";
+import { formattingToCellStyle } from "../../domain/formatting/formattingToCellStyle.js";
 import { useDocumentStore } from "../../stores/documentStore.js";
 import { useUiStore } from "../../stores/uiStore.js";
 import type { Block } from "../../types/block.js";
@@ -22,6 +24,7 @@ export function RowView({ block, workspaceId }: { block: Block; workspaceId: str
   const selection = useUiStore((state) => state.selection);
   const selectRow = useUiStore((state) => state.selectRow);
   const selectCell = useUiStore((state) => state.selectCell);
+  const settings = useDocumentStore((state) => state.settings);
   const visibleColumns = getVisibleColumnsInDisplayOrder(block.columns);
   const rows = getRowsInDisplayOrder(block.rows);
 
@@ -90,21 +93,33 @@ export function RowView({ block, workspaceId }: { block: Block; workspaceId: str
                 ⋮⋮
               </button>
               <div className="grid flex-1 gap-2" style={{ gridTemplateColumns: buildGridTemplate(visibleColumns) }}>
-                {visibleColumns.map((column) => (
-                  <div
-                    className={`min-h-8 rounded-md border px-2 py-1.5 text-sm text-text ${
-                      isCellSelected(row.id, column.id)
-                        ? "border-accent/70 ring-1 ring-accent/30 bg-panel"
-                        : "border-border/60 bg-panel"
-                    }`}
-                    data-testid={`cell-${row.id}-${column.id}`}
-                    key={column.id}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      selectCell(workspaceId, block.id, row.id, column.id);
-                    }}
-                  >
-                    <CellRenderer
+                {visibleColumns.map((column) => {
+                  const effectiveFormat = settings
+                    ? resolveCellFormatting(
+                        settings.defaults,
+                        block.format,
+                        column.format,
+                        row.format,
+                        row.cells[column.id]?.format
+                      )
+                    : {};
+                  const cellStyle = formattingToCellStyle(effectiveFormat);
+                  return (
+                    <div
+                      className={`min-h-8 rounded-md border px-2 py-1.5 text-sm text-text ${
+                        isCellSelected(row.id, column.id)
+                          ? "border-accent/70 ring-1 ring-accent/30 bg-panel"
+                          : "border-border/60 bg-panel"
+                      }`}
+                      data-testid={`cell-${row.id}-${column.id}`}
+                      key={column.id}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        selectCell(workspaceId, block.id, row.id, column.id);
+                      }}
+                      style={cellStyle}
+                    >
+                      <CellRenderer
                       cell={row.cells[column.id]}
                       column={column}
                       onCommitDate={(value) => {
@@ -125,8 +140,8 @@ export function RowView({ block, workspaceId }: { block: Block; workspaceId: str
                       rowIndex={rowIndex}
                     />
                   </div>
-                ))}
-              </div>
+                );
+              })}</div>
             </div>
             <div className="mt-1.5 flex items-center justify-end gap-1">
               <button
