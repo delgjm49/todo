@@ -15,6 +15,7 @@ See [`agents/CLOSING.md`](../agents/CLOSING.md) for the entry format and rules.
 | TICKET-041 Inspector shell | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 | TICKET-042 Text formatting controls | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 | TICKET-043 Border formatting controls | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
+| TICKET-044 Formatting persistence | Dispatched | Dispatch created for next Main → Plan → Dev → Review workflow |
 
 ---
 
@@ -301,3 +302,18 @@ Closed the TICKET-043 border formatting controls dispatch after confirming the l
 
 ### Outcome
 TICKET-043 is complete and ready to commit/push. Next recommended checkpoint is `TICKET-044` row/cell/column/block formatting persistence.
+
+## Session 18 — 2026-05-12
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: `agents/channels/004-formatting-persistence-channel.md`
+- Dispatch: `agents/artifacts/004-formatting-persistence-dispatch.md`
+
+### Summary
+Selected `TICKET-044` formatting persistence as the next EPIC-08 checkpoint after text and border formatting controls were completed. Created a scoped dispatch for hardening and verifying block, column, row, and cell formatting save/load behavior.
+
+### Outcome
+Formatting persistence is dispatched to Plan. The next session should use pickup mode and continue from `agents/channels/004-formatting-persistence-channel.md`.
