@@ -13,6 +13,7 @@ See [`agents/CLOSING.md`](../agents/CLOSING.md) for the entry format and rules.
 | Epic 07 (checkpoints 6–9) | Complete | Pre-dating the new 4-agent workflow; see `docs/ai_sessions/legacy/` |
 | Epic 08 (checkpoints 10–11) | Complete | Pre-dating the new 4-agent workflow; see `docs/ai_sessions/legacy/` |
 | TICKET-041 Inspector shell | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
+| TICKET-042 Text formatting controls | Dispatched | New workflow dispatch: `agents/channels/002-text-formatting-controls-channel.md` |
 
 ---
 
@@ -131,3 +132,18 @@ Closed the TICKET-041 inspector shell dispatch after confirming the latest chann
 
 ### Outcome
 TICKET-041 is complete and ready to commit/push as the first full new-workflow feature cycle.
+
+## Session 8 — 2026-05-12
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: `agents/channels/002-text-formatting-controls-channel.md`
+- Dispatch: `agents/artifacts/002-text-formatting-controls-dispatch.md`
+
+### Summary
+Reviewed the current phase status after TICKET-041 closed and selected `TICKET-042` text formatting controls as the next EPIC-08 checkpoint. Created a scoped dispatch for inspector-driven font family, font size, bold, italic, underline, text color, and fill/background color controls.
+
+### Outcome
+Text formatting controls are dispatched to Plan. The next session should use pickup mode and continue from `agents/channels/002-text-formatting-controls-channel.md`.
