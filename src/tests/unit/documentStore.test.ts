@@ -1171,4 +1171,88 @@ describe("document store autosave", () => {
     assert.equal(result, false);
     assert.equal(useHistoryStore.getState().canUndo, false);
   });
+
+  test("persists formatting across store re-initialization after autosave", async () => {
+    const service = await createMemoryStorageService();
+    await useDocumentStore.getState().initializeAppData(service);
+    const workspaceId = useDocumentStore.getState().activeWorkspaceId;
+    assert.ok(workspaceId);
+
+    const block = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0];
+    assert.ok(block);
+    const textColumn = block.columns.find((c) => c.type === "text");
+    const checkboxColumn = block.columns.find((c) => c.type === "checkbox");
+    assert.ok(textColumn);
+    assert.ok(checkboxColumn);
+    const rowId = block.rows[0]?.id;
+    assert.ok(rowId);
+
+    const blockApplied = useDocumentStore
+      .getState()
+      .updateSelectedTextFormatting(
+        { kind: "block", workspaceId, blockId: block.id },
+        { fontFamily: "Courier New", fontSize: 22, bold: true },
+        { service, autosaveDelayMs: 5 }
+      );
+    assert.equal(blockApplied, true);
+
+    const columnApplied = useDocumentStore
+      .getState()
+      .updateSelectedBorderFormatting(
+        { kind: "column", workspaceId, blockId: block.id, columnId: textColumn.id },
+        { borderWidth: 3, borderColor: "#ff00ff", edges: ["top"] },
+        { service, autosaveDelayMs: 5 }
+      );
+    assert.equal(columnApplied, true);
+
+    const rowApplied = useDocumentStore
+      .getState()
+      .updateSelectedTextFormatting(
+        { kind: "row", workspaceId, blockId: block.id, rowId },
+        { italic: true, textColor: "#00ffff" },
+        { service, autosaveDelayMs: 5 }
+      );
+    assert.equal(rowApplied, true);
+
+    const cellApplied = useDocumentStore
+      .getState()
+      .updateSelectedBorderFormatting(
+        { kind: "cell", workspaceId, blockId: block.id, rowId, columnId: textColumn.id },
+        { borderWidth: 5, edges: ["left", "bottom"] },
+        { service, autosaveDelayMs: 5 }
+      );
+    assert.equal(cellApplied, true);
+
+    await wait(20);
+
+    await useDocumentStore.getState().initializeAppData(service);
+
+    const reloadedBlock = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0];
+    assert.ok(reloadedBlock);
+    assert.equal(reloadedBlock.format.fontFamily, "Courier New");
+    assert.equal(reloadedBlock.format.fontSize, 22);
+    assert.equal(reloadedBlock.format.bold, true);
+
+    const reloadedColumn = reloadedBlock.columns.find((c) => c.id === textColumn.id);
+    assert.ok(reloadedColumn);
+    assert.equal(reloadedColumn.format.borderWidth, 3);
+    assert.equal(reloadedColumn.format.borderColor, "#ff00ff");
+    assert.deepEqual(reloadedColumn.format.edges, ["top"]);
+
+    const reloadedRow = reloadedBlock.rows.find((r) => r.id === rowId);
+    assert.ok(reloadedRow);
+    assert.equal(reloadedRow.format.italic, true);
+    assert.equal(reloadedRow.format.textColor, "#00ffff");
+
+    const reloadedCell = reloadedRow.cells[textColumn.id];
+    assert.ok(reloadedCell);
+    assert.ok(reloadedCell.format);
+    assert.equal(reloadedCell.format.borderWidth, 5);
+    assert.deepEqual(reloadedCell.format.edges, ["bottom", "left"]);
+    assert.equal(reloadedCell.value, "");
+
+    assert.equal(reloadedBlock.columns.length, block.columns.length);
+    assert.equal(reloadedBlock.rows.length, block.rows.length);
+    assert.equal(reloadedBlock.rows[0]?.cells[checkboxColumn.id]?.value, false);
+  });
 });

@@ -120,14 +120,15 @@ function toEdges(value: unknown): BorderFormatting["edges"] {
     return undefined;
   }
 
-  const allowed: BorderFormatting["edges"] = [];
+  const seen = new Set<string>();
   for (const entry of value) {
     if (entry === "top" || entry === "right" || entry === "bottom" || entry === "left") {
-      if (!allowed.includes(entry)) {
-        allowed.push(entry);
-      }
+      seen.add(entry);
     }
   }
+
+  const edgeOrder: Array<"top" | "right" | "bottom" | "left"> = ["top", "right", "bottom", "left"];
+  const allowed = edgeOrder.filter((edge) => seen.has(edge));
 
   return allowed.length > 0 ? allowed : undefined;
 }
@@ -138,10 +139,10 @@ function normalizeTextFormatting(value: unknown): TextFormatting {
   }
 
   const result: TextFormatting = {};
-  if (typeof value.fontFamily === "string") {
+  if (typeof value.fontFamily === "string" && value.fontFamily.trim().length > 0) {
     result.fontFamily = value.fontFamily;
   }
-  if (typeof value.fontSize === "number" && !Number.isNaN(value.fontSize)) {
+  if (typeof value.fontSize === "number" && Number.isFinite(value.fontSize) && value.fontSize > 0) {
     result.fontSize = value.fontSize;
   }
   if (typeof value.bold === "boolean") {
@@ -179,7 +180,7 @@ function normalizeBorderFormatting(value: unknown): BorderFormatting {
   if (isCssColor(value.borderColor)) {
     result.borderColor = value.borderColor;
   }
-  if (typeof value.borderWidth === "number" && !Number.isNaN(value.borderWidth)) {
+  if (typeof value.borderWidth === "number" && Number.isFinite(value.borderWidth) && value.borderWidth >= 0) {
     result.borderWidth = value.borderWidth;
   }
   const edges = toEdges(value.edges);

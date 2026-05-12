@@ -15,7 +15,7 @@ See [`agents/CLOSING.md`](../agents/CLOSING.md) for the entry format and rules.
 | TICKET-041 Inspector shell | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 | TICKET-042 Text formatting controls | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 | TICKET-043 Border formatting controls | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
-| TICKET-044 Formatting persistence | Dispatched | Dispatch created for next Main → Plan → Dev → Review workflow |
+| TICKET-044 Formatting persistence | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 
 ---
 
@@ -317,3 +317,72 @@ Selected `TICKET-044` formatting persistence as the next EPIC-08 checkpoint afte
 
 ### Outcome
 Formatting persistence is dispatched to Plan. The next session should use pickup mode and continue from `agents/channels/004-formatting-persistence-channel.md`.
+
+## Session 19 — 2026-05-12
+
+### Agent Type
+plan
+
+### Artifacts
+- Channel: `agents/channels/004-formatting-persistence-channel.md`
+- Dispatch: `agents/artifacts/004-formatting-persistence-dispatch.md`
+- Plan: `agents/artifacts/004-formatting-persistence-plan.md`
+
+### Summary
+Created the implementation plan for `TICKET-044`, focused on storage schema/coercion hardening and save/load verification for block, column, row, and cell formatting overrides. The plan defines tests for valid text/fill and border round trips, invalid formatting normalization without corrupting valid siblings, and effective formatting precedence after reload.
+
+### Outcome
+Plan is ready for Dev. The dispatch channel has been appended with the next Dev pickup message.
+
+## Session 20 — 2026-05-12
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: `agents/channels/004-formatting-persistence-channel.md`
+- Dispatch: `agents/artifacts/004-formatting-persistence-dispatch.md`
+- Plan: `agents/artifacts/004-formatting-persistence-plan.md`
+- Complete: `agents/artifacts/004-formatting-persistence-complete.md`
+
+### Summary
+Implemented `TICKET-044` formatting persistence hardening and verification. Updated `storageSchemas.ts` to reject non-finite fontSize, negative borderWidth, empty fontFamily strings, and canonicalize edges order to top/right/bottom/left. Added 6 new tests across storage coercion (2), storage round-trip (3), and document store integration (1) proving block, column, row, and cell formatting survives save/load, invalid values are dropped without harming valid siblings, and effective formatting after reload follows app defaults → block → column → row → cell precedence.
+
+### Outcome
+Implementation complete, all verification commands pass: `npm run typecheck`, `npm run test` (133/133), `npm run build`, `npm run lint`. Channel ready for Review pickup.
+
+## Session 21 — 2026-05-12
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: `agents/channels/004-formatting-persistence-channel.md`
+- Dispatch: `agents/artifacts/004-formatting-persistence-dispatch.md`
+- Plan: `agents/artifacts/004-formatting-persistence-plan.md`
+- Complete: `agents/artifacts/004-formatting-persistence-complete.md`
+- Review: `agents/artifacts/004-formatting-persistence-review.md`
+
+### Summary
+Reviewed the TICKET-044 formatting persistence implementation. Verified storage schema normalization hardens `fontSize`, `borderWidth`, `fontFamily`, and `edges` without breaking valid formatting. Confirmed block, column, row, and cell formatting survive save/load round trips; invalid values are dropped without corrupting valid siblings; and effective formatting after reload follows app defaults → block → column → row → cell precedence. No UI files were modified. Independently confirmed `npm run typecheck`, `npm run test` (133/133), `npm run build`, and `npm run lint` all pass.
+
+### Outcome
+Review verdict: PASS. Ready for Main to close the dispatch.
+
+## Session 22 — 2026-05-12
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: `agents/channels/004-formatting-persistence-channel.md`
+- Dispatch: `agents/artifacts/004-formatting-persistence-dispatch.md`
+- Plan: `agents/artifacts/004-formatting-persistence-plan.md`
+- Complete: `agents/artifacts/004-formatting-persistence-complete.md`
+- Review: `agents/artifacts/004-formatting-persistence-review.md`
+
+### Summary
+Closed the TICKET-044 formatting persistence dispatch after confirming the latest channel message was Review → Main with `State = review-pass` and the review artifact verdict was PASS. Marked the channel closed and updated phase status for the completed formatting persistence checkpoint.
+
+### Outcome
+TICKET-044 is complete and ready to commit/push. Next recommended checkpoint is `TICKET-045` checkbox automation behavior.
