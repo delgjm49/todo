@@ -1,13 +1,22 @@
-import type { ReactNode } from "react";
 import { useDocumentStore } from "../../stores/documentStore.js";
 import { useUiStore } from "../../stores/uiStore.js";
+import { buildInspectorTargetSummary } from "./inspectorTargetSummary.js";
 
 export function InspectorShell() {
   const workspaceIndex = useDocumentStore((state) => state.workspaceIndex);
+  const workspacesById = useDocumentStore((state) => state.workspacesById);
   const activeWorkspaceId = useDocumentStore((state) => state.activeWorkspaceId);
   const updateWorkspaceStyle = useDocumentStore((state) => state.updateWorkspaceStyle);
-  const activeWorkspace = workspaceIndex.find((entry) => entry.id === activeWorkspaceId) ?? workspaceIndex[0] ?? null;
   const selection = useUiStore((state) => state.selection);
+
+  const activeWorkspace = workspaceIndex.find((entry) => entry.id === activeWorkspaceId) ?? workspaceIndex[0] ?? null;
+  const workspaceDocument = activeWorkspace ? workspacesById[activeWorkspace.id] ?? null : null;
+
+  const summary = buildInspectorTargetSummary({
+    selection,
+    activeWorkspace,
+    workspaceDocument,
+  });
 
   if (!activeWorkspace) {
     return (
@@ -30,14 +39,22 @@ export function InspectorShell() {
       </div>
 
       <div className="mt-4 rounded-2xl border border-border bg-panelMuted/60 px-4 py-4">
-        <div className="text-xs uppercase tracking-[0.24em] text-textMuted">Selection</div>
-        <p className="mt-2 text-sm text-text">
-          {selection.kind === "none" && "Nothing selected"}
-          {selection.kind === "block" && "Block selected"}
-          {selection.kind === "column" && "Column selected"}
-          {selection.kind === "row" && "Row selected"}
-          {selection.kind === "cell" && "Cell selected"}
-        </p>
+        <div className="text-xs uppercase tracking-[0.24em] text-textMuted">Target summary</div>
+        <div className="mt-2">
+          <span className="text-xs font-medium uppercase tracking-wider text-accent">{summary.eyebrow}</span>
+          <h4 className="mt-1 text-sm font-semibold text-text">{summary.title}</h4>
+          <p className="mt-1 text-sm leading-5 text-textMuted">{summary.description}</p>
+        </div>
+        {summary.details.length > 0 && (
+          <dl className="mt-3 space-y-1">
+            {summary.details.map((detail) => (
+              <div key={detail.label} className="flex items-baseline justify-between gap-3">
+                <dt className="text-xs text-textMuted">{detail.label}</dt>
+                <dd className="text-sm text-text">{detail.value}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
       </div>
 
       <div className="mt-4 space-y-4">
@@ -111,7 +128,7 @@ function FieldCard({
   children,
 }: {
   label: string;
-  children: ReactNode;
+  children: React.ReactNode;
 }) {
   return (
     <section className="rounded-2xl border border-border bg-panelMuted/60 px-4 py-4">

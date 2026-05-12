@@ -12,7 +12,7 @@ See [`agents/CLOSING.md`](../agents/CLOSING.md) for the entry format and rules.
 |--------------|--------|-------|
 | Epic 07 (checkpoints 6–9) | Complete | Pre-dating the new 4-agent workflow; see `docs/ai_sessions/legacy/` |
 | Epic 08 (checkpoints 10–11) | Complete | Pre-dating the new 4-agent workflow; see `docs/ai_sessions/legacy/` |
-| TICKET-041 Inspector shell | Dispatched | New workflow dispatch: `agents/channels/001-inspector-shell-channel.md` |
+| TICKET-041 Inspector shell | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 
 ---
 
@@ -62,3 +62,72 @@ Reviewed the current implementation and legacy checkpoint status. Confirmed chec
 
 ### Outcome
 Created the new-format dispatch artifact and channel for inspector shell planning. The next session should use pickup mode and continue as Plan from `agents/channels/001-inspector-shell-channel.md`.
+
+## Session 4 — 2026-05-12
+
+### Agent Type
+plan
+
+### Artifacts
+- Channel: agents/channels/001-inspector-shell-channel.md
+- Dispatch: agents/artifacts/001-inspector-shell-dispatch.md
+- Plan: agents/artifacts/001-inspector-shell-plan.md
+
+### Summary
+Created the implementation plan for `TICKET-041`, focused on a read-only inspector target summary for no selection, block, column, row, and cell targets. The plan keeps formatting controls, formatting persistence, checkbox automation, sorting, clipboard, alerts, and packaging out of scope.
+
+### Outcome
+Plan is ready for Dev. The dispatch channel has been appended with the next Dev pickup message.
+
+## Session 5 — 2026-05-12
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: agents/channels/001-inspector-shell-channel.md
+- Dispatch: agents/artifacts/001-inspector-shell-dispatch.md
+- Plan: agents/artifacts/001-inspector-shell-plan.md
+- Complete: agents/artifacts/001-inspector-shell-complete.md
+
+### Summary
+Implemented the TICKET-041 inspector shell and target summary. Created `buildInspectorTargetSummary` pure helper in `src/components/layout/inspectorTargetSummary.ts` covering all selection kinds (none, block, column, row, cell) plus stale/missing target graceful fallbacks. Updated `InspectorShell.tsx` to replace the placeholder Selection card with a proper Target summary card showing eyebrow, title, description, and detail key-value pairs. Added 14 unit tests covering all summary kinds and stale-target edge cases.
+
+### Outcome
+Implementation complete, all verification commands pass. Channel ready for Review pickup.
+
+## Session 6 — 2026-05-12
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: `agents/channels/001-inspector-shell-channel.md`
+- Dispatch: `agents/artifacts/001-inspector-shell-dispatch.md`
+- Plan: `agents/artifacts/001-inspector-shell-plan.md`
+- Complete: `agents/artifacts/001-inspector-shell-complete.md`
+- Review: `agents/artifacts/001-inspector-shell-review.md`
+
+### Summary
+Reviewed the TICKET-041 inspector shell and target summary implementation. Verified all acceptance criteria are met, scope is clean, unit tests cover all selection kinds plus stale/missing edge cases, and no regressions were introduced. Independently confirmed `npm run typecheck`, `npm run test` (91/91), `npm run build`, and `npm run lint` all pass.
+
+### Outcome
+Review verdict: PASS. Ready for Main to close the dispatch.
+
+## Session 7 — 2026-05-12
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: `agents/channels/001-inspector-shell-channel.md`
+- Dispatch: `agents/artifacts/001-inspector-shell-dispatch.md`
+- Plan: `agents/artifacts/001-inspector-shell-plan.md`
+- Complete: `agents/artifacts/001-inspector-shell-complete.md`
+- Review: `agents/artifacts/001-inspector-shell-review.md`
+
+### Summary
+Closed the TICKET-041 inspector shell dispatch after confirming the latest channel message was Review → Main with `State = review-pass` and the review artifact verdict was PASS. Marked the channel closed and updated phase status for the completed inspector shell checkpoint.
+
+### Outcome
+TICKET-041 is complete and ready to commit/push as the first full new-workflow feature cycle.
