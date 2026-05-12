@@ -31,3 +31,18 @@ Pulled `origin/main` from the Mac-updated repo and reconciled the new Main -> Pl
 
 ### Outcome
 Workflow docs are now aligned locally with `main`, the shared repo layout now includes the expected artifacts directory, and Windows-only Pi setup was applied without changing the Mac-specific setup.
+
+## Session 2 - 2026-05-12
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: none
+- Dispatch: none
+
+### Summary
+Validated that this Windows machine no longer needs a repo-local `.pi/settings.json` override for Pi. Added PortableGit `bash.exe` to the user `PATH`, tested Pi in fresh sessions, and confirmed the agent could use its shell tool normally with `bash`, `git`, and repo reads.
+
+### Outcome
+The repo is intentionally left without `.pi/settings.json` on this machine. Shared Pi setup docs now note that Windows can use either a `PATH`-based Bash install or the repo-local `shellPath` fallback.
