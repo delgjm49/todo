@@ -6,6 +6,8 @@ import { BLOCK_TEMPLATES } from "../../domain/templates/blockTemplates.js";
 import { useDocumentStore } from "../../stores/documentStore.js";
 import { useUiStore } from "../../stores/uiStore.js";
 import { getVisibleColumnsInDisplayOrder } from "../../domain/columns/createColumn.js";
+import type { BlockSort } from "../../types/block.js";
+import type { ColumnId } from "../../domain/ids.js";
 
 export function MainPane() {
   const workspaceIndex = useDocumentStore((state) => state.workspaceIndex);
@@ -16,6 +18,7 @@ export function MainPane() {
   const reorderBlocks = useDocumentStore((state) => state.reorderBlocks);
   const moveBlockToWorkspace = useDocumentStore((state) => state.moveBlockToWorkspace);
   const deleteBlock = useDocumentStore((state) => state.deleteBlock);
+  const sortBlockRows = useDocumentStore((state) => state.sortBlockRows);
   const appendRowToBlock = useDocumentStore((state) => state.appendRowToBlock);
   const renameColumn = useDocumentStore((state) => state.renameColumn);
   const moveColumnLeft = useDocumentStore((state) => state.moveColumnLeft);
@@ -220,6 +223,11 @@ export function MainPane() {
               }}
               onRename={() => {
                 setEditingBlockId(activeBlockMenuBlock.id);
+                closeBlockMenu();
+              }}
+              onSort={(columnId: ColumnId, direction: BlockSort["direction"]) => {
+                void sortBlockRows(activeBlockMenuBlock.workspaceId, activeBlockMenuBlock.id, columnId, direction);
+                setEditingBlockId(null);
                 closeBlockMenu();
               }}
               onToggleCollapsed={() => {

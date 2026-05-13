@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import { createMemoryStorageService } from "../../services/storage/index.js";
+import { createColumn } from "../../domain/columns/createColumn.js";
 import type { AppDocumentSnapshot } from "../../types/app.js";
 import { useDocumentStore } from "../../stores/documentStore.js";
 import { useHistoryStore } from "../../stores/historyStore.js";
@@ -915,6 +916,204 @@ describe("document store autosave", () => {
     assert.equal(calls.length, 1);
     assert.equal(useDocumentStore.getState().saveStatus, "saved");
     assert.equal(useHistoryStore.getState().canUndo, true);
+  });
+
+  test("sorts block rows through the document store with metadata and undo history", async () => {
+    const service = await createMemoryStorageService();
+    await useDocumentStore.getState().initializeAppData(service);
+    const workspaceId = useDocumentStore.getState().activeWorkspaceId;
+    assert.ok(workspaceId);
+
+    const block = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0];
+    assert.ok(block);
+    const textColumn = block.columns.find((column) => column.type === "text");
+    const checkboxColumn = block.columns.find((column) => column.type === "checkbox");
+    const baseRow = block.rows[0];
+    assert.ok(textColumn);
+    assert.ok(checkboxColumn);
+    assert.ok(baseRow);
+
+    const seededRows = [
+      {
+        ...structuredClone(baseRow),
+        id: "row_charlie",
+        order: 0,
+        format: { backgroundColor: "#111111" },
+        cells: {
+          [checkboxColumn.id]: { value: true, format: { italic: true } },
+          [textColumn.id]: { value: "Charlie", format: { bold: true } },
+        },
+      },
+      {
+        ...structuredClone(baseRow),
+        id: "row_alpha",
+        order: 1,
+        format: { backgroundColor: "#222222" },
+        cells: {
+          [checkboxColumn.id]: { value: false, format: { italic: false } },
+          [textColumn.id]: { value: "Alpha", format: { bold: false } },
+        },
+      },
+      {
+        ...structuredClone(baseRow),
+        id: "row_bravo",
+        order: 2,
+        format: { backgroundColor: "#333333" },
+        cells: {
+          [checkboxColumn.id]: { value: false, format: { underline: true } },
+          [textColumn.id]: { value: "Bravo", format: { textColor: "#abcdef" } },
+        },
+      },
+    ];
+
+    useDocumentStore.setState({
+      workspacesById: {
+        ...structuredClone(useDocumentStore.getState().workspacesById),
+        [workspaceId]: {
+          ...structuredClone(useDocumentStore.getState().workspacesById[workspaceId]),
+          blocks: [
+            {
+              ...structuredClone(block),
+              sort: null,
+              rows: seededRows,
+            },
+          ],
+        },
+      },
+      canUndo: false,
+      canRedo: false,
+    });
+    useHistoryStore.getState().initializeHistory(snapshotFromStore());
+
+    const beforeRows = structuredClone(useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.rows ?? []);
+    const sorted = useDocumentStore
+      .getState()
+      .sortBlockRows(workspaceId, block.id, textColumn.id, "asc", { service, autosaveDelayMs: 5 });
+    assert.equal(sorted, true);
+
+    const sortedBlock = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0];
+    assert.ok(sortedBlock);
+    assert.deepEqual(sortedBlock.rows.map((row) => row.id), ["row_alpha", "row_bravo", "row_charlie"]);
+    assert.deepEqual(sortedBlock.rows.map((row) => row.order), [0, 1, 2]);
+    assert.deepEqual(sortedBlock.sort, { columnId: textColumn.id, direction: "asc" });
+    assert.equal(useHistoryStore.getState().past.length, 1);
+    assert.equal(useHistoryStore.getState().canUndo, true);
+
+    for (const sortedRow of sortedBlock.rows) {
+      const beforeRow = beforeRows.find((row) => row.id === sortedRow.id);
+      assert.ok(beforeRow);
+      assert.deepEqual(sortedRow.cells, beforeRow.cells);
+      assert.deepEqual(sortedRow.format, beforeRow.format);
+    }
+
+    const undoOk = useDocumentStore.getState().undo({ service, autosaveDelayMs: 5 });
+    assert.equal(undoOk, true);
+    const undoBlock = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0];
+    assert.deepEqual(undoBlock?.rows.map((row) => row.id), ["row_charlie", "row_alpha", "row_bravo"]);
+    assert.equal(undoBlock?.sort, null);
+
+    const redoOk = useDocumentStore.getState().redo({ service, autosaveDelayMs: 5 });
+    assert.equal(redoOk, true);
+    const redoBlock = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0];
+    assert.deepEqual(redoBlock?.rows.map((row) => row.id), ["row_alpha", "row_bravo", "row_charlie"]);
+    assert.deepEqual(redoBlock?.sort, { columnId: textColumn.id, direction: "asc" });
+  });
+
+  test("rejects missing and unsupported sort columns without committing history", async () => {
+    const service = await createMemoryStorageService();
+    await useDocumentStore.getState().initializeAppData(service);
+    const workspaceId = useDocumentStore.getState().activeWorkspaceId;
+    assert.ok(workspaceId);
+
+    const block = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0];
+    assert.ok(block);
+    const numberedColumn = createColumn("numbered", { id: "col_numbered", order: block.columns.length });
+    const rows = block.rows.map((row) => ({
+      ...structuredClone(row),
+      cells: {
+        ...structuredClone(row.cells),
+        [numberedColumn.id]: { value: null, format: {} },
+      },
+    }));
+
+    useDocumentStore.setState({
+      workspacesById: {
+        ...structuredClone(useDocumentStore.getState().workspacesById),
+        [workspaceId]: {
+          ...structuredClone(useDocumentStore.getState().workspacesById[workspaceId]),
+          blocks: [{ ...structuredClone(block), columns: [...block.columns, numberedColumn], rows }],
+        },
+      },
+      canUndo: false,
+      canRedo: false,
+    });
+    useHistoryStore.getState().initializeHistory(snapshotFromStore());
+
+    assert.equal(
+      useDocumentStore.getState().sortBlockRows(workspaceId, block.id, "missing_column", "asc", {
+        service,
+        autosaveDelayMs: 5,
+      }),
+      false
+    );
+    assert.equal(
+      useDocumentStore.getState().sortBlockRows(workspaceId, block.id, numberedColumn.id, "desc", {
+        service,
+        autosaveDelayMs: 5,
+      }),
+      false
+    );
+    assert.equal(useHistoryStore.getState().past.length, 0);
+    assert.equal(useHistoryStore.getState().canUndo, false);
+    assert.equal(useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.sort, null);
+  });
+
+  test("commits metadata-changing stable marker sorts and skips exact repeat no-ops", async () => {
+    const service = await createMemoryStorageService();
+    await useDocumentStore.getState().initializeAppData(service);
+    const workspaceId = useDocumentStore.getState().activeWorkspaceId;
+    assert.ok(workspaceId);
+
+    const block = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0];
+    assert.ok(block);
+    const bulletColumn = createColumn("bullet", { id: "col_bullet", order: 0 });
+    const textColumns = block.columns.map((column) => ({ ...structuredClone(column), order: column.order + 1 }));
+    const rows = block.rows.map((row) => ({
+      ...structuredClone(row),
+      cells: {
+        ...structuredClone(row.cells),
+        [bulletColumn.id]: { value: null, format: { textColor: "#ffffff" } },
+      },
+    }));
+
+    useDocumentStore.setState({
+      workspacesById: {
+        ...structuredClone(useDocumentStore.getState().workspacesById),
+        [workspaceId]: {
+          ...structuredClone(useDocumentStore.getState().workspacesById[workspaceId]),
+          blocks: [{ ...structuredClone(block), columns: [bulletColumn, ...textColumns], rows, sort: null }],
+        },
+      },
+      canUndo: false,
+      canRedo: false,
+    });
+    useHistoryStore.getState().initializeHistory(snapshotFromStore());
+
+    const firstSort = useDocumentStore
+      .getState()
+      .sortBlockRows(workspaceId, block.id, bulletColumn.id, "asc", { service, autosaveDelayMs: 5 });
+    assert.equal(firstSort, true);
+    assert.deepEqual(useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.sort, {
+      columnId: bulletColumn.id,
+      direction: "asc",
+    });
+    assert.equal(useHistoryStore.getState().past.length, 1);
+
+    const repeatSort = useDocumentStore
+      .getState()
+      .sortBlockRows(workspaceId, block.id, bulletColumn.id, "asc", { service, autosaveDelayMs: 5 });
+    assert.equal(repeatSort, false);
+    assert.equal(useHistoryStore.getState().past.length, 1);
   });
 
   test("supports column rename, add, delete, move, change type, and settings flows", async () => {

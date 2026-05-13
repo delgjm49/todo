@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import type { AppDocument, AppDocumentSnapshot, LoadedAppData, SaveFailure, SaveOutcome, SaveStatus } from "../types/app";
 import type { WorkspaceDocument, WorkspaceIndexEntry } from "../types/workspace";
-import type { Block } from "../types/block";
+import type { Block, BlockSort } from "../types/block";
 import type { BlockId, ColumnId, RowId, WorkspaceId } from "../domain/ids";
 import { createId } from "../domain/ids.js";
 import type { Settings } from "../types/settings";
@@ -16,6 +16,8 @@ import { BLOCK_TEMPLATES, createBlockTemplate, getBlockTemplateLabel } from "../
 import { createRow } from "../domain/rows/createRow.js";
 import { deleteRowById, getRowsInDisplayOrder, insertRowAtIndex, reorderRows } from "../domain/rows/reorderRows.js";
 import { applyCheckboxAutoMove } from "../domain/rows/applyCheckboxRules.js";
+import { isSortableColumn } from "../domain/sorting/compareValues.js";
+import { sortRowsByColumn } from "../domain/sorting/sortRows.js";
 import { addColumn } from "../domain/columns/addColumn.js";
 import { changeColumnType } from "../domain/columns/changeColumnType.js";
 import { deleteColumn } from "../domain/columns/deleteColumn.js";
@@ -158,6 +160,13 @@ export interface DocumentStoreState {
     blockId: BlockId,
     sourceRowId: RowId,
     targetRowId: RowId,
+    options?: DocumentMutationOptions
+  ) => boolean;
+  sortBlockRows: (
+    workspaceId: WorkspaceId,
+    blockId: BlockId,
+    columnId: ColumnId,
+    direction: BlockSort["direction"],
     options?: DocumentMutationOptions
   ) => boolean;
   appendRowToBlock: (
@@ -542,6 +551,21 @@ function replaceBlockRows(block: Block, rows: Block["rows"]): Block {
       order: index,
     })),
   };
+}
+
+function blockSortsEqual(left: BlockSort | null, right: BlockSort | null): boolean {
+  return left?.columnId === right?.columnId && left?.direction === right?.direction;
+}
+
+function rowOrderStateEqual(leftRows: Block["rows"], rightRows: Block["rows"]): boolean {
+  if (leftRows.length !== rightRows.length) {
+    return false;
+  }
+
+  return leftRows.every((leftRow, index) => {
+    const rightRow = rightRows[index];
+    return rightRow !== undefined && leftRow.id === rightRow.id && leftRow.order === rightRow.order;
+  });
 }
 
 function updateBlockInWorkspace(
@@ -1779,6 +1803,52 @@ export const useDocumentStore = create<DocumentStoreState>()((set, get) => {
     };
 
     return commitSnapshot(set, get, nextSnapshot, "drag", options);
+  },
+  sortBlockRows: (workspaceId, blockId, columnId, direction, options) => {
+    const state = get();
+    if (!state.settings) {
+      return false;
+    }
+
+    const workspace = state.workspacesById[workspaceId];
+    if (!workspace) {
+      return false;
+    }
+
+    const nextWorkspace = updateBlockInWorkspace(workspace, blockId, (block) => {
+      const column = block.columns.find((entry) => entry.id === columnId);
+      if (!isSortableColumn(column)) {
+        return null;
+      }
+
+      const sort: BlockSort = { columnId, direction };
+      const sortedRows = sortRowsByColumn(block.rows, block.columns, sort);
+      const currentRows = getRowsInDisplayOrder(block.rows);
+
+      if (blockSortsEqual(block.sort, sort) && rowOrderStateEqual(currentRows, sortedRows)) {
+        return null;
+      }
+
+      return {
+        ...structuredClone(block),
+        sort,
+        rows: sortedRows,
+      };
+    });
+
+    if (!nextWorkspace) {
+      return false;
+    }
+
+    const nextSnapshot: AppDocumentSnapshot = {
+      settings: structuredClone(state.settings),
+      workspaceIndex: structuredClone(state.workspaceIndex),
+      workspacesById: replaceWorkspaceDocument(state.workspacesById, nextWorkspace),
+      activeWorkspaceId: state.activeWorkspaceId,
+      loadedWorkspaceIds: structuredClone(state.loadedWorkspaceIds),
+    };
+
+    return commitSnapshot(set, get, nextSnapshot, "sort", options);
   },
   renameColumn: (workspaceId, blockId, columnId, label, options) => {
     const state = get();

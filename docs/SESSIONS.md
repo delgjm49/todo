@@ -19,7 +19,7 @@ See [`agents/CLOSING.md`](../agents/CLOSING.md) for the entry format and rules.
 | TICKET-013 Store selectors/action helpers | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 | TICKET-045 Checkbox automation behavior | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 | TICKET-047 Block row sorting domain logic | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
-| TICKET-048 Sort menu UI | Dispatched | Dispatch created for Plan pickup |
+| TICKET-048 Sort menu UI | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 
 ---
 
@@ -657,3 +657,72 @@ Selected `TICKET-048` sort menu UI as the next Milestone D/E checkpoint after co
 
 ### Outcome
 Sort menu UI is dispatched to Plan. The next session should use pickup mode and continue from `agents/channels/008-sort-menu-ui-channel.md`.
+
+## Session 39 — 2026-05-13
+
+### Agent Type
+plan
+
+### Artifacts
+- Channel: `agents/channels/008-sort-menu-ui-channel.md`
+- Dispatch: `agents/artifacts/008-sort-menu-ui-dispatch.md`
+- Plan: `agents/artifacts/008-sort-menu-ui-plan.md`
+
+### Summary
+Created the implementation plan for `TICKET-048` sort menu UI, focused on a `documentStore.sortBlockRows()` action that applies existing TICKET-047 sorting helpers, updates block sort metadata and row order in one `sort` history transaction, and exposes a compact block header/menu sort UI with targeted store/UI tests.
+
+### Outcome
+Plan is ready for Dev. The dispatch channel has been appended with the next Dev pickup message.
+
+## Session 40 — 2026-05-13
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: `agents/channels/008-sort-menu-ui-channel.md`
+- Dispatch: `agents/artifacts/008-sort-menu-ui-dispatch.md`
+- Plan: `agents/artifacts/008-sort-menu-ui-plan.md`
+- Complete: `agents/artifacts/008-sort-menu-ui-complete.md`
+
+### Summary
+Implemented `TICKET-048` sort menu UI. Added `documentStore.sortBlockRows()` using existing sorting helpers, updated block sort metadata and row order in one `sort` history transaction, exposed a block header/menu `Sort by` UI for visible sortable columns, and added focused store/UI coverage for valid sorts, invalid columns, no-sortable states, and menu-triggered sorting.
+
+### Outcome
+Implementation complete. Verification passed: `npm run typecheck`, `npm run test` (165/165 with existing React act warnings), `npm run build`, and `npm run lint`. The dispatch channel has been appended with the next Review pickup message.
+
+## Session 41 — 2026-05-13
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: `agents/channels/008-sort-menu-ui-channel.md`
+- Dispatch: `agents/artifacts/008-sort-menu-ui-dispatch.md`
+- Plan: `agents/artifacts/008-sort-menu-ui-plan.md`
+- Complete: `agents/artifacts/008-sort-menu-ui-complete.md`
+- Review: `agents/artifacts/008-sort-menu-ui-review.md`
+
+### Summary
+Reviewed the `TICKET-048` sort menu UI implementation. Confirmed `documentStore.sortBlockRows()` routes through the existing `TICKET-047` helpers, validates missing/unsupported columns, updates `block.sort` and row order in one `sort` history transaction with no-op suppression, and preserves row ids and cell payloads/formats. Confirmed the block header/menu UI lists visible sortable columns in display order, excludes `numbered` markers, shows an empty state when no sortable columns exist, and closes the menu after sort actions. Store and UI tests cover the new behavior.
+
+### Outcome
+PASS. Verification passed: `npm run typecheck`, `npm run test` (165/165 with pre-existing React act warnings), `npm run build`, and `npm run lint`. The dispatch channel has been appended with the `Review → Main` message at `State = review-pass`.
+
+## Session 42 — 2026-05-13
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: `agents/channels/008-sort-menu-ui-channel.md`
+- Dispatch: `agents/artifacts/008-sort-menu-ui-dispatch.md`
+- Plan: `agents/artifacts/008-sort-menu-ui-plan.md`
+- Complete: `agents/artifacts/008-sort-menu-ui-complete.md`
+- Review: `agents/artifacts/008-sort-menu-ui-review.md`
+
+### Summary
+Closed the `TICKET-048` sort menu UI dispatch after confirming the latest channel message was Review → Main with `State = review-pass` and the review artifact verdict was PASS. Marked the channel closed and updated phase status for the completed sort menu checkpoint.
+
+### Outcome
+TICKET-048 is complete and ready to commit/push. Unrelated local modifications to `agents/orchestration.json` were left out of the feature commit.

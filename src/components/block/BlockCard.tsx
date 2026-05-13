@@ -131,6 +131,14 @@ export function BlockCard({
         <div className="flex items-center gap-2">
           <button
             className="rounded-lg border border-border px-3 py-2 text-xs font-medium text-text transition hover:border-accent/40 hover:bg-panelMuted"
+            data-testid={`sort-menu-${block.id}`}
+            onClick={(event) => onOpenMenu(event.clientX, event.clientY)}
+            type="button"
+          >
+            Sort
+          </button>
+          <button
+            className="rounded-lg border border-border px-3 py-2 text-xs font-medium text-text transition hover:border-accent/40 hover:bg-panelMuted"
             data-testid={`add-row-${block.id}`}
             onClick={onAddRow}
             type="button"

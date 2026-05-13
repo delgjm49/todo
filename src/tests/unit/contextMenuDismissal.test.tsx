@@ -6,6 +6,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { LeftDock } from "../../components/layout/LeftDock.js";
 import { MainPane } from "../../components/layout/MainPane.js";
 import { createBlockTemplate } from "../../domain/templates/blockTemplates.js";
+import { createMemoryStorageService } from "../../services/storage/index.js";
 import { useDocumentStore } from "../../stores/documentStore.js";
 import { useUiStore } from "../../stores/uiStore.js";
 import { createColumn } from "../../domain/columns/createColumn.js";
@@ -67,6 +68,18 @@ async function renderNode(element: ReactNode) {
 async function dispatchPointerDown(element: Element) {
   await act(async () => {
     element.dispatchEvent(new window.PointerEvent("pointerdown", { bubbles: true }));
+  });
+}
+
+async function dispatchClick(element: Element) {
+  await act(async () => {
+    element.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+  });
+}
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
   });
 }
 
@@ -211,6 +224,106 @@ describe("context menu dismissal", () => {
       ]
     );
     assert.equal(document.querySelector('[data-testid="block-menu-backdrop"]'), null);
+  });
+
+  test("block sort menu action sorts rows and closes the menu", async () => {
+    const service = await createMemoryStorageService();
+    await useDocumentStore.getState().initializeAppData(service);
+
+    const checklist = createBlockTemplate("basic_checklist", "ws_home", {
+      blockId: "block_home",
+      title: "Today",
+      order: 0,
+    });
+    const textColumn = checklist.columns.find((column) => column.type === "text");
+    assert.ok(textColumn);
+    const checkboxColumn = checklist.columns.find((column) => column.type === "checkbox");
+    assert.ok(checkboxColumn);
+    const baseRow = checklist.rows[0];
+    assert.ok(baseRow);
+    checklist.rows = [
+      {
+        ...structuredClone(baseRow),
+        id: "row_zulu",
+        order: 0,
+        cells: {
+          [checkboxColumn.id]: { value: false, format: {} },
+          [textColumn.id]: { value: "Zulu", format: { bold: true } },
+        },
+      },
+      {
+        ...structuredClone(baseRow),
+        id: "row_alpha",
+        order: 1,
+        cells: {
+          [checkboxColumn.id]: { value: false, format: {} },
+          [textColumn.id]: { value: "Alpha", format: { bold: true } },
+        },
+      },
+      {
+        ...structuredClone(baseRow),
+        id: "row_mike",
+        order: 2,
+        cells: {
+          [checkboxColumn.id]: { value: false, format: {} },
+          [textColumn.id]: { value: "Mike", format: { bold: true } },
+        },
+      },
+    ];
+
+    useDocumentStore.setState({
+      workspaceIndex: [
+        {
+          id: "ws_home",
+          title: "Home",
+          order: 0,
+          style: {
+            background: "#1F2937",
+            textColor: "#F9FAFB",
+            accentStripe: { enabled: true, color: "#60A5FA" },
+          },
+        },
+      ],
+      workspacesById: {
+        ws_home: {
+          id: "ws_home",
+          blocks: [checklist],
+        },
+      },
+      loadedWorkspaceIds: ["ws_home"],
+      activeWorkspaceId: "ws_home",
+    });
+    useUiStore.setState({
+      workspaceMenu: null,
+      blockMenu: null,
+      columnMenu: null,
+      draggingWorkspaceId: null,
+      dropTargetWorkspaceId: null,
+      draggingBlockId: null,
+      dropTargetBlockId: null,
+      screen: "main",
+      inspectorOpen: false,
+    });
+
+    await renderNode(<MainPane />);
+
+    const sortButton = document.querySelector('[data-testid="sort-menu-block_home"]');
+    assert.ok(sortButton);
+    await dispatchClick(sortButton);
+
+    const sortAction = document.querySelector(`[data-testid="sort-block_home-${textColumn.id}-asc"]`);
+    assert.ok(sortAction);
+    await dispatchClick(sortAction);
+
+    const sortedRows = useDocumentStore.getState().workspacesById.ws_home?.blocks[0]?.rows ?? [];
+    assert.deepEqual(sortedRows.map((row) => row.id), ["row_alpha", "row_mike", "row_zulu"]);
+    assert.deepEqual(sortedRows.map((row) => row.order), [0, 1, 2]);
+    assert.deepEqual(useDocumentStore.getState().workspacesById.ws_home?.blocks[0]?.sort, {
+      columnId: textColumn.id,
+      direction: "asc",
+    });
+    assert.equal(useUiStore.getState().blockMenu, null);
+    await wait(300);
   });
 
   test("column menu uses a backdrop so outside dismissal does not mutate column state", async () => {
