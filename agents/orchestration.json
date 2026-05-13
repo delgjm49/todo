@@ -1,0 +1,4 @@
+{
+  "$comment": "Presence of this file enables the dispatch-auto Pi extension in this repo. Empty config = all worker roles use pi defaults. Add per-role overrides only when needed.",
+  "roles": {}
+}

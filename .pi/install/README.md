@@ -48,3 +48,63 @@ If you ever need to seed a fresh machine, copy from the other one only as a loca
 ## Keeping The Statusline In Sync
 
 When the canonical source at `.pi/install/repo-statusline.ts` changes (and is pulled from `main`), re-run the copy command above on each machine to refresh the globally installed copy.
+
+## Dispatch Auto-Orchestrator
+
+`.pi/install/dispatch-auto.ts` is the canonical source for the Pi extension that auto-runs the Main → Plan → Dev → Review chain. When Main writes a worker-addressed channel message, the extension spawns `pi --print` (or `claude -p`) subprocesses sequentially through Plan/Dev/Review until the chain returns to Main. You only interact with Main; you never copy/paste pickup prompts between sessions.
+
+### How it activates
+
+Opt-in per repo: the extension is dormant unless `agents/orchestration.json` exists in the cwd. Safe to install globally.
+
+It also self-disables when:
+
+- Invoked as a subprocess by another instance of itself (`DISPATCH_AUTO_SUBPROCESS=1` env var)
+- Pi is running with `--print` / `-p` (the orchestrator only fires from interactive Main sessions)
+
+### One-time install on a new machine
+
+```bash
+cp .pi/install/dispatch-auto.ts ~/.pi/agent/extensions/dispatch-auto.ts
+```
+
+That's it. Pi auto-discovers extensions from `~/.pi/agent/extensions/`.
+
+### How to use it
+
+1. `cd` into the repo and run `pi`.
+2. Tell Main what to work on. Main writes the dispatch artifact, creates the channel, and appends the first `Main → Plan` message — same flow as before.
+3. When Main's turn ends, the extension detects the fresh worker-addressed message and runs the chain. You'll see a status footer like `dispatch-auto: running Plan (msg 2)`.
+4. The chain runs Plan → Dev → Review (and any Review → Dev → Review revision loops) automatically. Each subprocess's stdout/stderr streams to `.dispatch-auto.log` in repo root.
+5. When the chain hits a message addressed to Main (typically `review-pass`), or the channel status reaches `closed`, it stops. You get a macOS / Windows toast notification.
+6. Switch back to your Main session to review the channel + review artifact, then close the dispatch (commit, push).
+
+### Session continuity within a cycle
+
+For Dev's fix turns after Review, the extension reuses Dev's prior session via `pi --resume <id>`. Session IDs are captured from Pi's stdout and stored per-channel-per-role at `agents/channels/.sessions/<channel>-<role>.id` (gitignored). New channel = new session IDs, so context never bleeds across dispatches.
+
+### Configuring Claude Code workers
+
+By default all worker roles run as `pi --print`. Override per role in `agents/orchestration.json`:
+
+```jsonc
+{
+  "roles": {
+    "Plan":   { "binary": "claude", "configDir": "~/.claude-acct1" },
+    "Review": { "binary": "claude", "configDir": "~/.claude-acct2" }
+  }
+}
+```
+
+`configDir` sets `CLAUDE_CONFIG_DIR` (or `PI_CODING_AGENT_DIR` for pi) so multi-account setups work cleanly. Main is always the host pi session you're sitting in — the orchestrator can't run as Claude.
+
+### Stopping / recovering
+
+- **Abort mid-chain**: Ctrl-C the subprocess; it'll bubble up to the chain loop which logs a non-zero exit and stops.
+- **Resume manually**: if the chain stops, the channel file is still source of truth. Switch any pi session into the repo and type `pickup agents/channels/<channel>.md` to take the next turn manually.
+- **Clear session state**: `rm -rf agents/channels/.sessions/` to force fresh sessions on the next chain run.
+- **Inspect**: `tail -f .dispatch-auto.log` while the chain runs.
+
+### Keeping it in sync
+
+When `.pi/install/dispatch-auto.ts` changes upstream, re-copy to `~/.pi/agent/extensions/` on each machine. Same pattern as the statusline.

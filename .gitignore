@@ -12,3 +12,7 @@ src-tauri/target
 # Canonical statusline source lives at .pi/install/ and is replicated to
 # ~/.pi/agent/extensions/ on each machine via the install README.
 .pi/settings.json
+
+# Dispatch-auto orchestrator runtime files (per-machine, not synced).
+.dispatch-auto.log
+agents/channels/.sessions/
