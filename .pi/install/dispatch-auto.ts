@@ -227,6 +227,12 @@ function buildLaunchCommand(role: string, cfg: OrchestrationConfig, channelRel: 
 	if (binary === "pi") {
 		args.push("--session-dir", sessionDir, "--continue");
 	} else if (binary === "claude") {
+		// Non-interactive worker: there's no human to approve a Bash prompt,
+		// so any Read/Edit/Bash gate would silently stall the turn (claude exits
+		// 0 after asking for approval). Workers run under the trust model of the
+		// dispatch (orchestrator-spawned, on a prompt the user already approved).
+		// Users can override via roles.<Role>.extraArgs if they want stricter.
+		args.push("--permission-mode", "bypassPermissions");
 		const uuidPath = path.join(sessionDir, "claude-session.uuid");
 		plan.claudeUuidPath = uuidPath;
 		if (fs.existsSync(uuidPath)) {
@@ -282,8 +288,12 @@ async function runRoleTurn(cwd: string, role: string, cfg: OrchestrationConfig, 
 	const sessionDir = sessionDirFor(cwd, channelFile, role);
 	const plan = buildLaunchCommand(role, cfg, channelRel, sessionDir);
 	const timeoutMs = resolveTimeoutMs(role, cfg);
-	const hadSession = fs.readdirSync(sessionDir).length > 0;
-	logEvent(cwd, `spawn role=${role} binary=${plan.cmd} resume=${hadSession ? "yes" : "fresh"} timeoutMs=${timeoutMs} channel=${path.basename(channelFile)}`);
+	// For Claude, buildLaunchCommand writes the UUID file before we read the dir,
+	// so directory-emptiness isn't a reliable signal. Use plan.resumedClaude instead.
+	const resumed = plan.cmd === "claude"
+		? !!plan.resumedClaude
+		: fs.readdirSync(sessionDir).length > 0;
+	logEvent(cwd, `spawn role=${role} binary=${plan.cmd} resume=${resumed ? "yes" : "fresh"} timeoutMs=${timeoutMs} channel=${path.basename(channelFile)}`);
 
 	const first = await spawnOnce(cwd, role, plan, timeoutMs);
 
