@@ -16,6 +16,7 @@ See [`agents/CLOSING.md`](../agents/CLOSING.md) for the entry format and rules.
 | TICKET-042 Text formatting controls | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 | TICKET-043 Border formatting controls | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 | TICKET-044 Formatting persistence | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
+| TICKET-013 Store selectors/action helpers | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 
 ---
 
@@ -386,3 +387,87 @@ Closed the TICKET-044 formatting persistence dispatch after confirming the lates
 
 ### Outcome
 TICKET-044 is complete and ready to commit/push. Next recommended checkpoint is `TICKET-045` checkbox automation behavior.
+
+## Session 23 — 2026-05-12
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: `agents/channels/005-store-selectors-action-helpers-channel.md`
+- Dispatch: `agents/artifacts/005-store-selectors-action-helpers-dispatch.md`
+
+### Summary
+Selected the smallest available backlog item, `TICKET-013` store selectors and action helpers, instead of opening a larger behavior feature. Created a tightly scoped dispatch for pure document/selection lookup helpers with a minimal Plan read list.
+
+### Outcome
+Store selectors/action helpers are dispatched to Plan. The next session should use pickup mode and continue from `agents/channels/005-store-selectors-action-helpers-channel.md`.
+
+## Session 24 — 2026-05-12
+
+### Agent Type
+plan
+
+### Artifacts
+- Channel: `agents/channels/005-store-selectors-action-helpers-channel.md`
+- Dispatch: `agents/artifacts/005-store-selectors-action-helpers-dispatch.md`
+- Plan: `agents/artifacts/005-store-selectors-action-helpers-plan.md`
+
+### Summary
+Created the implementation plan for `TICKET-013`, focused on a small pure document selector module and selection resolution helper for active workspace, block, column, row, and cell targets. The plan keeps UI changes, storage/schema changes, and broad store refactors out of scope, with optional localized adoption only if behavior-neutral.
+
+### Outcome
+Plan is ready for Dev. The dispatch channel has been appended with the next Dev pickup message.
+
+## Session 25 — 2026-05-12
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: `agents/channels/005-store-selectors-action-helpers-channel.md`
+- Dispatch: `agents/artifacts/005-store-selectors-action-helpers-dispatch.md`
+- Plan: `agents/artifacts/005-store-selectors-action-helpers-plan.md`
+- Complete: `agents/artifacts/005-store-selectors-action-helpers-complete.md`
+
+### Summary
+Implemented `TICKET-013` store selectors and action helpers. Added a pure document selector module for active workspace, workspace context, block, visible column, display-order row, and cell lookup plus non-throwing selection resolution for none/block/column/row/cell targets. Added unit coverage for valid lookups, visible-column behavior, and stale/missing workspace, block, column, row, and cell references. Updated ESLint ignores so local `.pi` harness files do not affect project lint.
+
+### Outcome
+Implementation complete. Verification passes: `npm run typecheck`, `npm run test` (139/139), `npm run build`, and `npm run lint`. Channel ready for Review pickup.
+
+## Session 26 — 2026-05-12
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: `agents/channels/005-store-selectors-action-helpers-channel.md`
+- Dispatch: `agents/artifacts/005-store-selectors-action-helpers-dispatch.md`
+- Plan: `agents/artifacts/005-store-selectors-action-helpers-plan.md`
+- Complete: `agents/artifacts/005-store-selectors-action-helpers-complete.md`
+- Review: `agents/artifacts/005-store-selectors-action-helpers-review.md`
+
+### Summary
+Reviewed the `TICKET-013` store selectors/action helpers implementation. Verified the new selector module is pure and focused, resolves none/block/column/row/cell selections non-throwingly, handles stale workspace/block/column/row/cell references gracefully, and includes focused unit coverage. Confirmed the `.pi` ESLint ignore is limited to local agent harness files.
+
+### Outcome
+Review verdict: PASS. Independently confirmed `npm run typecheck`, `npm run test` (139/139 with existing unrelated React act warnings), `npm run build`, and `npm run lint` all pass. Ready for Main to close the dispatch.
+
+## Session 27 — 2026-05-12
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: `agents/channels/005-store-selectors-action-helpers-channel.md`
+- Dispatch: `agents/artifacts/005-store-selectors-action-helpers-dispatch.md`
+- Plan: `agents/artifacts/005-store-selectors-action-helpers-plan.md`
+- Complete: `agents/artifacts/005-store-selectors-action-helpers-complete.md`
+- Review: `agents/artifacts/005-store-selectors-action-helpers-review.md`
+
+### Summary
+Closed the TICKET-013 store selectors/action helpers dispatch after confirming the latest channel message was Review → Main with `State = review-pass` and the review artifact verdict was PASS. Marked the channel closed and updated phase status for the completed selector/helper checkpoint.
+
+### Outcome
+TICKET-013 is complete and ready to commit/push. Next recommended checkpoint is `TICKET-045` checkbox automation behavior.
