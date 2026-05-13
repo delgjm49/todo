@@ -28,9 +28,8 @@ Auto-orchestration note: if `agents/orchestration.json` exists in this repo, the
 - When the chain finishes, the extension will inject a `[dispatch-auto]` summary message and you'll be asked to summarize results + offer to close. **Do not commit until the user explicitly approves the commit.**
 
 If the session starts with pickup instead of main:
-- Read AGENTS.md first, then agents/workflows/dispatch-channel-protocol.md, then the referenced dispatch channel
-- Use the latest message's To field as your active role
-- If To is Main, close or route the feature according to the message
+- Read AGENTS.md, then agents/workflows/dispatch-channel-protocol.md (its Role Resolution Rules section determines your active role based on the `[dispatch-auto]` tag).
+- For a human-invoked pickup (no tag) you are Main. If the channel's latest `### To` is Main: close or route the feature according to the message. If it's a worker, the chain was interrupted — diagnose (`.dispatch-auto.log` is the primary log) and re-route by appending a fresh `Main → <Role>` message. Never impersonate a worker.
 
 Your output should include:
 1. A brief status check

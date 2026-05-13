@@ -216,7 +216,11 @@ function buildLaunchCommand(role: string, cfg: OrchestrationConfig, channelRel: 
 		if (binary === "pi") env.PI_CODING_AGENT_DIR = expandHome(override.configDir);
 	}
 
-	const prompt = `${PICKUP_PREFIX}${channelRel}`;
+	// [dispatch-auto] prefix marks this prompt as orchestrator-invoked. Workers
+	// resolve their active role from the channel's To field only when this tag
+	// is present; user-interactive pickup (no tag) defaults to Main. See
+	// agents/workflows/dispatch-channel-protocol.md for the role-resolution rules.
+	const prompt = `[dispatch-auto] ${PICKUP_PREFIX}${channelRel}`;
 	const args: string[] = ["--print"];
 	const plan: LaunchPlan = { cmd: binary, args, env };
 

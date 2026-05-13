@@ -94,14 +94,18 @@ When a session starts with `pickup`:
 2. Read `agents/workflows/dispatch-channel-protocol.md` for pickup mechanics.
 3. Read the channel named in the prompt, or the most recently modified channel if no path is given.
 4. Find the last `## Message` block.
-5. Use the block's `### To` value as the active role:
-   - `Main` → Main Orchestrator
-   - `Plan` → Planning agent
-   - `Dev` → Dev agent
-   - `Review` → Review agent
-6. Follow the `### Read`, `### Task`, and `### Close Requirements` sections from that message.
+5. **Determine your active role based on how pickup was invoked**:
+   - **Orchestrator-invoked pickup** (the user prompt that triggered this turn starts with `[dispatch-auto]`): use the block's `### To` value as your active role:
+     - `Main` → Main Orchestrator
+     - `Plan` → Planning agent
+     - `Dev` → Dev agent
+     - `Review` → Review agent
+   - **Human-invoked pickup** (no `[dispatch-auto]` tag in the prompt): you are always **Main**. Workers are spawned only by the orchestrator, never by humans. If the channel's latest `### To` is a worker (Plan / Dev / Review), the chain was interrupted — your job is to diagnose and re-route by appending a fresh `Main → <Role>` message, **never to do the worker's work yourself**.
+6. Follow the `### Read`, `### Task`, and `### Close Requirements` sections from that message (Main, when re-routing, instead writes a fresh `Main → <Role>` message — it does not execute the worker's task).
 
 If the channel is missing, ambiguous, contains no `## Message` blocks, or the `### To` role is invalid, stop and ask the user for the channel path or intended role.
+
+**Tag commitment**: the `[dispatch-auto]` prefix is reserved for the orchestrator. Humans must never start a prompt with `[dispatch-auto]`. This is the single source of truth for "is this turn machine-driven or human-driven."
 
 ## Agent Responsibilities
 
