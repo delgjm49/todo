@@ -14,15 +14,15 @@ The Todo app uses a **multi-agent development workflow**. Instead of one agent d
 
 ## Starting a Session
 
-Every session begins with a **first message** that identifies the agent type. The agent reads `AGENTS.md` for project context, then assumes its role.
+Every session begins with a **first message** that identifies the agent type. The agent reads `AGENTS.md` for project context, **then reads its role's prompt template** (the role-specific guardrails live there — skipping this step causes the agent to operate without rules it should be following), then assumes its role.
 
 ```
-Session start: "main"                         → Main Orchestrator mode
-Session start: "plan"                         → Planning mode (manual fallback; needs dispatch artifact)
-Session start: "dev"                          → Dev mode (manual fallback; needs plan artifact)
-Session start: "review"                       → Review mode (manual fallback; needs plan + complete artifacts)
-Session start: "pickup agents/channels/...."  → Pickup mode (preferred; role comes from latest channel message)
-Session start: "pickup"                       → Pickup mode using most recently modified channel
+Session start: "main"                         → read agents/prompts/main.md   → Main Orchestrator mode
+Session start: "plan"                         → read agents/prompts/plan.md   → Planning mode (manual fallback)
+Session start: "dev"                          → read agents/prompts/dev.md    → Dev mode (manual fallback)
+Session start: "review"                       → read agents/prompts/review.md → Review mode (manual fallback)
+Session start: "pickup agents/channels/...."  → see Pickup section below
+Session start: "pickup"                       → see Pickup section below
 ```
 
 Preferred flow: after Main creates a dispatch channel, continue each later session with:

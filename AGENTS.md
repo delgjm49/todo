@@ -33,7 +33,15 @@ This project uses a **multi-agent workflow**: Main → Plan → Dev → Review, 
 
 **Session start**: The first line of your message determines your role. Say `main`, `plan`, `dev`, `review`, `pickup agents/channels/###-feature-channel.md`, or bare `pickup`.
 
-**Pickup mode**: If the session starts with `pickup`, read `AGENTS.md` first, then [`agents/workflows/dispatch-channel-protocol.md`](agents/workflows/dispatch-channel-protocol.md), then the named dispatch channel. If no channel path is given, use the most recently modified channel in `agents/channels/`. Use the latest message's `To` field as your role and follow that message.
+**Mandatory first read for every session**: After this file (`AGENTS.md`), you MUST read your role's prompt template **before doing any work** (orient, write artifacts, append messages, run commands). The role-specific rules — including guardrails like "discuss scope before dispatching" and "never commit without explicit user approval" — live only in those files. Skipping the prompt template will cause you to violate rules you didn't know existed.
+
+- `main` → read [`agents/prompts/main.md`](agents/prompts/main.md)
+- `plan` → read [`agents/prompts/plan.md`](agents/prompts/plan.md)
+- `dev` → read [`agents/prompts/dev.md`](agents/prompts/dev.md)
+- `review` → read [`agents/prompts/review.md`](agents/prompts/review.md)
+- `pickup` → see Pickup mode below (role determined by channel + `[dispatch-auto]` tag rule in the dispatch-channel-protocol doc)
+
+**Pickup mode**: If the session starts with `pickup`, read `AGENTS.md` first, then [`agents/workflows/dispatch-channel-protocol.md`](agents/workflows/dispatch-channel-protocol.md), then the named dispatch channel. If no channel path is given, use the most recently modified channel in `agents/channels/`. The protocol doc's Role Resolution Rules section determines your active role (it depends on the `[dispatch-auto]` tag). Then read the matching `agents/prompts/<role>.md` template before acting.
 
 **Session close**: Only Main commits and pushes. Other agents document and append the next dispatch-channel message. See [`agents/CLOSING.md`](agents/CLOSING.md).
 
