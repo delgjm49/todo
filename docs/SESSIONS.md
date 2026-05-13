@@ -20,6 +20,7 @@ See [`agents/CLOSING.md`](../agents/CLOSING.md) for the entry format and rules.
 | TICKET-045 Checkbox automation behavior | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 | TICKET-047 Block row sorting domain logic | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 | TICKET-048 Sort menu UI | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
+| TICKET-049 Internal row clipboard serialization | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 
 ---
 
@@ -726,3 +727,87 @@ Closed the `TICKET-048` sort menu UI dispatch after confirming the latest channe
 
 ### Outcome
 TICKET-048 is complete and ready to commit/push. Unrelated local modifications to `agents/orchestration.json` were left out of the feature commit.
+
+## Session 43 — 2026-05-13
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: `agents/channels/009-internal-row-clipboard-serialization-channel.md`
+- Dispatch: `agents/artifacts/009-internal-row-clipboard-serialization-dispatch.md`
+
+### Summary
+Selected `TICKET-049` internal row clipboard serialization as the next `EPIC-09` checkpoint after completing sort menu UI. Created a scoped dispatch for pure versioned row clipboard payload helpers, non-throwing deserialization, conservative same-block/cross-block row mapping, fresh row ids, and targeted unit tests.
+
+### Outcome
+Internal row clipboard serialization is dispatched to Plan. The next session should use pickup mode and continue from `agents/channels/009-internal-row-clipboard-serialization-channel.md`.
+
+## Session 44 — 2026-05-13
+
+### Agent Type
+plan
+
+### Artifacts
+- Channel: `agents/channels/009-internal-row-clipboard-serialization-channel.md`
+- Dispatch: `agents/artifacts/009-internal-row-clipboard-serialization-dispatch.md`
+- Plan: `agents/artifacts/009-internal-row-clipboard-serialization-plan.md`
+
+### Summary
+Created the implementation plan for `TICKET-049` internal row clipboard serialization. The plan defines pure domain helpers for a versioned app-owned row payload, non-throwing JSON deserialization/normalization, conservative same-column-id and compatible-shape mapping, fresh row ids, default target-cell filling, formatting preservation, and focused unit coverage.
+
+### Outcome
+Plan is ready for Dev. The dispatch channel has been updated to `ready-for-dev` and appended with the next Dev pickup message.
+
+## Session 45 — 2026-05-13
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: `agents/channels/009-internal-row-clipboard-serialization-channel.md`
+- Dispatch: `agents/artifacts/009-internal-row-clipboard-serialization-dispatch.md`
+- Plan: `agents/artifacts/009-internal-row-clipboard-serialization-plan.md`
+- Complete: `agents/artifacts/009-internal-row-clipboard-serialization-complete.md`
+
+### Summary
+Implemented `TICKET-049` internal row clipboard serialization. Added pure `src/domain/clipboard/` helpers for a versioned app-owned row payload, display-order serialization, non-throwing JSON deserialization/normalization, conservative same-column-id and compatible-shape target mapping, fresh row ids, default target-cell filling, formatting preservation, and focused unit coverage.
+
+### Outcome
+Implementation complete. Verification passed: `npm run typecheck`, `npm run test` (173/173 with existing React act warnings), `npm run build`, and `npm run lint`. The dispatch channel has been appended with the next Review pickup message.
+
+## Session 46 — 2026-05-13
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: `agents/channels/009-internal-row-clipboard-serialization-channel.md`
+- Dispatch: `agents/artifacts/009-internal-row-clipboard-serialization-dispatch.md`
+- Plan: `agents/artifacts/009-internal-row-clipboard-serialization-plan.md`
+- Complete: `agents/artifacts/009-internal-row-clipboard-serialization-complete.md`
+- Review: `agents/artifacts/009-internal-row-clipboard-serialization-review.md`
+
+### Summary
+Reviewed the `TICKET-049` internal row clipboard serialization implementation against the dispatch and plan. Verified pure domain serialization, non-throwing app-payload deserialization/normalization, conservative same-column-id and compatible-shape target mapping, fresh row ids, default target-cell filling, formatting/value preservation, incompatible-target no-op behavior, immutability, and targeted unit coverage.
+
+### Outcome
+Review verdict: PASS. Independently confirmed `npm run typecheck`, `npm run test` (173/173 with existing unrelated React act warnings), `npm run build`, and `npm run lint` all pass. The dispatch channel has been appended with the next Main pickup message for close/commit/push.
+
+## Session 47 — 2026-05-13
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: `agents/channels/009-internal-row-clipboard-serialization-channel.md`
+- Dispatch: `agents/artifacts/009-internal-row-clipboard-serialization-dispatch.md`
+- Plan: `agents/artifacts/009-internal-row-clipboard-serialization-plan.md`
+- Complete: `agents/artifacts/009-internal-row-clipboard-serialization-complete.md`
+- Review: `agents/artifacts/009-internal-row-clipboard-serialization-review.md`
+
+### Summary
+Closed the `TICKET-049` internal row clipboard serialization dispatch after confirming the latest channel message was Review → Main with `State = review-pass` and the review artifact verdict was PASS. Marked the channel closed and updated phase status for the completed row clipboard serialization checkpoint.
+
+### Outcome
+TICKET-049 is complete and ready to commit/push. Next recommended checkpoint is `TICKET-050` cut/copy/paste row UI flows.
