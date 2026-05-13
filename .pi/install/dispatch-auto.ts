@@ -305,12 +305,23 @@ export default function (pi: ExtensionAPI) {
 	if (isSubprocess() || isPrintMode()) return; // worker mode: dormant
 
 	let running = false;
-	let lastSeenMessageNumber = -1;
+	// Per-channel baseline: highest message number observed at session start (or
+	// after a chain run). Channels with no entry are NEW since session start and
+	// fire on their first detected message.
+	const baseline = new Map<string, number>();
 
 	pi.on("session_start", async (_event, ctx) => {
 		const cwd = ctx.cwd ?? process.cwd();
 		const cfg = loadConfig(cwd);
 		if (!cfg) return;
+		// Snapshot existing channels' last-message numbers so we don't auto-fire on
+		// pre-existing state. New channels created during this session will have
+		// no baseline entry and will fire on first sight.
+		const glob = cfg.channelGlob ?? CHANNEL_GLOB_DEFAULT;
+		for (const f of listChannels(cwd, glob)) {
+			const parsed = parseChannel(f);
+			if (parsed?.lastMessage) baseline.set(f, parsed.lastMessage.number);
+		}
 		ctx.ui.setStatus("dispatch-auto", "armed");
 	});
 
@@ -326,16 +337,13 @@ export default function (pi: ExtensionAPI) {
 		const parsed = parseChannel(channelFile);
 		if (!parsed?.lastMessage) return;
 
-		// Fire only when a fresh message has been written this turn AND it
-		// addresses a worker role. Initial baseline is set lazily.
-		if (lastSeenMessageNumber < 0) {
-			lastSeenMessageNumber = parsed.lastMessage.number;
+		const seen = baseline.get(channelFile);
+		if (seen !== undefined && parsed.lastMessage.number <= seen) return;
+		// Channel is new (no baseline entry) OR has advanced past baseline.
+		if (isTerminal(parsed)) {
+			baseline.set(channelFile, parsed.lastMessage.number);
 			return;
 		}
-		if (parsed.lastMessage.number <= lastSeenMessageNumber) return;
-		lastSeenMessageNumber = parsed.lastMessage.number;
-
-		if (isTerminal(parsed)) return;
 
 		running = true;
 		const setStatus = (s: string) => ctx.ui.setStatus("dispatch-auto", s);
@@ -343,9 +351,9 @@ export default function (pi: ExtensionAPI) {
 			await runChain(cwd, cfg, setStatus);
 		} finally {
 			running = false;
-			// Resync the baseline so a manual hand-edit followed by another turn re-triggers cleanly.
+			// Resync baseline so a manual hand-edit followed by another turn re-triggers cleanly.
 			const final = parseChannel(channelFile);
-			if (final?.lastMessage) lastSeenMessageNumber = final.lastMessage.number;
+			if (final?.lastMessage) baseline.set(channelFile, final.lastMessage.number);
 		}
 	});
 }
