@@ -18,7 +18,7 @@ See [`agents/CLOSING.md`](../agents/CLOSING.md) for the entry format and rules.
 | TICKET-044 Formatting persistence | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 | TICKET-013 Store selectors/action helpers | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 | TICKET-045 Checkbox automation behavior | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
-| TICKET-047 Block row sorting domain logic | Dispatched | Dispatch created for new Main → Plan → Dev → Review workflow |
+| TICKET-047 Block row sorting domain logic | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 
 ---
 
@@ -572,3 +572,72 @@ Selected `TICKET-047` block row sorting domain logic as the next Milestone D/E c
 
 ### Outcome
 Block row sorting domain logic is dispatched to Plan. The next session should use pickup mode and continue from `agents/channels/007-block-row-sorting-domain-logic-channel.md`.
+
+## Session 34 — 2026-05-13
+
+### Agent Type
+plan
+
+### Artifacts
+- Channel: `agents/channels/007-block-row-sorting-domain-logic-channel.md`
+- Dispatch: `agents/artifacts/007-block-row-sorting-domain-logic-dispatch.md`
+- Plan: `agents/artifacts/007-block-row-sorting-domain-logic-plan.md`
+
+### Summary
+Created the implementation plan for `TICKET-047`, focused on pure block row sorting comparators, stable current-display-order semantics, empty/null handling, numbered-column no-op behavior, and row identity/payload preservation. The plan keeps sort menu UI and store wiring out of scope so `TICKET-048` can consume the domain helpers later.
+
+### Outcome
+Plan is ready for Dev. The dispatch channel has been appended with the next Dev pickup message.
+
+## Session 35 — 2026-05-13
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: `agents/channels/007-block-row-sorting-domain-logic-channel.md`
+- Dispatch: `agents/artifacts/007-block-row-sorting-domain-logic-dispatch.md`
+- Plan: `agents/artifacts/007-block-row-sorting-domain-logic-plan.md`
+- Complete: `agents/artifacts/007-block-row-sorting-domain-logic-complete.md`
+
+### Summary
+Implemented `TICKET-047` block row sorting domain logic. Added pure comparator and row-sorting helpers for supported v1 column types, stable current-display-order behavior, documented no-op handling for missing/numbered columns, and targeted unit coverage for empty/null/invalid values, descending order, stability, and row payload preservation.
+
+### Outcome
+Implementation is complete and ready for Review. Verified `npm run typecheck`, `npm run test` (159/159 with existing React act warnings), `npm run build`, and `npm run lint` all pass.
+
+## Session 36 — 2026-05-13
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: `agents/channels/007-block-row-sorting-domain-logic-channel.md`
+- Dispatch: `agents/artifacts/007-block-row-sorting-domain-logic-dispatch.md`
+- Plan: `agents/artifacts/007-block-row-sorting-domain-logic-plan.md`
+- Complete: `agents/artifacts/007-block-row-sorting-domain-logic-complete.md`
+- Review: `agents/artifacts/007-block-row-sorting-domain-logic-review.md`
+
+### Summary
+Reviewed the `TICKET-047` block row sorting domain logic implementation against the dispatch and plan. Verified pure comparator/sort helper behavior, stable current-display-order semantics, no-op numbered/missing sort behavior, empty/null/invalid handling, payload preservation, and targeted unit coverage while confirming no out-of-scope UI/store/schema changes were introduced.
+
+### Outcome
+Review verdict: PASS. Independently confirmed `npm run typecheck`, `npm run test` (159/159 with existing unrelated React act warnings), `npm run build`, and `npm run lint` all pass. The dispatch channel has been appended with the next Main pickup message for close/commit/push.
+
+## Session 37 — 2026-05-13
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: `agents/channels/007-block-row-sorting-domain-logic-channel.md`
+- Dispatch: `agents/artifacts/007-block-row-sorting-domain-logic-dispatch.md`
+- Plan: `agents/artifacts/007-block-row-sorting-domain-logic-plan.md`
+- Complete: `agents/artifacts/007-block-row-sorting-domain-logic-complete.md`
+- Review: `agents/artifacts/007-block-row-sorting-domain-logic-review.md`
+
+### Summary
+Closed the `TICKET-047` block row sorting domain logic dispatch after confirming the latest channel message was Review → Main with `State = review-pass` and the review artifact verdict was PASS. Marked the channel closed and updated phase status for the completed sorting domain checkpoint.
+
+### Outcome
+TICKET-047 is complete and ready to commit/push. Unrelated local modifications to agent orchestration/prompt files were left out of the feature commit.
