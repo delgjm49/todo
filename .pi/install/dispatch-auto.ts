@@ -78,8 +78,8 @@ function loadConfig(cwd: string): OrchestrationConfig | null {
 }
 
 function listChannels(cwd: string, glob: string): string[] {
-	// Minimal glob: only supports "agents/channels/*-channel.md" shape.
-	const m = glob.match(/^(.+)\/([^/]+)\*([^/]+)$/);
+	// Minimal glob: supports "<dir>/<prefix>*<suffix>" with prefix possibly empty.
+	const m = glob.match(/^(.+)\/([^/]*)\*([^/]+)$/);
 	if (!m) return [];
 	const [, dir, prefix, suffix] = m;
 	const fullDir = path.join(cwd, dir);
