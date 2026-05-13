@@ -151,25 +151,11 @@ function isTerminal(channel: ParsedChannel): boolean {
 	return false;
 }
 
-function sessionIdPath(cwd: string, channelFile: string, role: string): string {
+function sessionDirFor(cwd: string, channelFile: string, role: string): string {
 	const base = path.basename(channelFile, ".md");
-	const dir = path.join(cwd, "agents", "channels", ".sessions");
+	const dir = path.join(cwd, "agents", "channels", ".sessions", `${base}-${role}`);
 	fs.mkdirSync(dir, { recursive: true });
-	return path.join(dir, `${base}-${role}.id`);
-}
-
-function readSessionId(cwd: string, channelFile: string, role: string): string | null {
-	const p = sessionIdPath(cwd, channelFile, role);
-	try {
-		const id = fs.readFileSync(p, "utf8").trim();
-		return id || null;
-	} catch {
-		return null;
-	}
-}
-
-function writeSessionId(cwd: string, channelFile: string, role: string, id: string): void {
-	fs.writeFileSync(sessionIdPath(cwd, channelFile, role), id, "utf8");
+	return dir;
 }
 
 function logEvent(cwd: string, line: string): void {
@@ -188,7 +174,7 @@ function notify(title: string, body: string): void {
 	}
 }
 
-function buildLaunchCommand(role: string, cfg: OrchestrationConfig, channelRel: string, sessionId: string | null): { cmd: string; args: string[]; env: NodeJS.ProcessEnv } {
+function buildLaunchCommand(role: string, cfg: OrchestrationConfig, channelRel: string, sessionDir: string): { cmd: string; args: string[]; env: NodeJS.ProcessEnv } {
 	const override = cfg.roles?.[role] ?? {};
 	const binary = override.binary ?? "pi";
 	const env: NodeJS.ProcessEnv = { ...process.env, DISPATCH_AUTO_SUBPROCESS: "1" };
@@ -200,10 +186,13 @@ function buildLaunchCommand(role: string, cfg: OrchestrationConfig, channelRel: 
 	const prompt = `${PICKUP_PREFIX}${channelRel}`;
 	const args: string[] = ["--print"];
 
+	// Within-cycle session continuity via per-(channel, role) session-dir + --continue.
+	// First turn (empty dir) creates a session; subsequent turns continue it. Between
+	// dispatches, channel name changes → dir changes → naturally fresh session.
 	if (binary === "pi") {
-		if (sessionId) args.push("--resume", sessionId);
+		args.push("--session-dir", sessionDir, "--continue");
 	} else if (binary === "claude") {
-		if (sessionId) args.push("--resume", sessionId);
+		args.push("--continue");
 	}
 
 	if (override.extraArgs) args.push(...override.extraArgs);
@@ -213,9 +202,10 @@ function buildLaunchCommand(role: string, cfg: OrchestrationConfig, channelRel: 
 
 async function runRoleTurn(cwd: string, role: string, cfg: OrchestrationConfig, channelFile: string): Promise<{ exitCode: number }> {
 	const channelRel = path.relative(cwd, channelFile);
-	const sessionId = readSessionId(cwd, channelFile, role);
-	const { cmd, args, env } = buildLaunchCommand(role, cfg, channelRel, sessionId);
-	logEvent(cwd, `spawn role=${role} binary=${cmd} resume=${sessionId ?? "none"} channel=${path.basename(channelFile)}`);
+	const sessionDir = sessionDirFor(cwd, channelFile, role);
+	const { cmd, args, env } = buildLaunchCommand(role, cfg, channelRel, sessionDir);
+	const hadSession = fs.readdirSync(sessionDir).length > 0;
+	logEvent(cwd, `spawn role=${role} binary=${cmd} resume=${hadSession ? "yes" : "fresh"} channel=${path.basename(channelFile)}`);
 
 	return new Promise((resolve) => {
 		const logStream = fs.createWriteStream(path.join(cwd, ".dispatch-auto.log"), { flags: "a" });
@@ -225,21 +215,13 @@ async function runRoleTurn(cwd: string, role: string, cfg: OrchestrationConfig, 
 			child.kill("SIGTERM");
 		}, SUBPROCESS_TIMEOUT_MS);
 
-		let capturedSessionId = "";
-		child.stdout.on("data", (chunk) => {
-			const s = chunk.toString();
-			logStream.write(`[${role}/stdout] ${s}`);
-			// Pi prints "Session: <id>" on save; best-effort capture for next turn's --resume.
-			const sm = s.match(/[Ss]ession[:\s]+([a-f0-9-]{8,})/);
-			if (sm) capturedSessionId = sm[1];
-		});
+		child.stdout.on("data", (chunk) => logStream.write(`[${role}/stdout] ${chunk}`));
 		child.stderr.on("data", (chunk) => logStream.write(`[${role}/stderr] ${chunk}`));
 
 		child.on("close", (code) => {
 			clearTimeout(timeout);
 			logStream.end();
-			if (capturedSessionId) writeSessionId(cwd, channelFile, role, capturedSessionId);
-			logEvent(cwd, `exit role=${role} code=${code ?? "null"} sessionCaptured=${capturedSessionId || "no"}`);
+			logEvent(cwd, `exit role=${role} code=${code ?? "null"}`);
 			resolve({ exitCode: code ?? -1 });
 		});
 		child.on("error", (err) => {
