@@ -18,6 +18,7 @@ See [`agents/CLOSING.md`](../agents/CLOSING.md) for the entry format and rules.
 | TICKET-044 Formatting persistence | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 | TICKET-013 Store selectors/action helpers | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 | TICKET-045 Checkbox automation behavior | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
+| TICKET-047 Block row sorting domain logic | Dispatched | Dispatch created for new Main → Plan → Dev → Review workflow |
 
 ---
 
@@ -556,3 +557,18 @@ Closed the `TICKET-045` checkbox automation behavior dispatch after confirming t
 
 ### Outcome
 TICKET-045 is complete and ready to commit/push. Next recommended checkpoint is `TICKET-046` type-specific inspector settings or `TICKET-047` block row sorting domain logic.
+
+## Session 33 — 2026-05-13
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: `agents/channels/007-block-row-sorting-domain-logic-channel.md`
+- Dispatch: `agents/artifacts/007-block-row-sorting-domain-logic-dispatch.md`
+
+### Summary
+Selected `TICKET-047` block row sorting domain logic as the next Milestone D/E checkpoint after completing checkbox automation. Created a focused dispatch for pure row sort/comparator helpers, stable ordering, row identity/payload preservation, and targeted unit coverage.
+
+### Outcome
+Block row sorting domain logic is dispatched to Plan. The next session should use pickup mode and continue from `agents/channels/007-block-row-sorting-domain-logic-channel.md`.
