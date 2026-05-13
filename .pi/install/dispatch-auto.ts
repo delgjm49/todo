@@ -315,15 +315,14 @@ export default function (pi: ExtensionAPI) {
 		const cfg = loadConfig(cwd);
 		if (!cfg) return;
 		sessionStartMs = Date.now();
-		// Pre-mark every existing channel's latest message as already acted on, so
-		// we don't auto-fire on stale state left from a previous Pi session. Any
-		// channel modified during *this* session (mtime > sessionStartMs) is fair
-		// game — that's our "this user is producing fresh work" signal.
-		const glob = cfg.channelGlob ?? CHANNEL_GLOB_DEFAULT;
-		for (const f of listChannels(cwd, glob)) {
-			const parsed = parseChannel(f);
-			if (parsed?.lastMessage) acted.set(f, parsed.lastMessage.number);
-		}
+		// Intentionally do NOT pre-populate `acted` with existing channels.
+		// The mtime gate is what filters stale state from prior sessions —
+		// a channel only matters here once its mtime advances past our session
+		// start. If Main re-uses a stale channel and overwrites Message 1 with
+		// the same number, that still counts as "fresh this session" and fires.
+		// `acted` is populated only when we actually spawn a chain, so it
+		// strictly tracks within-session "already handled" — never conflates
+		// pre-existing state with handled state.
 		ctx.ui.setStatus("dispatch-auto", "armed");
 	});
 
