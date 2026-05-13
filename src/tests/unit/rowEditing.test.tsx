@@ -144,6 +144,81 @@ describe("row editing ui", () => {
     );
   });
 
+  test("marks strikeout-enabled checked rows as completed", async () => {
+    const block = createBlockTemplate("basic_checklist", "ws_home", {
+      blockId: "block_home",
+      title: "Today",
+      order: 0,
+    });
+    const rowId = block.rows[0]?.id;
+    const checkboxColumnId = block.columns.find((column) => column.type === "checkbox")?.id;
+    assert.ok(rowId);
+    assert.ok(checkboxColumnId);
+
+    const completedBlock: Block = {
+      ...block,
+      columns: block.columns.map((column) =>
+        column.id === checkboxColumnId
+          ? {
+              ...column,
+              settings: { strikeoutRowWhenChecked: true, moveCheckedRowsToBottom: false },
+            }
+          : column
+      ),
+      rows: block.rows.map((row) => ({
+        ...row,
+        cells: {
+          ...row.cells,
+          [checkboxColumnId]: { value: true, format: {} },
+        },
+      })),
+    };
+
+    useDocumentStore.setState({
+      settings: {
+        theme: "dark",
+        defaults: {
+          fontFamily: "Segoe UI",
+          fontSize: 14,
+          textColor: "#F3F4F6",
+          cellBackground: "#111827",
+          blockBorderColor: "#374151",
+          blockBorderWidth: 1,
+          workspaceAccentEnabled: true,
+        },
+      },
+      workspaceIndex: [
+        {
+          id: "ws_home",
+          title: "Home",
+          order: 0,
+          style: {
+            background: "#1F2937",
+            textColor: "#F9FAFB",
+            accentStripe: { enabled: true, color: "#60A5FA" },
+          },
+        },
+      ],
+      workspacesById: {
+        ws_home: {
+          id: "ws_home",
+          blocks: [completedBlock],
+        },
+      },
+      loadedWorkspaceIds: ["ws_home"],
+      activeWorkspaceId: "ws_home",
+    });
+
+    await renderMainPane();
+
+    const rowElement = document.querySelector(`[data-testid="row-${rowId}"]`) as HTMLDivElement | null;
+    const cellElement = document.querySelector(`[data-testid="cell-${rowId}-${checkboxColumnId}"]`) as HTMLDivElement | null;
+    assert.ok(rowElement);
+    assert.ok(cellElement);
+    assert.equal(rowElement.dataset.completed, "true");
+    assert.ok(cellElement.className.includes("line-through"));
+  });
+
   test("adds, inserts, and deletes rows from UI controls", async () => {
     const block = createBlockTemplate("basic_checklist", "ws_home", {
       blockId: "block_home",

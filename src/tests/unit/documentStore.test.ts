@@ -527,6 +527,189 @@ describe("document store autosave", () => {
     assert.equal(useHistoryStore.getState().canUndo, true);
   });
 
+  test("preserves row order when checkbox auto-move is disabled", async () => {
+    const service = await createMemoryStorageService();
+    await useDocumentStore.getState().initializeAppData(service);
+    const workspaceId = useDocumentStore.getState().activeWorkspaceId;
+    assert.ok(workspaceId);
+
+    const block = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0];
+    assert.ok(block);
+    const checkboxColumn = block.columns.find((column) => column.type === "checkbox");
+    assert.ok(checkboxColumn);
+    const firstRowId = block.rows[0]?.id;
+    assert.ok(firstRowId);
+
+    assert.equal(useDocumentStore.getState().appendRowToBlock(workspaceId, block.id, { service, autosaveDelayMs: 5 }), true);
+    assert.equal(useDocumentStore.getState().appendRowToBlock(workspaceId, block.id, { service, autosaveDelayMs: 5 }), true);
+
+    const beforeToggle = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.rows ?? [];
+    const toggled = useDocumentStore
+      .getState()
+      .toggleCheckboxCellValue(workspaceId, block.id, firstRowId, checkboxColumn.id, { service, autosaveDelayMs: 5 });
+
+    assert.equal(toggled, true);
+    const afterToggle = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.rows ?? [];
+    assert.deepEqual(afterToggle.map((row) => row.id), beforeToggle.map((row) => row.id));
+    assert.equal(afterToggle.find((row) => row.id === firstRowId)?.cells[checkboxColumn.id]?.value, true);
+  });
+
+  test("moves checked rows to the bottom for the toggled checkbox column", async () => {
+    const service = await createMemoryStorageService();
+    await useDocumentStore.getState().initializeAppData(service);
+    const workspaceId = useDocumentStore.getState().activeWorkspaceId;
+    assert.ok(workspaceId);
+
+    const block = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0];
+    assert.ok(block);
+    const checkboxColumn = block.columns.find((column) => column.type === "checkbox");
+    assert.ok(checkboxColumn);
+
+    assert.equal(useDocumentStore.getState().appendRowToBlock(workspaceId, block.id, { service, autosaveDelayMs: 5 }), true);
+    assert.equal(useDocumentStore.getState().appendRowToBlock(workspaceId, block.id, { service, autosaveDelayMs: 5 }), true);
+
+    const rows = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.rows ?? [];
+    const firstRowId = rows[0]?.id;
+    const secondRowId = rows[1]?.id;
+    const thirdRowId = rows[2]?.id;
+    assert.ok(firstRowId);
+    assert.ok(secondRowId);
+    assert.ok(thirdRowId);
+
+    useDocumentStore.setState({
+      workspacesById: {
+        ...structuredClone(useDocumentStore.getState().workspacesById),
+        [workspaceId]: {
+          ...structuredClone(useDocumentStore.getState().workspacesById[workspaceId]),
+          blocks: [
+            {
+              ...structuredClone(useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]),
+              columns: useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.columns.map((column) =>
+                column.id === checkboxColumn.id
+                  ? {
+                      ...structuredClone(column),
+                      settings: { strikeoutRowWhenChecked: false, moveCheckedRowsToBottom: true },
+                    }
+                  : structuredClone(column)
+              ) ?? [],
+              rows: rows.map((row) =>
+                row.id === secondRowId
+                  ? {
+                      ...structuredClone(row),
+                      cells: {
+                        ...structuredClone(row.cells),
+                        [checkboxColumn.id]: { value: true, format: {} },
+                      },
+                    }
+                  : structuredClone(row)
+              ),
+            },
+          ],
+        },
+      },
+    });
+
+    const toggledTrue = useDocumentStore
+      .getState()
+      .toggleCheckboxCellValue(workspaceId, block.id, firstRowId, checkboxColumn.id, { service, autosaveDelayMs: 5 });
+    assert.equal(toggledTrue, true);
+    let afterToggle = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.rows ?? [];
+    assert.deepEqual(afterToggle.map((row) => row.id), [thirdRowId, firstRowId, secondRowId]);
+    assert.deepEqual(afterToggle.map((row) => row.order), [0, 1, 2]);
+    assert.equal(afterToggle.find((row) => row.id === firstRowId)?.cells[checkboxColumn.id]?.value, true);
+
+    const toggledFalse = useDocumentStore
+      .getState()
+      .toggleCheckboxCellValue(workspaceId, block.id, firstRowId, checkboxColumn.id, { service, autosaveDelayMs: 5 });
+    assert.equal(toggledFalse, true);
+    afterToggle = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.rows ?? [];
+    assert.deepEqual(afterToggle.map((row) => row.id), [thirdRowId, firstRowId, secondRowId]);
+    assert.deepEqual(afterToggle.map((row) => row.order), [0, 1, 2]);
+    assert.equal(afterToggle.find((row) => row.id === firstRowId)?.cells[checkboxColumn.id]?.value, false);
+    assert.equal(afterToggle.find((row) => row.id === secondRowId)?.cells[checkboxColumn.id]?.value, true);
+  });
+
+  test("applies auto-move using only the toggled checkbox column", async () => {
+    const service = await createMemoryStorageService();
+    await useDocumentStore.getState().initializeAppData(service);
+    const workspaceId = useDocumentStore.getState().activeWorkspaceId;
+    assert.ok(workspaceId);
+
+    const block = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0];
+    assert.ok(block);
+    const checkboxColumn = block.columns.find((column) => column.type === "checkbox");
+    assert.ok(checkboxColumn);
+    const secondCheckboxId = "col_reviewed";
+
+    assert.equal(useDocumentStore.getState().appendRowToBlock(workspaceId, block.id, { service, autosaveDelayMs: 5 }), true);
+    assert.equal(useDocumentStore.getState().appendRowToBlock(workspaceId, block.id, { service, autosaveDelayMs: 5 }), true);
+
+    const rows = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.rows ?? [];
+    const firstRowId = rows[0]?.id;
+    const secondRowId = rows[1]?.id;
+    const thirdRowId = rows[2]?.id;
+    assert.ok(firstRowId);
+    assert.ok(secondRowId);
+    assert.ok(thirdRowId);
+
+    useDocumentStore.setState({
+      workspacesById: {
+        ...structuredClone(useDocumentStore.getState().workspacesById),
+        [workspaceId]: {
+          ...structuredClone(useDocumentStore.getState().workspacesById[workspaceId]),
+          blocks: [
+            {
+              ...structuredClone(useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]),
+              columns: [
+                ...block.columns.map((column) => ({
+                  ...structuredClone(column),
+                  settings:
+                    column.id === checkboxColumn.id
+                      ? { strikeoutRowWhenChecked: false, moveCheckedRowsToBottom: true }
+                      : structuredClone(column.settings),
+                })),
+                {
+                  id: secondCheckboxId,
+                  type: "checkbox" as const,
+                  label: "Reviewed",
+                  order: block.columns.length,
+                  width: 96,
+                  visible: true,
+                  settings: { strikeoutRowWhenChecked: false, moveCheckedRowsToBottom: true },
+                  format: {},
+                },
+              ],
+              rows: rows.map((row) => ({
+                ...structuredClone(row),
+                cells: {
+                  ...structuredClone(row.cells),
+                  [checkboxColumn.id]: {
+                    value: row.id === firstRowId,
+                    format: {},
+                  },
+                  [secondCheckboxId]: {
+                    value: row.id === secondRowId,
+                    format: {},
+                  },
+                },
+              })),
+            },
+          ],
+        },
+      },
+    });
+
+    const toggled = useDocumentStore
+      .getState()
+      .toggleCheckboxCellValue(workspaceId, block.id, thirdRowId, secondCheckboxId, { service, autosaveDelayMs: 5 });
+    assert.equal(toggled, true);
+
+    const afterToggle = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0]?.rows ?? [];
+    assert.deepEqual(afterToggle.map((row) => row.id), [firstRowId, secondRowId, thirdRowId]);
+    assert.equal(afterToggle.find((row) => row.id === firstRowId)?.cells[checkboxColumn.id]?.value, true);
+    assert.equal(afterToggle.find((row) => row.id === thirdRowId)?.cells[secondCheckboxId]?.value, true);
+  });
+
   test("persists date, time, and dropdown cell edits", async () => {
     const service = await createMemoryStorageService();
     const calls: AppDocumentSnapshot[] = [];

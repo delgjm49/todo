@@ -17,7 +17,7 @@ See [`agents/CLOSING.md`](../agents/CLOSING.md) for the entry format and rules.
 | TICKET-043 Border formatting controls | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 | TICKET-044 Formatting persistence | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 | TICKET-013 Store selectors/action helpers | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
-| TICKET-045 Checkbox automation behavior | Dispatched | Channel created for Plan pickup |
+| TICKET-045 Checkbox automation behavior | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 
 ---
 
@@ -487,3 +487,72 @@ Selected `TICKET-045` checkbox automation behavior as the next Milestone D check
 
 ### Outcome
 Checkbox automation is dispatched to Plan. The next session should use pickup mode and continue from `agents/channels/006-checkbox-automation-channel.md`.
+
+## Session 29 — 2026-05-12
+
+### Agent Type
+plan
+
+### Artifacts
+- Channel: `agents/channels/006-checkbox-automation-channel.md`
+- Dispatch: `agents/artifacts/006-checkbox-automation-dispatch.md`
+- Plan: `agents/artifacts/006-checkbox-automation-plan.md`
+
+### Summary
+Created the implementation plan for `TICKET-045`, focused on pure checkbox row-completion and auto-move helpers, `documentStore.toggleCheckboxCellValue` integration, completed-row rendering, and targeted helper/store tests. The plan keeps sorting UI, alert suppression, richer inspector settings, schema changes, and broad rendering refactors out of scope.
+
+### Outcome
+Plan is ready for Dev. The dispatch channel has been appended with the next Dev pickup message.
+
+## Session 30 — 2026-05-12
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: `agents/channels/006-checkbox-automation-channel.md`
+- Dispatch: `agents/artifacts/006-checkbox-automation-dispatch.md`
+- Plan: `agents/artifacts/006-checkbox-automation-plan.md`
+- Complete: `agents/artifacts/006-checkbox-automation-complete.md`
+
+### Summary
+Implemented `TICKET-045` checkbox automation behavior. Added pure row helpers for checkbox completion and checked-row grouping, integrated auto-move into `toggleCheckboxCellValue`, added completed-row rendering markers/line-through styling, and covered helper, store, and UI rendering behavior with targeted tests.
+
+### Outcome
+Implementation is complete and ready for Review. Verified `npm run typecheck`, `npm run test` (148/148 with existing React act warnings), `npm run build`, and `npm run lint` all pass.
+
+## Session 31 — 2026-05-12
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: `agents/channels/006-checkbox-automation-channel.md`
+- Dispatch: `agents/artifacts/006-checkbox-automation-dispatch.md`
+- Plan: `agents/artifacts/006-checkbox-automation-plan.md`
+- Complete: `agents/artifacts/006-checkbox-automation-complete.md`
+- Review: `agents/artifacts/006-checkbox-automation-review.md`
+
+### Summary
+Reviewed the `TICKET-045` checkbox automation implementation for plan compliance, helper semantics, store integration, completed-row rendering, and targeted test coverage. Confirmed the work stays in scope with no schema/UI expansion beyond the dispatch and independently reran typecheck, tests, build, and lint.
+
+### Outcome
+Review verdict: PASS. The dispatch channel has been appended with the next Main pickup message for close/commit/push.
+
+## Session 32 — 2026-05-12
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: `agents/channels/006-checkbox-automation-channel.md`
+- Dispatch: `agents/artifacts/006-checkbox-automation-dispatch.md`
+- Plan: `agents/artifacts/006-checkbox-automation-plan.md`
+- Complete: `agents/artifacts/006-checkbox-automation-complete.md`
+- Review: `agents/artifacts/006-checkbox-automation-review.md`
+
+### Summary
+Closed the `TICKET-045` checkbox automation behavior dispatch after confirming the latest channel message was Review → Main with `State = review-pass` and the review artifact verdict was PASS. Marked the channel closed and updated phase status for the completed checkbox automation checkpoint.
+
+### Outcome
+TICKET-045 is complete and ready to commit/push. Next recommended checkpoint is `TICKET-046` type-specific inspector settings or `TICKET-047` block row sorting domain logic.

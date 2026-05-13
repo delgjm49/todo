@@ -1,5 +1,6 @@
 import { getVisibleColumnsInDisplayOrder } from "../../domain/columns/createColumn.js";
 import { getRowsInDisplayOrder } from "../../domain/rows/reorderRows.js";
+import { isRowCompletedByCheckbox } from "../../domain/rows/applyCheckboxRules.js";
 import { resolveCellFormatting } from "../../domain/formatting/resolveCellFormatting.js";
 import { formattingToCellStyle } from "../../domain/formatting/formattingToCellStyle.js";
 import { formattingToBorderStyle } from "../../domain/formatting/formattingToBorderStyle.js";
@@ -45,12 +46,14 @@ export function RowView({ block, workspaceId }: { block: Block; workspaceId: str
       {rows.map((row, rowIndex) => {
         const dragging = isRowDragging && draggingRowId === row.id;
         const dropTarget = isRowDragging && dropTargetRowId === row.id && draggingRowId !== row.id;
+        const completed = isRowCompletedByCheckbox(block.columns, row);
 
         return (
           <div
             className={`px-3 py-2.5 transition ${dragging ? "opacity-50" : ""} ${dropTarget ? "bg-accent/10" : ""} ${
               isRowSelected(row.id) ? "bg-accent/5" : ""
             }`}
+            data-completed={completed ? "true" : undefined}
             data-testid={`row-${row.id}`}
             draggable
             key={row.id}
@@ -111,6 +114,8 @@ export function RowView({ block, workspaceId }: { block: Block; workspaceId: str
                   return (
                     <div
                       className={`min-h-8 rounded-md border px-2 py-1.5 text-sm text-text ${
+                        completed ? "line-through decoration-textMuted decoration-1" : ""
+                      } ${
                         isCellSelected(row.id, column.id)
                           ? "border-accent/70 ring-1 ring-accent/30 bg-panel"
                           : "border-border/60 bg-panel"

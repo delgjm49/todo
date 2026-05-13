@@ -15,6 +15,7 @@ import {
 import { BLOCK_TEMPLATES, createBlockTemplate, getBlockTemplateLabel } from "../domain/templates/blockTemplates.js";
 import { createRow } from "../domain/rows/createRow.js";
 import { deleteRowById, getRowsInDisplayOrder, insertRowAtIndex, reorderRows } from "../domain/rows/reorderRows.js";
+import { applyCheckboxAutoMove } from "../domain/rows/applyCheckboxRules.js";
 import { addColumn } from "../domain/columns/addColumn.js";
 import { changeColumnType } from "../domain/columns/changeColumnType.js";
 import { deleteColumn } from "../domain/columns/deleteColumn.js";
@@ -1436,7 +1437,7 @@ export const useDocumentStore = create<DocumentStoreState>()((set, get) => {
         },
       };
 
-      return replaceBlockRows(block, rows);
+      return replaceBlockRows(block, applyCheckboxAutoMove(rows, block.columns, columnId));
     });
 
     if (!nextWorkspace) {
