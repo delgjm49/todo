@@ -16,11 +16,11 @@
     "gpt-5.4-codex":      ["--model", "openai-codex/gpt-5.4:high"],
     "gpt-5.4-mini-codex": ["--model", "openai-codex/gpt-5.4-mini:high"],
     "gpt-5.3-codex":      ["--model", "openai-codex/gpt-5.3-codex:high"],
-    "kimi-k2.6":          ["--model", "$defaultPiProvider/kimi-k2.6"],
-    "glm-5.1":            ["--model", "$defaultPiProvider/glm-5.1"],
+    "kimi-k2.6":          ["--model", "$defaultPiProvider/kimi-k2.6:medium"],
+    "glm-5.1":            ["--model", "$defaultPiProvider/glm-5.1:high"],
     "deepseek-v4-pro":    ["--model", "$defaultPiProvider/deepseek-v4-pro:high"],
-    "deepseek-v4-flash":  ["--model", "$defaultPiProvider/deepseek-v4-flash"],
-    "gemini-3.1-pro":     ["--model", "$defaultPiProvider/gemini-3.1-pro"]
+    "deepseek-v4-flash":  ["--model", "$defaultPiProvider/deepseek-v4-flash:medium"],
+    "gemini-3.1-pro":     ["--model", "$defaultPiProvider/gemini-3.1-pro:high"]
   },
   "roles": {
     "Plan":   { "binary": "pi", "modelPreset": "gpt-5.5-codex" },
