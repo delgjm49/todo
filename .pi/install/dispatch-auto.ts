@@ -35,11 +35,14 @@ interface RoleOverride {
 	configDir?: string;     // e.g., "~/.claude-acct1" for claude roles
 	extraArgs?: string[];   // appended to the launch command before the prompt
 	timeoutMinutes?: number; // per-role override of subprocess wall-clock timeout
+	modelPreset?: string;   // key into cfg.modelPresets — resolved to args, prepended before extraArgs
 }
 
 interface OrchestrationConfig {
 	channelGlob?: string;
 	timeoutMinutes?: number; // root-level override of default subprocess timeout
+	defaultPiProvider?: string; // value substituted for $defaultPiProvider tokens in presets (e.g., "opencode-go")
+	modelPresets?: Record<string, string[]>; // named arg arrays; tokens like $defaultPiProvider are expanded at launch time
 	roles?: Record<string, RoleOverride>;
 }
 
@@ -90,14 +93,41 @@ function isPrintMode(): boolean {
 	return argv.some((a) => a === "--print" || a === "-p");
 }
 
+function deepMerge<T>(base: T, over: unknown): T {
+	if (over === undefined) return base;
+	if (Array.isArray(over)) return over as unknown as T; // arrays replace, don't concat
+	if (typeof over !== "object" || over === null) return over as T;
+	if (typeof base !== "object" || base === null || Array.isArray(base)) return over as T;
+	const out: Record<string, unknown> = { ...(base as Record<string, unknown>) };
+	for (const k of Object.keys(over as Record<string, unknown>)) {
+		out[k] = deepMerge((base as Record<string, unknown>)[k], (over as Record<string, unknown>)[k]);
+	}
+	return out as T;
+}
+
 function loadConfig(cwd: string): OrchestrationConfig | null {
-	const configPath = path.join(cwd, "agents", "orchestration.json");
-	if (!fs.existsSync(configPath)) return null;
+	const basePath = path.join(cwd, "agents", "orchestration.json");
+	if (!fs.existsSync(basePath)) return null;
+	let base: OrchestrationConfig;
 	try {
-		return JSON.parse(fs.readFileSync(configPath, "utf8"));
+		base = JSON.parse(fs.readFileSync(basePath, "utf8"));
 	} catch {
 		return null;
 	}
+	// Per-machine override: agents/orchestration.local.json (gitignored). Deep-merges
+	// over the committed baseline so a single repo can support multiple machines with
+	// different Pi profiles / Claude accounts / model preferences. Arrays replace
+	// wholesale (e.g., overriding extraArgs); objects merge field-by-field.
+	const localPath = path.join(cwd, "agents", "orchestration.local.json");
+	if (fs.existsSync(localPath)) {
+		try {
+			const local = JSON.parse(fs.readFileSync(localPath, "utf8"));
+			return deepMerge(base, local);
+		} catch {
+			// malformed local file: fall back to base, don't crash
+		}
+	}
+	return base;
 }
 
 function listChannels(cwd: string, glob: string): string[] {
@@ -247,6 +277,17 @@ function buildLaunchCommand(role: string, cfg: OrchestrationConfig, channelRel: 
 			const uuid = randomUUID();
 			fs.writeFileSync(uuidPath, uuid);
 			args.push("--session-id", uuid);
+		}
+	}
+
+	// Model preset resolution: look up the named preset in cfg.modelPresets, expand
+	// $defaultPiProvider tokens, and push the resulting args before extraArgs.
+	// extraArgs comes after so per-role one-offs can override the preset (most
+	// CLIs treat last-occurrence wins for repeated options like --model).
+	if (override.modelPreset && cfg.modelPresets?.[override.modelPreset]) {
+		const provider = cfg.defaultPiProvider ?? "opencode-go";
+		for (const a of cfg.modelPresets[override.modelPreset]) {
+			args.push(a.replace(/\$defaultPiProvider/g, provider));
 		}
 	}
 

@@ -1,18 +1,30 @@
 {
-  "$comment": "Presence of this file enables the dispatch-auto Pi extension in this repo. Empty config = all worker roles use pi defaults. Add per-role overrides only when needed.",
+  "$comment": "Presence of this file enables the dispatch-auto Pi extension in this repo. This is the committed baseline (shared across machines, Pi-everywhere). Per-machine overrides (Claude accounts, profile paths, Pi configDir routing) belong in `agents/orchestration.local.json` (gitignored).",
   "$schema_notes": {
-    "timeoutMinutes": "Optional root-level wall-clock cap per subprocess. Default 15 min. Override per role under roles.<Role>.timeoutMinutes. Env DISPATCH_AUTO_TIMEOUT_MS=<millis> wins over both for one-off runs.",
-    "roles.<Role>.binary": "'pi' (default) or 'claude'. Claude integration uses --session-id on first call and --resume <uuid> after, with cycle isolation per channel.",
-    "roles.<Role>.configDir": "Sets CLAUDE_CONFIG_DIR (claude) or PI_CODING_AGENT_DIR (pi). Use '~/.claude-acct1' to point claude at a specific account.",
-    "roles.<Role>.extraArgs": "Appended to the launch command before the prompt. Examples: ['--effort','low'] for claude, ['--thinking','low'] for pi.",
-    "example": {
-      "timeoutMinutes": 15,
-      "roles": {
-        "Plan":   { "binary": "pi" },
-        "Dev":    { "binary": "pi" },
-        "Review": { "binary": "claude", "configDir": "~/.claude-acct2" }
-      }
-    }
+    "timeoutMinutes": "Wall-clock cap per subprocess. Env DISPATCH_AUTO_TIMEOUT_MS=<ms> wins over both root and per-role for one-off use.",
+    "defaultPiProvider": "Token value substituted for `$defaultPiProvider` in model preset args. Swap this single field to globally re-route all non-Codex/non-Claude models when an account runs out.",
+    "modelPresets": "Named arg-arrays appended to the launch command. Reference one from a role via `roles.<Role>.modelPreset`. Use `$defaultPiProvider` token to make the preset provider-agnostic; explicit provider strings (e.g. `openai-codex/`) bypass token substitution.",
+    "roles.<Role>.binary": "'pi' (default) or 'claude'. Claude uses --session-id on first call, --resume on subsequent — cycle-isolated per channel.",
+    "roles.<Role>.configDir": "Sets CLAUDE_CONFIG_DIR (claude) or PI_CODING_AGENT_DIR (pi). For Pi this is the only way to route workers to a specific profile that has the right providers signed in.",
+    "roles.<Role>.modelPreset": "Key into modelPresets above. Resolved args are appended before extraArgs.",
+    "roles.<Role>.extraArgs": "Appended after the preset and before the prompt. Use for per-role one-offs (e.g., `[\"--effort\",\"low\"]` for claude, `[\"--thinking\",\"high\"]` for pi)."
   },
-  "roles": {}
+  "timeoutMinutes": 15,
+  "defaultPiProvider": "opencode-go",
+  "modelPresets": {
+    "gpt-5.5-codex":      ["--model", "openai-codex/gpt-5.5:high"],
+    "gpt-5.4-codex":      ["--model", "openai-codex/gpt-5.4:high"],
+    "gpt-5.4-mini-codex": ["--model", "openai-codex/gpt-5.4-mini:high"],
+    "gpt-5.3-codex":      ["--model", "openai-codex/gpt-5.3-codex:high"],
+    "kimi-k2.6":          ["--model", "$defaultPiProvider/kimi-k2.6"],
+    "glm-5.1":            ["--model", "$defaultPiProvider/glm-5.1"],
+    "deepseek-v4-pro":    ["--model", "$defaultPiProvider/deepseek-v4-pro:high"],
+    "deepseek-v4-flash":  ["--model", "$defaultPiProvider/deepseek-v4-flash"],
+    "gemini-3.1-pro":     ["--model", "$defaultPiProvider/gemini-3.1-pro"]
+  },
+  "roles": {
+    "Plan":   { "binary": "pi", "modelPreset": "gpt-5.5-codex" },
+    "Dev":    { "binary": "pi", "modelPreset": "kimi-k2.6" },
+    "Review": { "binary": "pi", "modelPreset": "deepseek-v4-pro" }
+  }
 }

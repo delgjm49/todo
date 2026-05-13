@@ -16,3 +16,8 @@ src-tauri/target
 # Dispatch-auto orchestrator runtime files (per-machine, not synced).
 .dispatch-auto.log
 agents/channels/.sessions/
+
+# Dispatch-auto per-machine config overrides (Claude account paths, Pi profile
+# routing, etc.). The committed orchestration.json is the shared baseline; this
+# file deep-merges over it. Each machine maintains its own.
+agents/orchestration.local.json
