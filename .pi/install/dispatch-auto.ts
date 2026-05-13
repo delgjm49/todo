@@ -305,22 +305,24 @@ export default function (pi: ExtensionAPI) {
 	if (isSubprocess() || isPrintMode()) return; // worker mode: dormant
 
 	let running = false;
-	// Per-channel baseline: highest message number observed at session start (or
-	// after a chain run). Channels with no entry are NEW since session start and
-	// fire on their first detected message.
-	const baseline = new Map<string, number>();
+	let sessionStartMs = 0;
+	// Tracks the highest (channel-file, message-number) we've already acted on
+	// so we don't re-fire on the same message after a chain completes.
+	const acted = new Map<string, number>();
 
 	pi.on("session_start", async (_event, ctx) => {
 		const cwd = ctx.cwd ?? process.cwd();
 		const cfg = loadConfig(cwd);
 		if (!cfg) return;
-		// Snapshot existing channels' last-message numbers so we don't auto-fire on
-		// pre-existing state. New channels created during this session will have
-		// no baseline entry and will fire on first sight.
+		sessionStartMs = Date.now();
+		// Pre-mark every existing channel's latest message as already acted on, so
+		// we don't auto-fire on stale state left from a previous Pi session. Any
+		// channel modified during *this* session (mtime > sessionStartMs) is fair
+		// game — that's our "this user is producing fresh work" signal.
 		const glob = cfg.channelGlob ?? CHANNEL_GLOB_DEFAULT;
 		for (const f of listChannels(cwd, glob)) {
 			const parsed = parseChannel(f);
-			if (parsed?.lastMessage) baseline.set(f, parsed.lastMessage.number);
+			if (parsed?.lastMessage) acted.set(f, parsed.lastMessage.number);
 		}
 		ctx.ui.setStatus("dispatch-auto", "armed");
 	});
@@ -334,26 +336,35 @@ export default function (pi: ExtensionAPI) {
 		const glob = cfg.channelGlob ?? CHANNEL_GLOB_DEFAULT;
 		const channelFile = findLatestChannel(cwd, glob);
 		if (!channelFile) return;
+
+		// Gate 1: channel must have been modified during this session. Robust to
+		// stale leftover channels with the same message number — if Main writes
+		// (or rewrites) the file this session, mtime advances and we fire.
+		let channelMtime = 0;
+		try { channelMtime = fs.statSync(channelFile).mtimeMs; } catch { return; }
+		if (channelMtime < sessionStartMs) return;
+
 		const parsed = parseChannel(channelFile);
 		if (!parsed?.lastMessage) return;
 
-		const seen = baseline.get(channelFile);
-		if (seen !== undefined && parsed.lastMessage.number <= seen) return;
-		// Channel is new (no baseline entry) OR has advanced past baseline.
+		// Gate 2: don't re-fire on a message we've already acted on this session.
+		const lastActed = acted.get(channelFile);
+		if (lastActed !== undefined && parsed.lastMessage.number <= lastActed) return;
+
 		if (isTerminal(parsed)) {
-			baseline.set(channelFile, parsed.lastMessage.number);
+			acted.set(channelFile, parsed.lastMessage.number);
 			return;
 		}
 
 		running = true;
+		acted.set(channelFile, parsed.lastMessage.number);
 		const setStatus = (s: string) => ctx.ui.setStatus("dispatch-auto", s);
 		try {
 			await runChain(cwd, cfg, setStatus);
 		} finally {
 			running = false;
-			// Resync baseline so a manual hand-edit followed by another turn re-triggers cleanly.
 			const final = parseChannel(channelFile);
-			if (final?.lastMessage) baseline.set(channelFile, final.lastMessage.number);
+			if (final?.lastMessage) acted.set(channelFile, final.lastMessage.number);
 		}
 	});
 }
