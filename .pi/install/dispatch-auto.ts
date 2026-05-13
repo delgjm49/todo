@@ -19,6 +19,7 @@
  */
 
 import { spawn } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
@@ -27,16 +28,18 @@ const STOP_ROLE = "Main";
 const TERMINAL_STATES = new Set(["closed"]);
 const CHANNEL_GLOB_DEFAULT = "agents/channels/*-channel.md";
 const PICKUP_PREFIX = "pickup ";
-const SUBPROCESS_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes per role turn
+const DEFAULT_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes per role turn (override via env / config)
 
 interface RoleOverride {
 	binary?: string;        // default: "pi"
 	configDir?: string;     // e.g., "~/.claude-acct1" for claude roles
 	extraArgs?: string[];   // appended to the launch command before the prompt
+	timeoutMinutes?: number; // per-role override of subprocess wall-clock timeout
 }
 
 interface OrchestrationConfig {
 	channelGlob?: string;
+	timeoutMinutes?: number; // root-level override of default subprocess timeout
 	roles?: Record<string, RoleOverride>;
 }
 
@@ -56,6 +59,26 @@ interface ParsedChannel {
 function expandHome(p: string): string {
 	if (p.startsWith("~/")) return path.join(process.env.HOME ?? "", p.slice(2));
 	return p;
+}
+
+function normalizeKey(p: string): string {
+	const r = path.resolve(p);
+	return process.platform === "win32" ? r.toLowerCase() : r;
+}
+
+function resolveTimeoutMs(role: string, cfg: OrchestrationConfig): number {
+	const envVal = process.env.DISPATCH_AUTO_TIMEOUT_MS;
+	if (envVal && Number.isFinite(parseInt(envVal, 10))) return parseInt(envVal, 10);
+	const roleMin = cfg.roles?.[role]?.timeoutMinutes;
+	if (typeof roleMin === "number" && Number.isFinite(roleMin)) return roleMin * 60 * 1000;
+	if (typeof cfg.timeoutMinutes === "number" && Number.isFinite(cfg.timeoutMinutes)) return cfg.timeoutMinutes * 60 * 1000;
+	return DEFAULT_TIMEOUT_MS;
+}
+
+function psEscape(s: string): string {
+	// In a PowerShell double-quoted string, the escape character is the backtick.
+	// Order matters: escape backtick first so we don't double-escape the ones we add.
+	return s.replace(/`/g, "``").replace(/"/g, '`"').replace(/\$/g, "`$");
 }
 
 function isSubprocess(): boolean {
@@ -169,12 +192,22 @@ function notify(title: string, body: string): void {
 	if (process.platform === "darwin") {
 		spawn("osascript", ["-e", `display notification "${body.replace(/"/g, '\\"')}" with title "${title.replace(/"/g, '\\"')}"`], { stdio: "ignore", detached: true }).unref();
 	} else if (process.platform === "win32") {
-		const ps = `[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType=WindowsRuntime] > $null; $t = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent([Windows.UI.Notifications.ToastTemplateType]::ToastText02); ($t.SelectSingleNode("//text[@id='1']")).InnerText = "${title}"; ($t.SelectSingleNode("//text[@id='2']")).InnerText = "${body}"; [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("dispatch-auto").Show([Windows.UI.Notifications.ToastNotification]::new($t))`;
+		const t = psEscape(title);
+		const b = psEscape(body);
+		const ps = `[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType=WindowsRuntime] > $null; $t = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent([Windows.UI.Notifications.ToastTemplateType]::ToastText02); ($t.SelectSingleNode("//text[@id='1']")).InnerText = "${t}"; ($t.SelectSingleNode("//text[@id='2']")).InnerText = "${b}"; [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("dispatch-auto").Show([Windows.UI.Notifications.ToastNotification]::new($t))`;
 		spawn("powershell", ["-NoProfile", "-Command", ps], { stdio: "ignore", detached: true }).unref();
 	}
 }
 
-function buildLaunchCommand(role: string, cfg: OrchestrationConfig, channelRel: string, sessionDir: string): { cmd: string; args: string[]; env: NodeJS.ProcessEnv } {
+interface LaunchPlan {
+	cmd: string;
+	args: string[];
+	env: NodeJS.ProcessEnv;
+	claudeUuidPath?: string;  // present iff binary === "claude"; set so callers can invalidate on resume failure
+	resumedClaude?: boolean;  // true when we passed --resume to claude (vs. --session-id)
+}
+
+function buildLaunchCommand(role: string, cfg: OrchestrationConfig, channelRel: string, sessionDir: string): LaunchPlan {
 	const override = cfg.roles?.[role] ?? {};
 	const binary = override.binary ?? "pi";
 	const env: NodeJS.ProcessEnv = { ...process.env, DISPATCH_AUTO_SUBPROCESS: "1" };
@@ -185,65 +218,101 @@ function buildLaunchCommand(role: string, cfg: OrchestrationConfig, channelRel: 
 
 	const prompt = `${PICKUP_PREFIX}${channelRel}`;
 	const args: string[] = ["--print"];
+	const plan: LaunchPlan = { cmd: binary, args, env };
 
-	// Within-cycle session continuity via per-(channel, role) session-dir + --continue.
-	// First turn (empty dir) creates a session; subsequent turns continue it. Between
-	// dispatches, channel name changes → dir changes → naturally fresh session.
+	// Within-cycle session continuity. Both binaries get isolation per (channel, role):
+	//   pi → --session-dir <dir> --continue   (Pi handles create-or-resume internally)
+	//   claude → --session-id <uuid> on first call; --resume <uuid> thereafter.
+	// Between dispatches, channel name changes → sessionDir changes → fresh session.
 	if (binary === "pi") {
 		args.push("--session-dir", sessionDir, "--continue");
 	} else if (binary === "claude") {
-		args.push("--continue");
+		const uuidPath = path.join(sessionDir, "claude-session.uuid");
+		plan.claudeUuidPath = uuidPath;
+		if (fs.existsSync(uuidPath)) {
+			const uuid = fs.readFileSync(uuidPath, "utf8").trim();
+			args.push("--resume", uuid);
+			plan.resumedClaude = true;
+		} else {
+			const uuid = randomUUID();
+			fs.writeFileSync(uuidPath, uuid);
+			args.push("--session-id", uuid);
+		}
 	}
 
 	if (override.extraArgs) args.push(...override.extraArgs);
 	args.push(prompt);
-	return { cmd: binary, args, env };
+	return plan;
 }
 
-async function runRoleTurn(cwd: string, role: string, cfg: OrchestrationConfig, channelFile: string): Promise<{ exitCode: number }> {
-	const channelRel = path.relative(cwd, channelFile);
-	const sessionDir = sessionDirFor(cwd, channelFile, role);
-	const { cmd, args, env } = buildLaunchCommand(role, cfg, channelRel, sessionDir);
-	const hadSession = fs.readdirSync(sessionDir).length > 0;
-	logEvent(cwd, `spawn role=${role} binary=${cmd} resume=${hadSession ? "yes" : "fresh"} channel=${path.basename(channelFile)}`);
-
+async function spawnOnce(cwd: string, role: string, plan: LaunchPlan, timeoutMs: number): Promise<{ exitCode: number; stderrTail: string }> {
+	const { cmd, args, env } = plan;
 	return new Promise((resolve) => {
 		const logStream = fs.createWriteStream(path.join(cwd, ".dispatch-auto.log"), { flags: "a" });
 		const child = spawn(cmd, args, { cwd, env, stdio: ["ignore", "pipe", "pipe"] });
 		const timeout = setTimeout(() => {
-			logEvent(cwd, `timeout role=${role} after ${SUBPROCESS_TIMEOUT_MS}ms — killing`);
+			logEvent(cwd, `timeout role=${role} after ${timeoutMs}ms — killing`);
 			child.kill("SIGTERM");
-		}, SUBPROCESS_TIMEOUT_MS);
+		}, timeoutMs);
 
+		let stderrTail = "";
 		child.stdout.on("data", (chunk) => logStream.write(`[${role}/stdout] ${chunk}`));
-		child.stderr.on("data", (chunk) => logStream.write(`[${role}/stderr] ${chunk}`));
+		child.stderr.on("data", (chunk) => {
+			logStream.write(`[${role}/stderr] ${chunk}`);
+			stderrTail = (stderrTail + chunk.toString()).slice(-2048);
+		});
 
 		child.on("close", (code) => {
 			clearTimeout(timeout);
 			logStream.end();
 			logEvent(cwd, `exit role=${role} code=${code ?? "null"}`);
-			resolve({ exitCode: code ?? -1 });
+			resolve({ exitCode: code ?? -1, stderrTail });
 		});
 		child.on("error", (err) => {
 			clearTimeout(timeout);
 			logStream.end();
 			logEvent(cwd, `spawn-error role=${role} err=${err.message}`);
-			resolve({ exitCode: -1 });
+			resolve({ exitCode: -1, stderrTail });
 		});
 	});
 }
 
-async function runChain(cwd: string, cfg: OrchestrationConfig, setStatus: (s: string) => void): Promise<void> {
-	const glob = cfg.channelGlob ?? CHANNEL_GLOB_DEFAULT;
+async function runRoleTurn(cwd: string, role: string, cfg: OrchestrationConfig, channelFile: string): Promise<{ exitCode: number }> {
+	const channelRel = path.relative(cwd, channelFile);
+	const sessionDir = sessionDirFor(cwd, channelFile, role);
+	const plan = buildLaunchCommand(role, cfg, channelRel, sessionDir);
+	const timeoutMs = resolveTimeoutMs(role, cfg);
+	const hadSession = fs.readdirSync(sessionDir).length > 0;
+	logEvent(cwd, `spawn role=${role} binary=${plan.cmd} resume=${hadSession ? "yes" : "fresh"} timeoutMs=${timeoutMs} channel=${path.basename(channelFile)}`);
+
+	const first = await spawnOnce(cwd, role, plan, timeoutMs);
+
+	// Claude resume-failure recovery: if --resume <uuid> hit a session-not-found error
+	// (most often: user wiped ~/.claude or the session store rotated), drop the stale
+	// UUID file and retry once with --session-id + a fresh UUID. We only do this when
+	// resume is the failure mode; a real worker failure should propagate.
+	if (
+		first.exitCode !== 0 &&
+		plan.resumedClaude &&
+		plan.claudeUuidPath &&
+		/No conversation found with session ID/i.test(first.stderrTail)
+	) {
+		logEvent(cwd, `claude resume failed for role=${role} — wiping uuid file and retrying with fresh session`);
+		try { fs.unlinkSync(plan.claudeUuidPath); } catch {}
+		const fresh = buildLaunchCommand(role, cfg, channelRel, sessionDir);
+		const second = await spawnOnce(cwd, role, fresh, timeoutMs);
+		return { exitCode: second.exitCode };
+	}
+
+	return { exitCode: first.exitCode };
+}
+
+async function runChain(cwd: string, cfg: OrchestrationConfig, channelFile: string, setStatus: (s: string) => void): Promise<void> {
 	let safety = 20; // hard cap on links per chain run to prevent runaway loops
 
 	while (safety-- > 0) {
-		const channelFile = findLatestChannel(cwd, glob);
-		if (!channelFile) {
-			logEvent(cwd, "chain stop: no channel file");
-			setStatus("idle");
-			return;
-		}
+		// Channel pinned for the chain's duration: avoids mtime-pivot if any
+		// process touches an older channel mid-chain (editor save, git, lint).
 		const parsed = parseChannel(channelFile);
 		if (!parsed || !parsed.lastMessage) {
 			logEvent(cwd, `chain stop: unparseable channel ${path.basename(channelFile)}`);
@@ -317,6 +386,7 @@ export default function (pi: ExtensionAPI) {
 		const glob = cfg.channelGlob ?? CHANNEL_GLOB_DEFAULT;
 		const channelFile = findLatestChannel(cwd, glob);
 		if (!channelFile) return;
+		const channelKey = normalizeKey(channelFile);
 
 		// Gate 1: channel must have been modified during this session. Robust to
 		// stale leftover channels with the same message number — if Main writes
@@ -329,19 +399,19 @@ export default function (pi: ExtensionAPI) {
 		if (!parsed?.lastMessage) return;
 
 		// Gate 2: don't re-fire on a message we've already acted on this session.
-		const lastActed = acted.get(channelFile);
+		const lastActed = acted.get(channelKey);
 		if (lastActed !== undefined && parsed.lastMessage.number <= lastActed) return;
 
 		if (isTerminal(parsed)) {
-			acted.set(channelFile, parsed.lastMessage.number);
+			acted.set(channelKey, parsed.lastMessage.number);
 			return;
 		}
 
 		running = true;
-		acted.set(channelFile, parsed.lastMessage.number);
+		acted.set(channelKey, parsed.lastMessage.number);
 		const setStatus = (s: string) => ctx.ui.setStatus("dispatch-auto", s);
 		try {
-			await runChain(cwd, cfg, setStatus);
+			await runChain(cwd, cfg, channelFile, setStatus);
 			// Wake Main with a summary message so it can describe what just happened
 			// and offer next steps (close, commit, push). We never auto-commit — Main
 			// must wait for user confirmation. Use setTimeout so the agent_end handler
@@ -373,7 +443,7 @@ export default function (pi: ExtensionAPI) {
 		} finally {
 			running = false;
 			const final = parseChannel(channelFile);
-			if (final?.lastMessage) acted.set(channelFile, final.lastMessage.number);
+			if (final?.lastMessage) acted.set(channelKey, final.lastMessage.number);
 		}
 	});
 }

@@ -1,4 +1,18 @@
 {
   "$comment": "Presence of this file enables the dispatch-auto Pi extension in this repo. Empty config = all worker roles use pi defaults. Add per-role overrides only when needed.",
+  "$schema_notes": {
+    "timeoutMinutes": "Optional root-level wall-clock cap per subprocess. Default 15 min. Override per role under roles.<Role>.timeoutMinutes. Env DISPATCH_AUTO_TIMEOUT_MS=<millis> wins over both for one-off runs.",
+    "roles.<Role>.binary": "'pi' (default) or 'claude'. Claude integration uses --session-id on first call and --resume <uuid> after, with cycle isolation per channel.",
+    "roles.<Role>.configDir": "Sets CLAUDE_CONFIG_DIR (claude) or PI_CODING_AGENT_DIR (pi). Use '~/.claude-acct1' to point claude at a specific account.",
+    "roles.<Role>.extraArgs": "Appended to the launch command before the prompt. Examples: ['--effort','low'] for claude, ['--thinking','low'] for pi.",
+    "example": {
+      "timeoutMinutes": 15,
+      "roles": {
+        "Plan":   { "binary": "pi" },
+        "Dev":    { "binary": "pi" },
+        "Review": { "binary": "claude", "configDir": "~/.claude-acct2" }
+      }
+    }
+  },
   "roles": {}
 }

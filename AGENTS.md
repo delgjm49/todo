@@ -58,6 +58,6 @@ When running required verification commands, use the **actual shell available in
 
 ## Current Phase
 
-Check [`docs/SESSIONS.md`](docs/SESSIONS.md) for the latest phase status and most recent session entries.
+Check [`docs/SESSIONS.md`](docs/SESSIONS.md) for the latest phase status and most recent session entries. **Workers (Plan / Dev / Review) do not need to read this file** — your dispatch artifact + channel have everything required for a well-scoped task. Main reads it to orient.
 
 The previous 3-agent checkpoint workflow (Epics 07–08, checkpoints 6–12) is archived under [`docs/ai_sessions/legacy/`](docs/ai_sessions/legacy/) for historical reference. Do not append new entries there.
