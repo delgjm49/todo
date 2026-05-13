@@ -17,6 +17,7 @@ See [`agents/CLOSING.md`](../agents/CLOSING.md) for the entry format and rules.
 | TICKET-043 Border formatting controls | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 | TICKET-044 Formatting persistence | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 | TICKET-013 Store selectors/action helpers | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
+| TICKET-045 Checkbox automation behavior | Dispatched | Channel created for Plan pickup |
 
 ---
 
@@ -471,3 +472,18 @@ Closed the TICKET-013 store selectors/action helpers dispatch after confirming t
 
 ### Outcome
 TICKET-013 is complete and ready to commit/push. Next recommended checkpoint is `TICKET-045` checkbox automation behavior.
+
+## Session 28 — 2026-05-12
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: `agents/channels/006-checkbox-automation-channel.md`
+- Dispatch: `agents/artifacts/006-checkbox-automation-dispatch.md`
+
+### Summary
+Selected `TICKET-045` checkbox automation behavior as the next Milestone D checkpoint after completing the selector/helper dispatch. Created a focused dispatch for checked-row strikeout, optional move-checked-to-bottom behavior, pure row helpers, store integration, and targeted tests.
+
+### Outcome
+Checkbox automation is dispatched to Plan. The next session should use pickup mode and continue from `agents/channels/006-checkbox-automation-channel.md`.
