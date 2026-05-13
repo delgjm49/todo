@@ -19,6 +19,7 @@ See [`agents/CLOSING.md`](../agents/CLOSING.md) for the entry format and rules.
 | TICKET-013 Store selectors/action helpers | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 | TICKET-045 Checkbox automation behavior | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 | TICKET-047 Block row sorting domain logic | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
+| TICKET-048 Sort menu UI | Dispatched | Dispatch created for Plan pickup |
 
 ---
 
@@ -641,3 +642,18 @@ Closed the `TICKET-047` block row sorting domain logic dispatch after confirming
 
 ### Outcome
 TICKET-047 is complete and ready to commit/push. Unrelated local modifications to agent orchestration/prompt files were left out of the feature commit.
+
+## Session 38 — 2026-05-13
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: `agents/channels/008-sort-menu-ui-channel.md`
+- Dispatch: `agents/artifacts/008-sort-menu-ui-dispatch.md`
+
+### Summary
+Selected `TICKET-048` sort menu UI as the next Milestone D/E checkpoint after completing the block row sorting domain logic. Created a focused dispatch for applying existing sorting helpers through a block header/menu control, store history integration, sort metadata updates, and targeted tests.
+
+### Outcome
+Sort menu UI is dispatched to Plan. The next session should use pickup mode and continue from `agents/channels/008-sort-menu-ui-channel.md`.
