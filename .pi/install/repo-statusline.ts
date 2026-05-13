@@ -319,56 +319,31 @@ export default function (pi: ExtensionAPI) {
 
 					/* ── Progressive truncation ──
 					 * Drop order (least → most important):
-					 *   extension statuses → reasoning+cost → diff → output
-					 *   → context abs → context entirely → input → location
-					 * Model name is never dropped.
+					 *   reasoning+cost → diff → output → context abs
+					 *   → extension statuses → context entirely → input → location
+					 * Model name is never dropped. Extension statuses outrank
+					 * diff/tokens-extras/context-abs because they carry actionable
+					 * info (multicodex quota, etc.) that affects what you do next.
 					 */
 					const candidates = [
-						() =>
-							tryLine(
-								[locationPart, modelPart, contextSeg],
-								tokenFull
-							),
-						() =>
-							tryLine(
-								[locationPart, modelCore, contextSeg],
-								tokenFull
-							),
-						() =>
-							tryLine(
-								[locationPart, modelCore, contextSeg],
-								tokenNoExtra
-							),
-						() =>
-							tryLine(
-								[location, modelCore, contextSeg],
-								tokenNoExtra
-							),
-						() =>
-							tryLine(
-								[location, modelCore, contextSeg],
-								tokenInputOnly
-							),
-						() =>
-							tryLine(
-								[location, modelCore, contextPctOnly],
-								tokenInputOnly
-							),
-						() =>
-							tryLine(
-								[location, modelCore],
-								tokenInputOnly
-							),
-						() =>
-							tryLine(
-								[location, modelCore],
-								""
-							),
-						() =>
-							tryLine(
-								[modelCore],
-								""
-							),
+						// keep everything
+						() => tryLine([locationPart, modelPart, contextSeg], tokenFull),
+						// drop reasoning+cost from tokens
+						() => tryLine([locationPart, modelPart, contextSeg], tokenNoExtra),
+						// drop diff (locationPart → location), keep statuses
+						() => tryLine([location, modelPart, contextSeg], tokenNoExtra),
+						// drop output token (tokenInputOnly), keep statuses
+						() => tryLine([location, modelPart, contextSeg], tokenInputOnly),
+						// drop context-abs (contextPctOnly), keep statuses
+						() => tryLine([location, modelPart, contextPctOnly], tokenInputOnly),
+						// finally drop statuses
+						() => tryLine([location, modelCore, contextPctOnly], tokenInputOnly),
+						// drop context entirely
+						() => tryLine([location, modelCore], tokenInputOnly),
+						// drop input tokens
+						() => tryLine([location, modelCore], ""),
+						// drop location
+						() => tryLine([modelCore], ""),
 					];
 
 					for (const candidate of candidates) {
