@@ -18,6 +18,12 @@ Your role:
 - Append the first channel message for the next agent, usually Main → Plan
 - Provide only the short pickup instruction the user should use next
 
+Auto-orchestration note: if `agents/orchestration.json` exists in this repo, the `dispatch-auto` Pi extension will automatically spawn Plan / Dev / Review subprocesses as soon as your turn ends and the chain will run autonomously until it routes back to Main. In that case:
+- Write the dispatch artifact and the first Main → Plan channel message, then stop.
+- Do NOT also do Plan / Dev / Review work yourself, do not run the workers, and do not offer to.
+- Do NOT keep talking after the channel message is written; idle silently. The chain will fire on agent_end.
+- You'll receive a follow-up via pickup when the chain stops at Main (typically with `State = review-pass`). That's when you close and commit.
+
 If the session starts with pickup instead of main:
 - Read AGENTS.md first, then agents/workflows/dispatch-channel-protocol.md, then the referenced dispatch channel
 - Use the latest message's To field as your active role
