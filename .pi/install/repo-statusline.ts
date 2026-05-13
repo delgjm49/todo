@@ -313,47 +313,42 @@ export default function (pi: ExtensionAPI) {
 					const modelLabel = theme.fg("text", "Model: ");
 					const modelCore = modelLabel + modelSeg + thinkingSeg + providerSeg;
 
-					const modelPart = [...statuses, modelCore]
-						.filter(Boolean)
-						.join(" ");
-
 					/* ── Progressive truncation ──
 					 * Drop order (least → most important):
 					 *   reasoning+cost → diff → output → context abs
-					 *   → extension statuses → context entirely → input → location
-					 * Model name is never dropped. Extension statuses outrank
-					 * diff/tokens-extras/context-abs because they carry actionable
-					 * info (multicodex quota, etc.) that affects what you do next.
+					 *   → context entirely → input → location
+					 * Model name is never dropped. Extension statuses live on a
+					 * separate line (below) so they no longer compete with the
+					 * main line for width.
 					 */
 					const candidates = [
-						// keep everything
-						() => tryLine([locationPart, modelPart, contextSeg], tokenFull),
-						// drop reasoning+cost from tokens
-						() => tryLine([locationPart, modelPart, contextSeg], tokenNoExtra),
-						// drop diff (locationPart → location), keep statuses
-						() => tryLine([location, modelPart, contextSeg], tokenNoExtra),
-						// drop output token (tokenInputOnly), keep statuses
-						() => tryLine([location, modelPart, contextSeg], tokenInputOnly),
-						// drop context-abs (contextPctOnly), keep statuses
-						() => tryLine([location, modelPart, contextPctOnly], tokenInputOnly),
-						// finally drop statuses
+						() => tryLine([locationPart, modelCore, contextSeg], tokenFull),
+						() => tryLine([locationPart, modelCore, contextSeg], tokenNoExtra),
+						() => tryLine([location, modelCore, contextSeg], tokenNoExtra),
+						() => tryLine([location, modelCore, contextSeg], tokenInputOnly),
 						() => tryLine([location, modelCore, contextPctOnly], tokenInputOnly),
-						// drop context entirely
 						() => tryLine([location, modelCore], tokenInputOnly),
-						// drop input tokens
 						() => tryLine([location, modelCore], ""),
-						// drop location
 						() => tryLine([modelCore], ""),
 					];
 
+					let mainLine = truncateToWidth(modelCore, width);
 					for (const candidate of candidates) {
 						const line = candidate();
 						if (visibleWidth(line) <= width) {
-							return [line];
+							mainLine = line;
+							break;
 						}
 					}
 
-					return [truncateToWidth(modelCore, width)];
+					// Extension statuses (multicodex quota, etc.) on their own line.
+					// Only shown when at least one extension has non-empty status.
+					if (statuses.length > 0) {
+						const sep = theme.fg("dim", "  ·  ");
+						const statusLine = truncateToWidth(statuses.join(sep), width);
+						return [mainLine, statusLine];
+					}
+					return [mainLine];
 				},
 			};
 		});

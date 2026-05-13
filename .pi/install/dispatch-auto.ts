@@ -362,7 +362,7 @@ async function runRoleTurn(cwd: string, role: string, cfg: OrchestrationConfig, 
 	return { exitCode: first.exitCode };
 }
 
-async function runChain(cwd: string, cfg: OrchestrationConfig, channelFile: string, setStatus: (s: string) => void): Promise<void> {
+async function runChain(cwd: string, cfg: OrchestrationConfig, channelFile: string, setStatus: (s: string | undefined) => void): Promise<void> {
 	let safety = 20; // hard cap on links per chain run to prevent runaway loops
 
 	while (safety-- > 0) {
@@ -371,13 +371,13 @@ async function runChain(cwd: string, cfg: OrchestrationConfig, channelFile: stri
 		const parsed = parseChannel(channelFile);
 		if (!parsed || !parsed.lastMessage) {
 			logEvent(cwd, `chain stop: unparseable channel ${path.basename(channelFile)}`);
-			setStatus("idle");
+			setStatus(undefined);
 			return;
 		}
 		if (isTerminal(parsed)) {
 			logEvent(cwd, `chain stop: terminal channel=${path.basename(channelFile)} status=${parsed.status} last-to=${parsed.lastMessage.to}`);
 			notify("Dispatch chain complete", `${path.basename(channelFile)} → ${parsed.lastMessage.to} (${parsed.lastMessage.state})`);
-			setStatus("idle");
+			setStatus(undefined);
 			return;
 		}
 
@@ -429,7 +429,10 @@ export default function (pi: ExtensionAPI) {
 		// `acted` is populated only when we actually spawn a chain, so it
 		// strictly tracks within-session "already handled" — never conflates
 		// pre-existing state with handled state.
-		ctx.ui.setStatus("dispatch-auto", "armed");
+		// Intentionally do NOT set an "armed" status here — the extension's
+		// presence is implicit, and an always-on "armed" indicator just
+		// clutters the footer when nothing is happening. We only publish
+		// status while a chain is actively running or has errored.
 	});
 
 	pi.on("agent_end", async (_event, ctx) => {
@@ -464,7 +467,7 @@ export default function (pi: ExtensionAPI) {
 
 		running = true;
 		acted.set(channelKey, parsed.lastMessage.number);
-		const setStatus = (s: string) => ctx.ui.setStatus("dispatch-auto", s);
+		const setStatus = (s: string | undefined) => ctx.ui.setStatus("dispatch-auto", s);
 		try {
 			await runChain(cwd, cfg, channelFile, setStatus);
 			// Wake Main with a summary message so it can describe what just happened
