@@ -97,13 +97,20 @@ function findLatestChannel(cwd: string, glob: string): string | null {
 		.sort((a, b) => b.mtime - a.mtime)[0].f;
 }
 
+function stripFencedBlocks(text: string): string {
+	// Replace fenced code blocks (``` ... ```) with blank lines of the same length
+	// so heading regex doesn't match inline example messages. Preserves line offsets.
+	return text.replace(/```[\s\S]*?```/g, (block) => block.replace(/[^\n]/g, " "));
+}
+
 function parseChannel(filePath: string): ParsedChannel | null {
-	let text: string;
+	let raw: string;
 	try {
-		text = fs.readFileSync(filePath, "utf8");
+		raw = fs.readFileSync(filePath, "utf8");
 	} catch {
 		return null;
 	}
+	const text = stripFencedBlocks(raw);
 
 	const statusMatch = text.match(/^\s*-\s*Current status:\s*([^\n]+?)\s*$/im);
 	const status = statusMatch ? statusMatch[1].trim().toLowerCase() : "";
