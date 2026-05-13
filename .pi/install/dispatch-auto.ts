@@ -342,6 +342,34 @@ export default function (pi: ExtensionAPI) {
 		const setStatus = (s: string) => ctx.ui.setStatus("dispatch-auto", s);
 		try {
 			await runChain(cwd, cfg, setStatus);
+			// Wake Main with a summary message so it can describe what just happened
+			// and offer next steps (close, commit, push). We never auto-commit — Main
+			// must wait for user confirmation. Use setTimeout so the agent_end handler
+			// fully unwinds before we trigger a new turn.
+			const final = parseChannel(channelFile);
+			if (final?.lastMessage) {
+				const rel = path.relative(cwd, channelFile);
+				const summary =
+					`[dispatch-auto] The Plan → Dev → Review chain just finished for \`${rel}\`.\n\n` +
+					`Channel status: **${final.status || "(none)"}**\n` +
+					`Latest message: **${final.lastMessage.from} → ${final.lastMessage.to}** (state: \`${final.lastMessage.state}\`)\n\n` +
+					`Please:\n` +
+					`1. Read the channel and the review artifact for this dispatch.\n` +
+					`2. Skim \`git status\` to see what changed.\n` +
+					`3. Briefly summarize the result (what shipped, any concerns).\n` +
+					`4. **Offer** to update \`docs/SESSIONS.md\` with a Main close-session entry, mark the channel closed, commit, and push.\n\n` +
+					`**Do not commit yet** — wait for my explicit go-ahead.`;
+				setTimeout(() => {
+					try {
+						pi.sendMessage(
+							{ customType: "dispatch-auto-summary", content: summary, display: true },
+							{ triggerTurn: true, deliverAs: "followUp" }
+						);
+					} catch (err) {
+						logEvent(cwd, `notify-main failed: ${(err as Error).message}`);
+					}
+				}, 250);
+			}
 		} finally {
 			running = false;
 			const final = parseChannel(channelFile);
