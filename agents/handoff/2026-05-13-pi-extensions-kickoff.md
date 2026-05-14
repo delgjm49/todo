@@ -2,6 +2,8 @@
 
 **Read this first to pick up where the previous session left off.** Once you've read this plus the linked files, you should have everything you need to start.
 
+> 2026-05-14 update: shared/global Pi extension sources have moved to `~/Developer/meta-workflow/pi/extensions/`. This file is historical; any references below to `.pi/install/*` as canonical should now be read as repo-local mirror/bootstrap references.
+
 ## Where we are in the roadmap
 
 The user has a 4-item meta-workflow roadmap. Status as of 2026-05-13:
