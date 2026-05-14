@@ -841,3 +841,144 @@ Audited `codex-switch` and `ai-usage` after Pi profile consolidation. Confirmed 
 
 ### Outcome
 `ai-usage` was tested multiple times by the user and looks correct. `codex-switch` remains installed for a short soak period before retirement. Next discussion is how to organize machine/environment-level workflow that sits above any single repo, then move into the Meta agent layer design.
+
+## Session 50 — 2026-05-14
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: `agents/channels/010-dispatch-smoke-re-review-channel.md`
+- Dispatch: `agents/artifacts/010-dispatch-smoke-re-review-dispatch.md`
+
+### Summary
+Created a small meta-workflow smoke-test dispatch for the dispatch automation setup work living outside this repo. The dispatch is intentionally artifact-only and requires a forced first Review → Dev return so the channel can exercise the mandatory re-review path.
+
+### Outcome
+Dispatch smoke re-review loop is queued for Plan. The expected audit trail is `Main → Plan → Dev → Review → Dev → Review → Main`, after which Main can note the successful dispatch test and optionally clean up disposable fake artifacts.
+
+## Session 51 — 2026-05-14
+
+### Agent Type
+plan
+
+### Artifacts
+- Channel: `agents/channels/010-dispatch-smoke-re-review-channel.md`
+- Dispatch: `agents/artifacts/010-dispatch-smoke-re-review-dispatch.md`
+- Plan: `agents/artifacts/010-dispatch-smoke-re-review-plan.md`
+
+### Summary
+Created the artifact-only implementation plan for the dispatch smoke re-review loop. The plan explicitly preserves the forced `Main → Plan → Dev → Review → Dev → Review → Main` route, with the first Dev pass writing `review-loop-state: first-review-required`, the first Review intentionally returning to Dev, the Dev fix updating the marker to `re-review-ready`, and the second Review returning PASS to Main.
+
+### Outcome
+Plan is ready for Dev. The dispatch channel has been appended with the next Dev pickup message.
+
+## Session 52 — 2026-05-14
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: `agents/channels/010-dispatch-smoke-re-review-channel.md`
+- Dispatch: `agents/artifacts/010-dispatch-smoke-re-review-dispatch.md`
+- Dispatch-auto log: `.dispatch-auto.log`
+
+### Summary
+Recovered the smoke-test dispatch after the first Dev worker exited non-zero under the previous orchestration config, which used a non-Codex provider that rejected Pi reasoning fields. The Dev worker had partially created the marker and complete artifacts but did not append the `Dev → Review` handoff.
+
+### Outcome
+Appended a fresh `Main → Dev` retry message to the existing channel with `State = ready-for-dev`. No new dispatch was created; the retry instructs Dev to finish the initial Dev pass and preserve the forced first Review → Dev loop.
+
+## Session 53 — 2026-05-14
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: `agents/channels/010-dispatch-smoke-re-review-channel.md`
+- Dispatch: `agents/artifacts/010-dispatch-smoke-re-review-dispatch.md`
+- Plan: `agents/artifacts/010-dispatch-smoke-re-review-plan.md`
+- Complete: `agents/artifacts/010-dispatch-smoke-re-review-complete.md`
+- Marker: `agents/artifacts/010-dispatch-smoke-re-review-marker.md`
+
+### Summary
+Completed the initial Dev pass for the artifact-only dispatch smoke re-review loop after Main recovered the interrupted worker handoff. Confirmed the marker remains at `review-loop-state: first-review-required`, updated the complete artifact with retry/recovery context, and ran the lightweight artifact verification.
+
+### Outcome
+Initial Dev-pass bookkeeping is complete and ready for Review. The dispatch channel has been appended with the next `Dev → Review` message at `State = ready-for-review`, preserving the forced first Review → Dev return.
+
+## Session 54 — 2026-05-14
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: `agents/channels/010-dispatch-smoke-re-review-channel.md`
+- Dispatch: `agents/artifacts/010-dispatch-smoke-re-review-dispatch.md`
+- Plan: `agents/artifacts/010-dispatch-smoke-re-review-plan.md`
+- Complete: `agents/artifacts/010-dispatch-smoke-re-review-complete.md`
+- Review: `agents/artifacts/010-dispatch-smoke-re-review-review.md`
+- Marker: `agents/artifacts/010-dispatch-smoke-re-review-marker.md`
+
+### Summary
+Reviewed the initial Dev pass for the artifact-only dispatch smoke re-review loop. Confirmed the marker is present with `review-loop-state: first-review-required` and the complete artifact documents the retry/recovery context, then intentionally returned to Dev as required by the dispatch plan.
+
+### Outcome
+Verdict is `FAIL — Return to Dev` by design for the forced first-review loop. The dispatch channel has been appended with the next `Review → Dev` message at `State = needs-dev-fix` and includes the required FAIL → Dev close block.
+
+## Session 55 — 2026-05-14
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: `agents/channels/010-dispatch-smoke-re-review-channel.md`
+- Dispatch: `agents/artifacts/010-dispatch-smoke-re-review-dispatch.md`
+- Plan: `agents/artifacts/010-dispatch-smoke-re-review-plan.md`
+- Complete: `agents/artifacts/010-dispatch-smoke-re-review-complete.md`
+- Review: `agents/artifacts/010-dispatch-smoke-re-review-review.md`
+- Marker: `agents/artifacts/010-dispatch-smoke-re-review-marker.md`
+
+### Summary
+Applied the required Dev fix for the artifact-only dispatch smoke re-review loop. Updated the marker from `review-loop-state: first-review-required` to `review-loop-state: re-review-ready`, updated the complete artifact with fix notes stating that the forced Review → Dev loop was exercised, and ran the lightweight fix verification.
+
+### Outcome
+Dev fix is complete and ready for re-review. The dispatch channel has been appended with the next `Dev → Review` message at `State = ready-for-re-review`; work remains open until Review returns `State = review-pass`.
+
+## Session 56 — 2026-05-14
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: `agents/channels/010-dispatch-smoke-re-review-channel.md`
+- Dispatch: `agents/artifacts/010-dispatch-smoke-re-review-dispatch.md`
+- Plan: `agents/artifacts/010-dispatch-smoke-re-review-plan.md`
+- Complete: `agents/artifacts/010-dispatch-smoke-re-review-complete.md`
+- Review: `agents/artifacts/010-dispatch-smoke-re-review-review.md`
+- Marker: `agents/artifacts/010-dispatch-smoke-re-review-marker.md`
+
+### Summary
+Re-reviewed the artifact-only dispatch smoke re-review loop after the required Dev fix. Confirmed the marker now contains `review-loop-state: re-review-ready`, the complete artifact records that the forced first Review → Dev loop was exercised, and the channel audit trail contains the expected re-review route with the documented recovery retry.
+
+### Outcome
+Verdict is `PASS`. The dispatch channel has been appended with the next `Review → Main` message at `State = review-pass`, so Main can close the smoke-test dispatch.
+
+## Session 57 — 2026-05-14
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: `agents/channels/010-dispatch-smoke-re-review-channel.md`
+- Dispatch: `agents/artifacts/010-dispatch-smoke-re-review-dispatch.md`
+- Plan: `agents/artifacts/010-dispatch-smoke-re-review-plan.md`
+- Complete: `agents/artifacts/010-dispatch-smoke-re-review-complete.md`
+- Review: `agents/artifacts/010-dispatch-smoke-re-review-review.md`
+- Marker: `agents/artifacts/010-dispatch-smoke-re-review-marker.md`
+
+### Summary
+Closed the artifact-only dispatch smoke re-review loop after confirming the latest Review message was addressed to Main with `State = review-pass` and the review artifact verdict was PASS with no required fixes. The smoke test successfully exercised `Main → Plan → Dev → Review → Dev → Review → Main`, plus a documented `Main → Dev` recovery retry after the earlier provider/config failure.
+
+### Outcome
+Dispatch-auto smoke test is complete and passed on the Mac. The channel is marked closed, and the created workflow/test artifacts are committed for auditability.
