@@ -213,7 +213,6 @@ export default function (pi: ExtensionAPI) {
 					let output = 0;
 					let reasoning = 0;
 					let cost = 0;
-					let totalTokens = 0;
 
 					for (const entry of ctx.sessionManager.getBranch()) {
 						if (
@@ -225,8 +224,6 @@ export default function (pi: ExtensionAPI) {
 							output += m.usage?.output ?? 0;
 							cost += m.usage?.cost?.total ?? 0;
 							reasoning += (m.usage as { reasoning?: number })?.reasoning ?? 0;
-							totalTokens +=
-								(m.usage?.input ?? 0) + (m.usage?.output ?? 0);
 						}
 					}
 
@@ -268,12 +265,14 @@ export default function (pi: ExtensionAPI) {
 					const tokenInputOnly = mkTokenPart([inputSeg]);
 
 					/* ── Context ── */
-					const ctxWindow = (ctx.model as { contextWindow?: number })?.contextWindow ?? 0;
+					const contextUsage = ctx.getContextUsage();
+					const ctxWindow = contextUsage?.contextWindow ?? 0;
 					let contextSeg = "";
 					let contextPctOnly = "";
 
-					if (ctxWindow > 0) {
-						const remaining = Math.max(0, ctxWindow - totalTokens);
+					if (ctxWindow > 0 && contextUsage) {
+						const usedTokens = Math.max(0, contextUsage.tokens ?? 0);
+						const remaining = Math.max(0, ctxWindow - usedTokens);
 						const pct = Math.max(
 							0,
 							Math.min(100, (remaining / ctxWindow) * 100)

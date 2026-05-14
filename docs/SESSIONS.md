@@ -811,3 +811,18 @@ Closed the `TICKET-049` internal row clipboard serialization dispatch after conf
 
 ### Outcome
 TICKET-049 is complete and ready to commit/push. Next recommended checkpoint is `TICKET-050` cut/copy/paste row UI flows.
+
+## Session 48 — 2026-05-14
+
+### Agent Type
+main
+
+### Artifacts
+- Handoff: `agents/handoff/2026-05-13-pi-extensions-kickoff.md`
+- Pi install sources: `.pi/install/repo-statusline.ts`, `.pi/install/sticky-model.ts`, `.pi/install/README.md`
+
+### Summary
+Worked through the Pi extensions/tooling lane. Installed and validated the lightweight task-list extension `@juicesharp/rpiv-todo` and context observability extension `pi-mono-context`. Audited minimal web tooling and skipped it after `pi-mono-web-search` failed to install cleanly. Audited OpenPets and noted its Pi package is experimental/unpublished. Fixed the custom statusline to use Pi's live `ctx.getContextUsage()` for context remaining, and replaced the prior sticky-model behavior with a narrower `/new`-only handoff that preserves the current session's provider/model/thinking level without imposing an extra global last-used-model policy.
+
+### Outcome
+Pi task list and context observability are active globally on this machine. The statusline context display and `/new` model preservation were tested by the user and confirmed working. Next recommended meta-workflow item is the `codex-switch` / `ai-usage` audit.

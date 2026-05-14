@@ -5,6 +5,7 @@ Per-machine setup for the [Pi coding agent](https://earendil.works) when working
 ## What Lives Here
 
 - [`repo-statusline.ts`](repo-statusline.ts) - canonical source for the custom Pi footer/statusline (repo name + branch, git diff, token counters, context %, model). It is tracked in the repo so any machine that pulls from `main` has the same source.
+- [`sticky-model.ts`](sticky-model.ts) - canonical source for the small `/new` model handoff extension. It preserves the current session's provider/model/thinking level across `/new` without imposing an extra global last-used-model policy.
 
 ## Why `install` Instead Of `.pi/extensions/`
 
@@ -16,9 +17,10 @@ Pi auto-loads extensions from `.pi/extensions/` in the project directory. If the
 # Copy the canonical source to your global Pi extensions dir
 mkdir -p ~/.pi/agent/extensions
 cp .pi/install/repo-statusline.ts ~/.pi/agent/extensions/repo-statusline.ts
+cp .pi/install/sticky-model.ts ~/.pi/agent/extensions/sticky-model.ts
 ```
 
-Pi auto-discovers extensions from `~/.pi/agent/extensions/`, so no `settings.json` edit is required for this statusline. After the next Pi session restart, the statusline applies to every repo on that machine, not just this one.
+Pi auto-discovers extensions from `~/.pi/agent/extensions/`, so no `settings.json` edit is required for these globally installed extensions. After the next Pi session restart, they apply to every repo on that machine, not just this one.
 
 If you do edit `~/.pi/agent/settings.json` for other reasons, save it as UTF-8 **without BOM**. Pi parses JSON with `JSON.parse`, and a leading BOM can cause startup warnings like `Unexpected token '﻿'`.
 
@@ -45,9 +47,9 @@ If `bash --version` already works in a fresh terminal on a machine, `.pi/setting
 
 If you ever need to seed a fresh machine, copy from the other one only as a local fallback - there is no canonical version of this file.
 
-## Keeping The Statusline In Sync
+## Keeping Installed Extensions In Sync
 
-When the canonical source at `.pi/install/repo-statusline.ts` changes (and is pulled from `main`), re-run the copy command above on each machine to refresh the globally installed copy.
+When the canonical sources at `.pi/install/repo-statusline.ts` or `.pi/install/sticky-model.ts` change (and are pulled from `main`), re-run the relevant copy command above on each machine to refresh the globally installed copy.
 
 ## Dispatch Auto-Orchestrator
 

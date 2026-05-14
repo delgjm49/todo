@@ -10,8 +10,8 @@ The user has a 4-item meta-workflow roadmap. Status as of 2026-05-13:
 |---|---|---|
 | 1 | Dispatch system fully working | ✅ Done. Real cycles 005/006/008/009 all completed end-to-end via dispatch-auto. Windows verification still pending (checklist at `agents/workflows/windows-test-plan.md`). |
 | 4 | Pi profile consolidation | ✅ Done. Vanilla `pi` is now the unified profile (`~/.pi/agent/`); `pi-multicodex` (ewgdg fork) handles two Codex OAuth accounts inside one profile. Aliases `pi-main` / `pi-alt` / etc. removed. |
-| **2** | **Pi extensions / tools (THIS SESSION)** | ⏳ Starting now. |
-| 3 | Meta agent layer above Main | ⏳ After #2. |
+| **2** | **Pi extensions / tools (THIS SESSION)** | ⏳ In progress. Task list/context observability installed; minimal web search/fetch next; model default audit next. |
+| 3 | Meta agent layer above Main | ⏳ After #2. Capture as explicit backlog item; it sits above Main/Plan/Dev/Review and should likely coordinate/choose work across repos/workflows. |
 
 ## Scope of this session (item #2)
 
@@ -88,6 +88,93 @@ Pi auto-discovers `.ts` files in `~/.pi/agent/extensions/` AND items listed in `
 ## In-flight work as of handoff
 
 - TICKET-049 (internal row clipboard serialization) was dispatched, reviewed `review-pass`, and just committed/pushed by the previous Main agent. So the working tree should be clean when you start. Verify with `git status -s`.
+
+## Pi extension wishlist captured after kickoff
+
+The user is interested in evaluating these extension/tool categories before installing or building anything:
+
+1. **Web fetch / web search**
+   - Question: is a dedicated tool even needed, since Pi agents have already reconciled web pages successfully using `bash`/curl-style approaches?
+   - Possible value: save tokens with cleaned/truncated extraction, give the model a clearer tool affordance, avoid shelling out for URLs, add search, handle difficult pages better.
+   - Concern: there are many options; choose based on actual needs rather than installing the largest package.
+   - Candidate packages/sources mentioned or found during initial survey:
+     - `pi-mono-web-search` from `emanuelcasco/pi-mono-extensions`: `web_search` + `web_read`, DuckDuckGo + Mozilla Readability, no external system tools, blocks private/internal addresses.
+     - `pi-web-access`: broad web/search/fetch/GitHub/PDF/YouTube/video package with fallback chains; likely powerful but larger surface area.
+     - `pi-smart-fetch`: robust fetch-focused package with browser-like TLS, Defuddle extraction, downloads, batch fetch, multiple formats.
+     - `@juicesharp/rpiv-web-tools`: Brave Search API-backed `web_search` + `web_fetch`, large-page spillover.
+     - `@ollama/pi-web-search`: depends on local Ollama web search/fetch APIs.
+
+2. **Task lists / todo tool**
+   - User likes Claude Code-style task tracking.
+   - Candidate packages:
+     - `@tintinweb/pi-tasks`: Claude-style task tools (`TaskCreate`, `TaskList`, `TaskGet`, `TaskUpdate`, etc.), persistent widget, dependencies, shared task lists, optional subagent integration; early release and relatively feature-heavy.
+     - `@juicesharp/rpiv-todo`: simpler `todo` tool + `/todos` command + live overlay; survives `/reload` and compaction; likely closer to a lightweight Claude TodoWrite-style experience.
+   - Need evaluate whether this complements or conflicts with the repo's existing dispatch artifacts/channel workflow.
+
+3. **Context management / context bloat/search**
+   - User sees many tools claiming context savings/search improvements and specifically mentioned `context-mode` from Pi's package listing.
+   - Candidate categories:
+     - Observability-only: `pi-mono-context` adds `/context` display-only context usage breakdown; likely low risk.
+     - Guardrails/intervention: `pi-mono-context-guard` auto-limits `read`, deduplicates repeated reads, and bounds raw `rg`; useful but may conflict with workflows requiring complete doc reads.
+     - External retrieval/MCP: `context-mode` claims large context-window savings with sandboxed code execution, FTS5 knowledge base, and intent-driven search; broader and more invasive, Elastic-2.0 license.
+     - Session search/memory: `@kaiserlich-dev/pi-session-search` and `pi-hermes-memory` could help search past Pi sessions, but may overlap with auto-memory and require privacy/secret-handling review.
+
+Initial recommendation to revisit: prefer temporary trials (`pi -e ...`) or source audits before global installs. Keep package count small because each active tool/command can add system-prompt/tool schema overhead and change model behavior.
+
+4. **OpenPets**
+   - User asked to look at <https://github.com/alvinunreal/openpets>.
+   - Summary from source audit: OpenPets is a tray-first Electron desktop companion for coding agents, with MCP/Claude/OpenCode integrations and an experimental Pi extension package at `@open-pets/pi`.
+   - Pi extension behavior from `packages/pi/src/runtime.ts`: subscribes to Pi lifecycle/tool events (`session_start`, `agent_start`, `turn_start`, `tool_execution_start`, `tool_execution_end`, `agent_end`, etc.), sends local best-effort reactions through `@open-pets/client`, and registers `/openpets status|test|react|say`.
+   - Privacy posture: automatic events do not forward prompts, assistant text, tool output, file contents, paths, URLs, or secrets; command text is bounded and only used to classify test-like shell commands.
+   - Important caveat as of this audit: `npm view @open-pets/pi` returned 404 even though the package exists in the repo at version `2.0.6`; README says Pi install validation is still required before marking support fully supported. Treat this as experimental/source-install only unless npm publishing is confirmed later.
+   - Possible fit: UI/UX/status companion, not a core workflow tool. Fun/low-stakes if installed, but requires running the OpenPets desktop app and potentially package/source installation.
+
+Initial selected trials discussed with user:
+
+- Task list: installed globally with `pi install npm:@juicesharp/rpiv-todo`; package now appears in `~/.pi/agent/settings.json`.
+- Context observability: installed globally with `pi install npm:pi-mono-context`; package now appears in `~/.pi/agent/settings.json`.
+- Minimal web search/fetch: attempted `pi install npm:pi-mono-web-search`, but install failed. `npm` failed while installing transitive `koffi` (`Cannot find module .../node_modules/koffi/src/cnoke/cnoke.js`). Settings were unchanged; `pi-mono-web-search` was not added. Package metadata also looks suspect because it declares dependency `pi-common@0.1.1`, and `npm view pi-common` returned 404. Candidate next alternatives: `pi-smart-fetch` for fetch-only robust extraction, or `@juicesharp/rpiv-web-tools` for Brave-backed search/fetch if user wants to provide an API key.
+
+Follow-up findings after reload:
+
+- `/context` reported about `68k/272k` current context usage, while `repo-statusline.ts` showed `Context: 17.6% (48.0k / 272.0k)` and token totals `↑in:212.0k ↓out:12.0k`.
+- Root cause: the custom repo statusline's “Context” segment is currently computed from cumulative assistant usage (`sum(input + output)` over the session branch), not from current prompt/context occupancy. That means it behaves like “cumulative charged token budget remaining” and can diverge sharply from Pi's actual current context, especially after many turns/cache reuse. `pi-mono-context` uses `ctx.getContextUsage()` for the current context window and is likely the better source for actual remaining context.
+- Fix applied: canonical `.pi/install/repo-statusline.ts` and installed `~/.pi/agent/extensions/repo-statusline.ts` now use `ctx.getContextUsage()` for the Context segment while keeping the cumulative `Tokens:` segment unchanged. Verification: `npm run typecheck` passed.
+
+5. **Retire/reconcile old workflow commands**
+   - User noticed `/context` still lists `orch` and `orch-watch` commands.
+   - Source audit: these are registered unconditionally by the global `~/.pi/agent/extensions/joe-workflow/index.ts` extension, alongside `agent`, `profile`, `tool-profile`, `godot`, and `mcp`.
+   - User suspects `orch` / `orch-watch` may no longer be needed for Todo because this repo now uses dispatch-auto channels/artifacts instead. They may still be used by `gumball-factory`, but goal is likely to retire that path when revisiting that repo and porting the Todo strategy.
+   - Do not remove globally yet without checking cross-repo usage. Candidate future fix: add config-gated command registration or split legacy orchestration commands into a separate extension/package so Todo/Blancetrack can run without them while Gumball retains them temporarily.
+
+## Broader meta-workflow backlog additions captured after kickoff
+
+The user paused before the Pi extensions wishlist to add a few broader todos, in case the session is lost:
+
+1. **Pi default model selection audit**
+   - Examine how Pi chooses the default model for a fresh session.
+   - Examine how `/new` chooses or inherits a model.
+   - Revisit prior customization, especially the installed `sticky-model.ts` extension, because it may have helped but did not fully solve the behavior.
+   - Goal: make default/new-session model behavior predictable and document the actual resolution order.
+   - User's #1 preference: when the user enters `/new`, the replacement session should preserve the current session's exact active provider/model/thinking level, e.g. `gpt-5.5 - high (openai-codex)`. It should not simply read the global “last used” model, because another terminal may have selected a different model.
+   - Audit finding: Pi core already persists model changes to global settings in `AgentSession.setModel()` / model cycling (`settingsManager.setDefaultModelAndProvider`) and persists thinking changes in `setThinkingLevel()` (`settingsManager.setDefaultThinkingLevel`). `/new` tears down the old runtime and creates a blank session, so initial model selection is resolved from the current global settings before extensions see the new session. The current `sticky-model.ts` also reads global settings on `session_start` and applies them, which reinforces the cross-terminal problem.
+   - Fix applied: replaced installed `~/.pi/agent/extensions/sticky-model.ts` and added canonical `.pi/install/sticky-model.ts`. The new version only handles `/new`: on `session_shutdown` with `reason === "new"`, it snapshots the current session's `ctx.model` plus `pi.getThinkingLevel()`, temporarily writes those values into settings so Pi core initializes the new session correctly, then on `session_start` with `reason === "new"`, restores the prior settings fields if they still match the temporary values. It does not listen to `model_select` or apply global settings on every `session_start`; everything else is Pi defaults. Verification: TypeScript transpile check for `.pi/install/sticky-model.ts` passed; `npm run typecheck` passed.
+
+2. **Retire or reconcile `codex-switch`**
+   - Audit whether a `codex-switch` application/config is still installed or active.
+   - Determine whether it is now obsolete because vanilla `pi` plus `pi-multicodex` can route both Codex OAuth accounts inside one Pi profile.
+   - Check for interplay with `ai-usage`; this may need adjustment if `codex-switch` is removed or bypassed.
+   - Do not remove anything until dependencies and current usage are understood.
+
+3. **Replicate the Todo workflow to other repos**
+   - First target: `blancetrack`, replicating the improved dispatch/orchestration/statusline/workflow pieces from this repo as appropriate.
+   - Longer-term target: `gumball-factory`, likely harder because that repo has additional repo-specific complexity, including Terra.
+   - Prefer a migration checklist and repo-specific reconciliation over blind copy/paste.
+
+Suggested categorization:
+
+- Items 1 and 2 fit the Pi tooling/extensions cleanup lane and may be investigated alongside extension work.
+- Item 3 is a separate workflow-portability lane after the Todo workflow stabilizes further.
 
 ## First message to send the user
 
