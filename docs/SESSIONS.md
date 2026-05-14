@@ -1107,3 +1107,91 @@ Closed the artifact-only Kimi/no-reasoning dispatch smoke test after confirming 
 
 ### Outcome
 Kimi/no-reasoning dispatch-auto smoke test is complete and passed on the Mac. The channel is marked closed, and the created workflow/test artifacts are committed for auditability.
+
+## Session 65 — 2026-05-14
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: `agents/channels/012-dispatch-auto-failure-retry-smoke-channel.md`
+- Dispatch: `agents/artifacts/012-dispatch-auto-failure-retry-smoke-dispatch.md`
+
+### Summary
+Created a tiny artifact-only dispatch-auto smoke test to support failure/retry behavior testing without exercising a forced review loop. The dispatch is intentionally limited to disposable artifacts under `agents/artifacts/`, normal channel/session bookkeeping, and the simple route `Main → Plan → Dev → Review → Main`.
+
+### Outcome
+Dispatch-auto failure/retry smoke test is queued for Plan. No app source, app tests, package/Tauri config, product docs, or orchestration config changes are in scope for workers.
+
+## Session 66 — 2026-05-14
+
+### Agent Type
+plan
+
+### Artifacts
+- Channel: `agents/channels/012-dispatch-auto-failure-retry-smoke-channel.md`
+- Dispatch: `agents/artifacts/012-dispatch-auto-failure-retry-smoke-dispatch.md`
+- Plan: `agents/artifacts/012-dispatch-auto-failure-retry-smoke-plan.md`
+
+### Summary
+Created the tiny artifact-only plan for the dispatch-auto failure/retry smoke test. The plan preserves the simple `Main → Plan → Dev → Review → Main` route and limits Dev/Review work to disposable artifacts plus required workflow bookkeeping.
+
+### Outcome
+Plan is ready for Dev. The dispatch channel has been appended with a `Plan → Dev` message at `State = ready-for-dev`; workers remain prohibited from modifying app source, app tests, package/Tauri config, product docs, orchestration config, dispatch-auto code, external scripts, or committing changes.
+
+## Session 67 — 2026-05-14
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: `agents/channels/012-dispatch-auto-failure-retry-smoke-channel.md`
+- Dispatch: `agents/artifacts/012-dispatch-auto-failure-retry-smoke-dispatch.md`
+- Plan: `agents/artifacts/012-dispatch-auto-failure-retry-smoke-plan.md`
+- Complete: `agents/artifacts/012-dispatch-auto-failure-retry-smoke-complete.md`
+- Marker: `agents/artifacts/012-dispatch-auto-failure-retry-smoke-marker.md`
+
+### Summary
+Created the disposable smoke marker artifact (`smoke-state: dev-complete`) and the complete artifact with lightweight verification results. All required commands passed: marker grep, `git diff --check`, `git diff --name-only`. No app source, app tests, package/Tauri config, product docs, orchestration config, dispatch-auto code, or external scripts were modified by Dev.
+
+### Outcome
+Implementation complete, ready for Review. Channel appended with `Dev → Review` message at `State = ready-for-review`.
+
+## Session 68 — 2026-05-14
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: `agents/channels/012-dispatch-auto-failure-retry-smoke-channel.md`
+- Dispatch: `agents/artifacts/012-dispatch-auto-failure-retry-smoke-dispatch.md`
+- Plan: `agents/artifacts/012-dispatch-auto-failure-retry-smoke-plan.md`
+- Complete: `agents/artifacts/012-dispatch-auto-failure-retry-smoke-complete.md`
+- Marker: `agents/artifacts/012-dispatch-auto-failure-retry-smoke-marker.md`
+- Review: `agents/artifacts/012-dispatch-auto-failure-retry-smoke-review.md`
+
+### Summary
+Reviewed the artifact-only dispatch-auto failure/retry smoke test. Confirmed the marker contains `smoke-state: dev-complete`, the complete artifact records lightweight verification, and no app source, tests, package/Tauri config, product docs, orchestration config, dispatch-auto code, or external scripts were modified by workers. Independently ran marker grep, `git diff --check`, and `git diff --name-only` — all pass with only allowed workflow changes observed.
+
+### Outcome
+Review verdict: PASS. Channel appended with `Review → Main` message at `State = review-pass`, preserving the simple `Main → Plan → Dev → Review → Main` route.
+
+## Session 69 — 2026-05-14
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: `agents/channels/012-dispatch-auto-failure-retry-smoke-channel.md`
+- Dispatch: `agents/artifacts/012-dispatch-auto-failure-retry-smoke-dispatch.md`
+- Plan: `agents/artifacts/012-dispatch-auto-failure-retry-smoke-plan.md`
+- Complete: `agents/artifacts/012-dispatch-auto-failure-retry-smoke-complete.md`
+- Marker: `agents/artifacts/012-dispatch-auto-failure-retry-smoke-marker.md`
+- Review: `agents/artifacts/012-dispatch-auto-failure-retry-smoke-review.md`
+
+### Summary
+Closed the artifact-only dispatch-auto failure/retry smoke test after confirming the latest channel message was Review → Main with `State = review-pass` and the review artifact verdict was PASS. The test exercised two retry paths: a failed Plan launch caused by an intentional ignored local unsupported-model override, followed by a successful retry after removing it; and a failed Review closeout under Kimi, followed by a successful retry after temporarily routing the ignored local Review override to `deepseek-v4-pro`.
+
+### Outcome
+Dispatch-auto failure/retry behavior was validated without app source, app tests, package/Tauri config, product docs, orchestration config, dispatch-auto code, or external script changes from workers. The temporary ignored local Review override was removed before close preparation, and the channel is marked closed pending Main commit/push approval.
+

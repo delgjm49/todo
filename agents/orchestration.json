@@ -60,7 +60,7 @@
     },
     "Review": {
       "binary": "pi",
-      "modelPreset": "kimi-k2.6"
+      "modelPreset": "deepseek-v4-pro"
     }
   }
 }

@@ -23,6 +23,7 @@ import { randomUUID } from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import { Type } from "typebox";
 
 const STOP_ROLE = "Main";
 const TERMINAL_STATES = new Set(["closed"]);
@@ -204,6 +205,83 @@ function isTerminal(channel: ParsedChannel): boolean {
 	return false;
 }
 
+function resolveChannel(cwd: string, cfg: OrchestrationConfig, explicitPath?: string): { channelFile?: string; error?: string } {
+	const trimmed = explicitPath?.trim();
+	if (trimmed) {
+		const resolved = path.resolve(cwd, trimmed.replace(/^@/, ""));
+		const cwdResolved = path.resolve(cwd);
+		if (resolved !== cwdResolved && !resolved.startsWith(cwdResolved + path.sep)) {
+			return { error: `channel path is outside repo: ${trimmed}` };
+		}
+		if (!fs.existsSync(resolved)) return { error: `channel does not exist: ${trimmed}` };
+		if (!fs.statSync(resolved).isFile()) return { error: `channel is not a file: ${trimmed}` };
+		return { channelFile: resolved };
+	}
+
+	const glob = cfg.channelGlob ?? CHANNEL_GLOB_DEFAULT;
+	const latest = findLatestChannel(cwd, glob);
+	if (!latest) return { error: `no dispatch channels found for ${glob}` };
+	return { channelFile: latest };
+}
+
+function validateRetryChannel(channel: ParsedChannel | null): string | null {
+	if (!channel) return "channel is unparseable";
+	if (!channel.lastMessage) return "channel has no messages";
+	if (isTerminal(channel)) return `channel is terminal (status=${channel.status || "none"}, latest-to=${channel.lastMessage.to})`;
+	return null;
+}
+
+function summarizeFinal(cwd: string, channelFile: string): string {
+	const final = parseChannel(channelFile);
+	const rel = path.relative(cwd, channelFile);
+	if (!final?.lastMessage) return `Dispatch chain finished for \`${rel}\`, but the channel could not be parsed.`;
+	return (
+		`Dispatch chain finished for \`${rel}\`.\n\n` +
+		`Channel status: **${final.status || "(none)"}**\n` +
+		`Latest message: **${final.lastMessage.from} → ${final.lastMessage.to}** (state: \`${final.lastMessage.state}\`)`
+	);
+}
+
+interface RetryRequest {
+	channel?: string;
+	reason?: string;
+	requestedBy?: string;
+	createdAt?: string;
+}
+
+function retryRequestDir(cwd: string): string {
+	return path.join(cwd, "agents", "channels", ".sessions", "retry-requests");
+}
+
+function enqueueRetryRequest(cwd: string, request: RetryRequest): string {
+	const dir = retryRequestDir(cwd);
+	fs.mkdirSync(dir, { recursive: true });
+	const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+	const filePath = path.join(dir, `${stamp}-${randomUUID()}.json`);
+	fs.writeFileSync(filePath, JSON.stringify({ ...request, createdAt: new Date().toISOString() }, null, 2) + "\n");
+	logEvent(cwd, `manual-retry queued request=${path.basename(filePath)} channel=${JSON.stringify(request.channel ?? "latest")} reason=${JSON.stringify(request.reason ?? "")}`);
+	return filePath;
+}
+
+function consumeNextRetryRequest(cwd: string): { request?: RetryRequest; filePath?: string; error?: string } {
+	const dir = retryRequestDir(cwd);
+	if (!fs.existsSync(dir)) return {};
+	const files = fs.readdirSync(dir)
+		.filter((f) => f.endsWith(".json"))
+		.map((f) => path.join(dir, f))
+		.sort();
+	if (files.length === 0) return {};
+	const filePath = files[0];
+	try {
+		const request = JSON.parse(fs.readFileSync(filePath, "utf8")) as RetryRequest;
+		fs.unlinkSync(filePath);
+		return { request, filePath };
+	} catch (err) {
+		try { fs.renameSync(filePath, `${filePath}.bad`); } catch {}
+		return { error: `invalid retry request ${path.basename(filePath)}: ${(err as Error).message}`, filePath };
+	}
+}
+
 function sessionDirFor(cwd: string, channelFile: string, role: string): string {
 	const base = path.basename(channelFile, ".md");
 	const dir = path.join(cwd, "agents", "channels", ".sessions", `${base}-${role}`);
@@ -363,7 +441,12 @@ async function runRoleTurn(cwd: string, role: string, cfg: OrchestrationConfig, 
 	return { exitCode: first.exitCode };
 }
 
-async function runChain(cwd: string, cfg: OrchestrationConfig, channelFile: string, setStatus: (s: string | undefined) => void): Promise<void> {
+interface ChainResult {
+	ok: boolean;
+	reason: string;
+}
+
+async function runChain(cwd: string, cfg: OrchestrationConfig, channelFile: string, setStatus: (s: string | undefined) => void, reason = "auto"): Promise<ChainResult> {
 	let safety = 20; // hard cap on links per chain run to prevent runaway loops
 
 	while (safety-- > 0) {
@@ -371,41 +454,46 @@ async function runChain(cwd: string, cfg: OrchestrationConfig, channelFile: stri
 		// process touches an older channel mid-chain (editor save, git, lint).
 		const parsed = parseChannel(channelFile);
 		if (!parsed || !parsed.lastMessage) {
-			logEvent(cwd, `chain stop: unparseable channel ${path.basename(channelFile)}`);
+			const stopReason = `unparseable channel ${path.basename(channelFile)}`;
+			logEvent(cwd, `chain stop: ${stopReason}`);
 			setStatus(undefined);
-			return;
+			return { ok: false, reason: stopReason };
 		}
 		if (isTerminal(parsed)) {
-			logEvent(cwd, `chain stop: terminal channel=${path.basename(channelFile)} status=${parsed.status} last-to=${parsed.lastMessage.to}`);
+			const stopReason = `terminal channel=${path.basename(channelFile)} status=${parsed.status} last-to=${parsed.lastMessage.to}`;
+			logEvent(cwd, `chain stop: ${stopReason}`);
 			notify("Dispatch chain complete", `${path.basename(channelFile)} → ${parsed.lastMessage.to} (${parsed.lastMessage.state})`);
 			setStatus(undefined);
-			return;
+			return { ok: true, reason: stopReason };
 		}
 
 		const role = parsed.lastMessage.to;
-		setStatus(`running ${role} (msg ${parsed.lastMessage.number + 1})`);
+		setStatus(`${reason === "manual-retry" ? "retrying" : "running"} ${role} (msg ${parsed.lastMessage.number + 1})`);
 		const { exitCode } = await runRoleTurn(cwd, role, cfg, channelFile);
 
 		if (exitCode !== 0) {
-			logEvent(cwd, `chain stop: ${role} exited non-zero (code=${exitCode})`);
+			const stopReason = `${role} exited non-zero (code=${exitCode})`;
+			logEvent(cwd, `chain stop: ${stopReason}`);
 			notify("Dispatch chain stopped", `${role} exited with code ${exitCode}. See .dispatch-auto.log.`);
 			setStatus("error");
-			return;
+			return { ok: false, reason: stopReason };
 		}
 
 		// Re-poll the channel to detect what the just-run role wrote.
 		const after = parseChannel(channelFile);
 		if (!after || !after.lastMessage || after.lastMessage.number <= parsed.lastMessage.number) {
-			logEvent(cwd, `chain stop: ${role} ran but did not append a new message`);
+			const stopReason = `${role} ran but did not append a new message`;
+			logEvent(cwd, `chain stop: ${stopReason}`);
 			notify("Dispatch chain stalled", `${role} ran but channel didn't advance. See .dispatch-auto.log.`);
 			setStatus("error");
-			return;
+			return { ok: false, reason: stopReason };
 		}
 		// Loop: parse will pick up the new latest message and decide next.
 	}
 	logEvent(cwd, "chain stop: safety cap reached");
 	notify("Dispatch chain stopped", "Safety cap (20 links) reached. See .dispatch-auto.log.");
 	setStatus("error");
+	return { ok: false, reason: "safety cap reached" };
 }
 
 export default function (pi: ExtensionAPI) {
@@ -413,17 +501,141 @@ export default function (pi: ExtensionAPI) {
 
 	let running = false;
 	let sessionStartMs = 0;
+	let retryToolRegistered = false;
 	// Tracks the latest (channel-file, message-number, mtime) we've attempted.
 	// We compare both message number and file mtime so a user/Main can retry the
 	// same message after a failure by touching or appending to the channel without
 	// needing /reload. A stale unmodified channel still won't re-fire forever.
 	const acted = new Map<string, { number: number; mtimeMs: number }>();
 
+	const sendMainSummary = (cwd: string, channelFile: string, chainResult: ChainResult) => {
+		const final = parseChannel(channelFile);
+		if (!final?.lastMessage) return;
+		const rel = path.relative(cwd, channelFile);
+		const summary =
+			`[dispatch-auto] The Plan → Dev → Review chain just ${chainResult.ok ? "finished" : "stopped"} for \`${rel}\`.\n\n` +
+			`Result: **${chainResult.ok ? "ok" : "needs attention"}** — ${chainResult.reason}\n` +
+			`Channel status: **${final.status || "(none)"}**\n` +
+			`Latest message: **${final.lastMessage.from} → ${final.lastMessage.to}** (state: \`${final.lastMessage.state}\`)\n\n` +
+			`Please:\n` +
+			`1. Read the channel and the review artifact for this dispatch.\n` +
+			`2. Skim \`git status\` to see what changed.\n` +
+			`3. Briefly summarize the result (what shipped, any concerns).\n` +
+			`4. **Offer** to update \`docs/SESSIONS.md\` with a Main close-session entry, mark the channel closed, commit, and push.\n\n` +
+			`**Do not commit yet** — wait for my explicit go-ahead.`;
+		setTimeout(() => {
+			try {
+				pi.sendMessage(
+					{ customType: "dispatch-auto-summary", content: summary, display: true },
+					{ triggerTurn: true, deliverAs: "followUp" }
+				);
+			} catch (err) {
+				logEvent(cwd, `notify-main failed: ${(err as Error).message}`);
+			}
+		}, 250);
+	};
+
+	const requestRetry = async (
+		cwd: string,
+		cfg: OrchestrationConfig,
+		channelArg: string | undefined,
+		reason: string | undefined,
+		setStatus: (s: string | undefined) => void,
+	): Promise<{ ok: boolean; message: string; channelFile?: string; chainResult?: ChainResult }> => {
+		if (running) return { ok: false, message: "dispatch chain is already running" };
+		const resolved = resolveChannel(cwd, cfg, channelArg);
+		if (!resolved.channelFile) {
+			logEvent(cwd, `manual-retry rejected reason=${JSON.stringify(resolved.error)}`);
+			return { ok: false, message: resolved.error ?? "could not resolve channel" };
+		}
+		const channelFile = resolved.channelFile;
+		const parsed = parseChannel(channelFile);
+		const invalid = validateRetryChannel(parsed);
+		if (invalid) {
+			logEvent(cwd, `manual-retry rejected reason=${JSON.stringify(invalid)} channel=${path.basename(channelFile)}`);
+			return { ok: false, message: invalid, channelFile };
+		}
+
+		const channelKey = normalizeKey(channelFile);
+		let startMtime = 0;
+		try { startMtime = fs.statSync(channelFile).mtimeMs; } catch {}
+		logEvent(cwd, `manual-retry requested channel=${path.basename(channelFile)} msg=${parsed!.lastMessage!.number} reason=${JSON.stringify(reason ?? "")}`);
+
+		running = true;
+		acted.set(channelKey, { number: parsed!.lastMessage!.number, mtimeMs: startMtime });
+		try {
+			const chainResult = await runChain(cwd, cfg, channelFile, setStatus, "manual-retry");
+			logEvent(cwd, `manual-retry finished channel=${path.basename(channelFile)} ok=${chainResult.ok} reason=${JSON.stringify(chainResult.reason)}`);
+			const summary = `${chainResult.ok ? "Dispatch retry finished" : "Dispatch retry stopped"}: ${chainResult.reason}\n\n${summarizeFinal(cwd, channelFile)}`;
+			return { ok: chainResult.ok, message: summary, channelFile, chainResult };
+		} finally {
+			running = false;
+			const final = parseChannel(channelFile);
+			if (final?.lastMessage) {
+				let finalMtime = startMtime;
+				try { finalMtime = fs.statSync(channelFile).mtimeMs; } catch {}
+				acted.set(channelKey, { number: final.lastMessage.number, mtimeMs: finalMtime });
+			}
+		}
+	};
+
+	pi.registerCommand("dispatch", {
+		description: "Dispatch-auto controls: /dispatch retry [channel-path]",
+		handler: async (args, ctx) => {
+			const cwd = ctx.cwd ?? process.cwd();
+			const cfg = loadConfig(cwd);
+			if (!cfg) {
+				ctx.ui.notify("dispatch-auto is not enabled in this repo", "warning");
+				return;
+			}
+			const parts = args.trim().split(/\s+/).filter(Boolean);
+			if (parts[0] !== "retry") {
+				ctx.ui.notify("Usage: /dispatch retry [channel-path]", "info");
+				return;
+			}
+			const channelArg = parts.slice(1).join(" ") || undefined;
+			const result = await requestRetry(cwd, cfg, channelArg, "slash command", (s) => ctx.ui.setStatus("dispatch-auto", s));
+			ctx.ui.notify(result.ok ? "Dispatch retry finished" : `Dispatch retry rejected: ${result.message}`, result.ok ? "info" : "warning");
+		},
+	});
+
 	pi.on("session_start", async (_event, ctx) => {
 		const cwd = ctx.cwd ?? process.cwd();
 		const cfg = loadConfig(cwd);
 		if (!cfg) return;
 		sessionStartMs = Date.now();
+		if (!retryToolRegistered) {
+			retryToolRegistered = true;
+			pi.registerTool({
+				name: "dispatch_auto_retry",
+				label: "Dispatch Retry",
+				description: "Request a one-shot retry of the latest or specified dispatch-auto channel after explicit user approval.",
+				promptSnippet: "Request a guarded one-shot dispatch-auto retry after the user explicitly approves retrying a failed dispatch.",
+				promptGuidelines: [
+					"Use dispatch_auto_retry only after the user explicitly approves retrying a failed or stalled dispatch-auto chain.",
+					"Do not use dispatch_auto_retry for terminal channels addressed to Main, closed channels, or speculative retries without user approval.",
+				],
+				parameters: Type.Object({
+					channel: Type.Optional(Type.String({ description: "Optional channel path. If omitted, retry the latest configured dispatch channel." })),
+					reason: Type.Optional(Type.String({ description: "Brief reason and user approval context for the retry." })),
+				}),
+				async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
+					const cwd = ctx.cwd ?? process.cwd();
+					const cfg = loadConfig(cwd);
+					if (!cfg) throw new Error("dispatch-auto is not enabled in this repo");
+					const requestPath = enqueueRetryRequest(cwd, {
+						channel: params.channel,
+						reason: params.reason,
+						requestedBy: "Main/model via dispatch_auto_retry",
+					});
+					const rel = path.relative(cwd, requestPath);
+					return {
+						content: [{ type: "text", text: `Queued a one-shot dispatch retry request at ${rel}. It will be consumed when this turn ends.` }],
+						details: { request: rel, channel: params.channel, reason: params.reason },
+					};
+				},
+			});
+		}
 		// Intentionally do NOT pre-populate `acted` with existing channels.
 		// The mtime gate is what filters stale state from prior sessions —
 		// a channel only matters here once its mtime advances past our session
@@ -443,6 +655,20 @@ export default function (pi: ExtensionAPI) {
 		const cfg = loadConfig(cwd);
 		if (!cfg) return;
 		if (running) return;
+
+		const retryRequest = consumeNextRetryRequest(cwd);
+		if (retryRequest.error) {
+			logEvent(cwd, `manual-retry rejected reason=${JSON.stringify(retryRequest.error)}`);
+			ctx.ui.setStatus("dispatch-auto", "error");
+			return;
+		}
+		if (retryRequest.request) {
+			const setStatus = (s: string | undefined) => ctx.ui.setStatus("dispatch-auto", s);
+			const result = await requestRetry(cwd, cfg, retryRequest.request.channel, retryRequest.request.reason ?? "queued retry request", setStatus);
+			if (result.channelFile && result.chainResult) sendMainSummary(cwd, result.channelFile, result.chainResult);
+			else logEvent(cwd, `manual-retry rejected reason=${JSON.stringify(result.message)}`);
+			return;
+		}
 
 		const glob = cfg.channelGlob ?? CHANNEL_GLOB_DEFAULT;
 		const channelFile = findLatestChannel(cwd, glob);
@@ -478,35 +704,12 @@ export default function (pi: ExtensionAPI) {
 		acted.set(channelKey, { number: parsed.lastMessage.number, mtimeMs: channelMtime });
 		const setStatus = (s: string | undefined) => ctx.ui.setStatus("dispatch-auto", s);
 		try {
-			await runChain(cwd, cfg, channelFile, setStatus);
+			const chainResult = await runChain(cwd, cfg, channelFile, setStatus);
 			// Wake Main with a summary message so it can describe what just happened
 			// and offer next steps (close, commit, push). We never auto-commit — Main
 			// must wait for user confirmation. Use setTimeout so the agent_end handler
 			// fully unwinds before we trigger a new turn.
-			const final = parseChannel(channelFile);
-			if (final?.lastMessage) {
-				const rel = path.relative(cwd, channelFile);
-				const summary =
-					`[dispatch-auto] The Plan → Dev → Review chain just finished for \`${rel}\`.\n\n` +
-					`Channel status: **${final.status || "(none)"}**\n` +
-					`Latest message: **${final.lastMessage.from} → ${final.lastMessage.to}** (state: \`${final.lastMessage.state}\`)\n\n` +
-					`Please:\n` +
-					`1. Read the channel and the review artifact for this dispatch.\n` +
-					`2. Skim \`git status\` to see what changed.\n` +
-					`3. Briefly summarize the result (what shipped, any concerns).\n` +
-					`4. **Offer** to update \`docs/SESSIONS.md\` with a Main close-session entry, mark the channel closed, commit, and push.\n\n` +
-					`**Do not commit yet** — wait for my explicit go-ahead.`;
-				setTimeout(() => {
-					try {
-						pi.sendMessage(
-							{ customType: "dispatch-auto-summary", content: summary, display: true },
-							{ triggerTurn: true, deliverAs: "followUp" }
-						);
-					} catch (err) {
-						logEvent(cwd, `notify-main failed: ${(err as Error).message}`);
-					}
-				}, 250);
-			}
+			sendMainSummary(cwd, channelFile, chainResult);
 		} finally {
 			running = false;
 			const final = parseChannel(channelFile);

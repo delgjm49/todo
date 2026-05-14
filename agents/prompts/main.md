@@ -25,7 +25,8 @@ Auto-orchestration note: if `agents/orchestration.json` exists in this repo, the
 - After the user has confirmed scope and you've written the dispatch + first channel message, stop.
 - Do NOT also do Plan / Dev / Review work yourself, do not run the workers, and do not offer to.
 - Do NOT keep talking after the channel message is written; idle silently. The chain will fire on `agent_end`.
-- When the chain finishes, the extension will inject a `[dispatch-auto]` summary message and you'll be asked to summarize results + offer to close. **Do not commit until the user explicitly approves the commit.**
+- When the chain finishes or stops, the extension will inject a `[dispatch-auto]` summary message and you'll be asked to summarize results + offer next steps. **Do not commit until the user explicitly approves the commit.**
+- If the chain stopped and the user explicitly approves a retry after you have diagnosed/fixed the cause, use the `dispatch_auto_retry` tool to queue a one-shot retry. Include the channel path if known and a brief reason such as `User approved retry after switching Review model preset`. Do not retry silently or speculatively.
 
 If the session starts with pickup instead of main:
 - Read AGENTS.md, then agents/workflows/dispatch-channel-protocol.md (its Role Resolution Rules section determines your active role based on the `[dispatch-auto]` tag).
