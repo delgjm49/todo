@@ -24,7 +24,7 @@
   },
   "roles": {
     "Plan":   { "binary": "pi", "modelPreset": "gpt-5.5-codex" },
-    "Dev":    { "binary": "pi", "modelPreset": "kimi-k2.6" },
-    "Review": { "binary": "pi", "modelPreset": "deepseek-v4-pro" }
+    "Dev":    { "binary": "pi", "modelPreset": "gpt-5.5-codex" },
+    "Review": { "binary": "pi", "modelPreset": "gpt-5.5-codex" }
   }
 }
