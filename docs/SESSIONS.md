@@ -826,3 +826,18 @@ Worked through the Pi extensions/tooling lane. Installed and validated the light
 
 ### Outcome
 Pi task list and context observability are active globally on this machine. The statusline context display and `/new` model preservation were tested by the user and confirmed working. Next recommended meta-workflow item is the `codex-switch` / `ai-usage` audit.
+
+## Session 49 — 2026-05-14
+
+### Agent Type
+main
+
+### Artifacts
+- Handoff: `agents/handoff/2026-05-13-pi-extensions-kickoff.md`
+- External machine files updated outside this repo: `~/Developer/.cmux/scripts/ai_usage_snapshot.py`, `~/.local/bin/ai-usage.sh`
+
+### Summary
+Audited `codex-switch` and `ai-usage` after Pi profile consolidation. Confirmed the user no longer uses the direct Codex harness and now uses both Codex accounts through Pi Agent / pi-multicodex. Updated the external `ai_usage_snapshot.py` and `ai-usage.sh` scripts so Codex usage prefers Pi-multicodex/Pi auth storage and no longer depends on `codex-switch` in the normal path. Removed the stale Codex active-account `*` marker from the dashboard. Captured a future todo for `ai-usage` to refresh/warm Claude Code account usage reporting when accounts have been idle too long.
+
+### Outcome
+`ai-usage` was tested multiple times by the user and looks correct. `codex-switch` remains installed for a short soak period before retirement. Next discussion is how to organize machine/environment-level workflow that sits above any single repo, then move into the Meta agent layer design.
