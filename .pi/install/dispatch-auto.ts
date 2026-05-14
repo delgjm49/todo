@@ -338,7 +338,8 @@ async function runRoleTurn(cwd: string, role: string, cfg: OrchestrationConfig, 
 	const resumed = plan.cmd === "claude"
 		? !!plan.resumedClaude
 		: fs.readdirSync(sessionDir).length > 0;
-	logEvent(cwd, `spawn role=${role} binary=${plan.cmd} resume=${resumed ? "yes" : "fresh"} timeoutMs=${timeoutMs} channel=${path.basename(channelFile)}`);
+	const safeArgs = plan.args.slice(0, -1); // omit pickup prompt; keep model/session args for diagnostics
+	logEvent(cwd, `spawn role=${role} binary=${plan.cmd} resume=${resumed ? "yes" : "fresh"} timeoutMs=${timeoutMs} channel=${path.basename(channelFile)} args=${JSON.stringify(safeArgs)}`);
 
 	const first = await spawnOnce(cwd, role, plan, timeoutMs);
 
@@ -412,9 +413,11 @@ export default function (pi: ExtensionAPI) {
 
 	let running = false;
 	let sessionStartMs = 0;
-	// Tracks the highest (channel-file, message-number) we've already acted on
-	// so we don't re-fire on the same message after a chain completes.
-	const acted = new Map<string, number>();
+	// Tracks the latest (channel-file, message-number, mtime) we've attempted.
+	// We compare both message number and file mtime so a user/Main can retry the
+	// same message after a failure by touching or appending to the channel without
+	// needing /reload. A stale unmodified channel still won't re-fire forever.
+	const acted = new Map<string, { number: number; mtimeMs: number }>();
 
 	pi.on("session_start", async (_event, ctx) => {
 		const cwd = ctx.cwd ?? process.cwd();
@@ -456,17 +459,23 @@ export default function (pi: ExtensionAPI) {
 		const parsed = parseChannel(channelFile);
 		if (!parsed?.lastMessage) return;
 
-		// Gate 2: don't re-fire on a message we've already acted on this session.
+		// Gate 2: don't re-fire on a message+mtime we've already attempted this
+		// session. If Main touches/appends the same latest message after a worker
+		// failure, the mtime advances and this gate allows a retry.
 		const lastActed = acted.get(channelKey);
-		if (lastActed !== undefined && parsed.lastMessage.number <= lastActed) return;
+		if (
+			lastActed !== undefined &&
+			parsed.lastMessage.number <= lastActed.number &&
+			channelMtime <= lastActed.mtimeMs
+		) return;
 
 		if (isTerminal(parsed)) {
-			acted.set(channelKey, parsed.lastMessage.number);
+			acted.set(channelKey, { number: parsed.lastMessage.number, mtimeMs: channelMtime });
 			return;
 		}
 
 		running = true;
-		acted.set(channelKey, parsed.lastMessage.number);
+		acted.set(channelKey, { number: parsed.lastMessage.number, mtimeMs: channelMtime });
 		const setStatus = (s: string | undefined) => ctx.ui.setStatus("dispatch-auto", s);
 		try {
 			await runChain(cwd, cfg, channelFile, setStatus);
@@ -501,7 +510,11 @@ export default function (pi: ExtensionAPI) {
 		} finally {
 			running = false;
 			const final = parseChannel(channelFile);
-			if (final?.lastMessage) acted.set(channelKey, final.lastMessage.number);
+			if (final?.lastMessage) {
+				let finalMtime = channelMtime;
+				try { finalMtime = fs.statSync(channelFile).mtimeMs; } catch {}
+				acted.set(channelKey, { number: final.lastMessage.number, mtimeMs: finalMtime });
+			}
 		}
 	});
 }
