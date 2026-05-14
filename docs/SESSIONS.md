@@ -982,3 +982,128 @@ Closed the artifact-only dispatch smoke re-review loop after confirming the late
 
 ### Outcome
 Dispatch-auto smoke test is complete and passed on the Mac. The channel is marked closed, and the created workflow/test artifacts are committed for auditability.
+
+## Session 58 — 2026-05-14
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: `agents/channels/011-dispatch-smoke-kimi-re-review-channel.md`
+- Dispatch: `agents/artifacts/011-dispatch-smoke-kimi-re-review-dispatch.md`
+
+### Summary
+Created a second artifact-only meta-workflow smoke-test dispatch for the dispatch automation setup work living outside this repo. This run is intended to validate the recent no-reasoning-model support with Kimi K2.6 present in the dispatch process, while again forcing a first Review → Dev return.
+
+### Outcome
+The dummy dispatch is queued for Plan. The expected audit trail is `Main → Plan → Dev → Review → Dev → Review → Main`, after which Main can note the successful dispatch test and optionally clean up disposable fake artifacts.
+
+## Session 59 — 2026-05-14
+
+### Agent Type
+plan
+
+### Artifacts
+- Channel: `agents/channels/011-dispatch-smoke-kimi-re-review-channel.md`
+- Dispatch: `agents/artifacts/011-dispatch-smoke-kimi-re-review-dispatch.md`
+- Plan: `agents/artifacts/011-dispatch-smoke-kimi-re-review-plan.md`
+
+### Summary
+Created the implementation plan for the artifact-only Kimi/no-reasoning dispatch-auto smoke re-review loop. The plan explicitly preserves the forced `Main → Plan → Dev → Review → Dev → Review → Main` route, requires the first Review to return to Dev, and instructs workers to note any observable Kimi/no-reasoning launch evidence without modifying orchestration or scripts.
+
+### Outcome
+Plan is ready for Dev. The dispatch channel has been appended with the next `Plan → Dev` message at `State = ready-for-dev`.
+
+## Session 60 — 2026-05-14
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: `agents/channels/011-dispatch-smoke-kimi-re-review-channel.md`
+- Dispatch: `agents/artifacts/011-dispatch-smoke-kimi-re-review-dispatch.md`
+- Plan: `agents/artifacts/011-dispatch-smoke-kimi-re-review-plan.md`
+- Complete: `agents/artifacts/011-dispatch-smoke-kimi-re-review-complete.md`
+- Marker: `agents/artifacts/011-dispatch-smoke-kimi-re-review-marker.md`
+
+### Summary
+Completed the initial Dev pass for the artifact-only Kimi/no-reasoning dispatch-auto smoke re-review loop. Created the disposable marker with `review-loop-state: first-review-required`, documented that external Kimi launch logs were not visible to this session, and ran the lightweight artifact verification.
+
+### Outcome
+Initial Dev-pass bookkeeping is complete and ready for Review. The dispatch channel has been appended with the next `Dev → Review` message at `State = ready-for-review`, preserving the forced first Review → Dev return.
+
+## Session 61 — 2026-05-14
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: `agents/channels/011-dispatch-smoke-kimi-re-review-channel.md`
+- Dispatch: `agents/artifacts/011-dispatch-smoke-kimi-re-review-dispatch.md`
+- Plan: `agents/artifacts/011-dispatch-smoke-kimi-re-review-plan.md`
+- Complete: `agents/artifacts/011-dispatch-smoke-kimi-re-review-complete.md`
+- Review: `agents/artifacts/011-dispatch-smoke-kimi-re-review-review.md`
+- Marker: `agents/artifacts/011-dispatch-smoke-kimi-re-review-marker.md`
+
+### Summary
+Reviewed the initial Dev pass for the artifact-only Kimi/no-reasoning dispatch-auto smoke re-review loop. Confirmed the marker is present with `review-loop-state: first-review-required`, the complete artifact records lightweight verification and non-blocking Kimi/no-reasoning evidence notes, and product/source file changes were not observed by the checkpoint-scoped file-age check.
+
+### Outcome
+Verdict is `FAIL — Return to Dev` by design. The dispatch channel has been appended with the next `Review → Dev` message at `State = needs-dev-fix` and the required FAIL → Dev close block, so Dev can update the marker to `review-loop-state: re-review-ready` for re-review.
+
+## Session 62 — 2026-05-14
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: `agents/channels/011-dispatch-smoke-kimi-re-review-channel.md`
+- Dispatch: `agents/artifacts/011-dispatch-smoke-kimi-re-review-dispatch.md`
+- Plan: `agents/artifacts/011-dispatch-smoke-kimi-re-review-plan.md`
+- Complete: `agents/artifacts/011-dispatch-smoke-kimi-re-review-complete.md`
+- Review: `agents/artifacts/011-dispatch-smoke-kimi-re-review-review.md`
+- Marker: `agents/artifacts/011-dispatch-smoke-kimi-re-review-marker.md`
+
+### Summary
+Applied the required Dev fix for the artifact-only Kimi/no-reasoning dispatch-auto smoke re-review loop. Updated the marker from `review-loop-state: first-review-required` to `review-loop-state: re-review-ready`, updated the complete artifact with fix-pass notes, and ran the lightweight fix verification.
+
+### Outcome
+Dev fix is complete and ready for re-review. The dispatch channel has been appended with the next `Dev → Review` message at `State = ready-for-re-review`; work remains open until Review returns `State = review-pass`.
+
+## Session 63 — 2026-05-14
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: `agents/channels/011-dispatch-smoke-kimi-re-review-channel.md`
+- Dispatch: `agents/artifacts/011-dispatch-smoke-kimi-re-review-dispatch.md`
+- Plan: `agents/artifacts/011-dispatch-smoke-kimi-re-review-plan.md`
+- Complete: `agents/artifacts/011-dispatch-smoke-kimi-re-review-complete.md`
+- Review: `agents/artifacts/011-dispatch-smoke-kimi-re-review-review.md`
+- Marker: `agents/artifacts/011-dispatch-smoke-kimi-re-review-marker.md`
+
+### Summary
+Re-reviewed the artifact-only Kimi/no-reasoning dispatch-auto smoke loop after the required Dev fix. Confirmed the marker now contains `review-loop-state: re-review-ready`, the complete artifact records fix-pass notes and lightweight verification, and the channel audit trail includes the expected `Main → Plan → Dev → Review → Dev → Review` route before final handoff.
+
+### Outcome
+Verdict is `PASS`. The dispatch channel has been appended with the next `Review → Main` message at `State = review-pass`, so Main can close the smoke-test dispatch and handle git operations.
+
+## Session 64 — 2026-05-14
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: `agents/channels/011-dispatch-smoke-kimi-re-review-channel.md`
+- Dispatch: `agents/artifacts/011-dispatch-smoke-kimi-re-review-dispatch.md`
+- Plan: `agents/artifacts/011-dispatch-smoke-kimi-re-review-plan.md`
+- Complete: `agents/artifacts/011-dispatch-smoke-kimi-re-review-complete.md`
+- Review: `agents/artifacts/011-dispatch-smoke-kimi-re-review-review.md`
+- Marker: `agents/artifacts/011-dispatch-smoke-kimi-re-review-marker.md`
+
+### Summary
+Closed the artifact-only Kimi/no-reasoning dispatch smoke test after confirming the latest Review message was addressed to Main with `State = review-pass` and the review artifact verdict was PASS with no required fixes. The smoke test successfully exercised `Main → Plan → Dev → Review → Dev → Review → Main`; Review noted external Kimi launch logs were not directly visible but treated that as non-blocking because the chain completed and the Kimi/no-reasoning preset was present in the orchestration config.
+
+### Outcome
+Kimi/no-reasoning dispatch-auto smoke test is complete and passed on the Mac. The channel is marked closed, and the created workflow/test artifacts are committed for auditability.
