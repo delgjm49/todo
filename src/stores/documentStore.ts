@@ -27,8 +27,13 @@ import { updateColumnSettings } from "../domain/columns/updateColumnSettings.js"
 import type { ColumnType } from "../types/column.js";
 import type { HistoryTransactionKind } from "./historyStore.js";
 import { useHistoryStore } from "./historyStore.js";
+import { useUiStore } from "./uiStore.js";
 import type { Selection } from "../types/ui.js";
 import { applyFormattingPatch, type FormattingPatch } from "../domain/formatting/applyFormattingPatch.js";
+import {
+  mapClipboardRowsToBlock,
+  serializeRowsForClipboard,
+} from "../domain/clipboard/index.js";
 
 export interface DocumentMutationOptions {
   service?: StorageService;
@@ -248,6 +253,23 @@ export interface DocumentStoreState {
   updateSelectedBorderFormatting: (
     selection: Selection,
     patch: FormattingPatch,
+    options?: DocumentMutationOptions
+  ) => boolean;
+  copyRows: (
+    workspaceId: WorkspaceId,
+    blockId: BlockId,
+    rowIds: RowId[]
+  ) => boolean;
+  cutRows: (
+    workspaceId: WorkspaceId,
+    blockId: BlockId,
+    rowIds: RowId[],
+    options?: DocumentMutationOptions
+  ) => boolean;
+  pasteRows: (
+    workspaceId: WorkspaceId,
+    blockId: BlockId,
+    targetRowId: RowId | null,
     options?: DocumentMutationOptions
   ) => boolean;
 }
@@ -1565,6 +1587,145 @@ export const useDocumentStore = create<DocumentStoreState>()((set, get) => {
       }
 
       return replaceBlockRows(block, nextRows);
+    });
+
+    if (!nextWorkspace) {
+      return false;
+    }
+
+    const nextSnapshot: AppDocumentSnapshot = {
+      settings: structuredClone(state.settings),
+      workspaceIndex: structuredClone(state.workspaceIndex),
+      workspacesById: replaceWorkspaceDocument(state.workspacesById, nextWorkspace),
+      activeWorkspaceId: state.activeWorkspaceId,
+      loadedWorkspaceIds: structuredClone(state.loadedWorkspaceIds),
+    };
+
+    return commitSnapshot(set, get, nextSnapshot, "formatting", options);
+  },
+  copyRows: (workspaceId, blockId, rowIds) => {
+    const state = get();
+    if (!state.settings) {
+      return false;
+    }
+
+    const workspace = state.workspacesById[workspaceId];
+    if (!workspace) {
+      return false;
+    }
+
+    const block = workspace.blocks.find((b) => b.id === blockId);
+    if (!block) {
+      return false;
+    }
+
+    const result = serializeRowsForClipboard(block, rowIds);
+    if (!result.ok) {
+      return false;
+    }
+
+    useUiStore.getState().setRowClipboard(structuredClone(result.payload), "copy");
+    return true;
+  },
+  cutRows: (workspaceId, blockId, rowIds, options) => {
+    const state = get();
+    if (!state.settings) {
+      return false;
+    }
+
+    const workspace = state.workspacesById[workspaceId];
+    if (!workspace) {
+      return false;
+    }
+
+    const block = workspace.blocks.find((b) => b.id === blockId);
+    if (!block) {
+      return false;
+    }
+
+    const serializeResult = serializeRowsForClipboard(block, rowIds);
+    if (!serializeResult.ok) {
+      return false;
+    }
+
+    const nextWorkspace = updateBlockInWorkspace(workspace, blockId, (block) => {
+      const orderedRows = getRowsInDisplayOrder(block.rows);
+      let nextRows = orderedRows;
+      for (const rowId of rowIds) {
+        nextRows = deleteRowById(nextRows, rowId);
+      }
+      if (nextRows.length === orderedRows.length) {
+        return null;
+      }
+      return replaceBlockRows(block, nextRows);
+    });
+
+    if (!nextWorkspace) {
+      return false;
+    }
+
+    const nextSnapshot: AppDocumentSnapshot = {
+      settings: structuredClone(state.settings),
+      workspaceIndex: structuredClone(state.workspaceIndex),
+      workspacesById: replaceWorkspaceDocument(state.workspacesById, nextWorkspace),
+      activeWorkspaceId: state.activeWorkspaceId,
+      loadedWorkspaceIds: structuredClone(state.loadedWorkspaceIds),
+    };
+
+    const committed = commitSnapshot(set, get, nextSnapshot, "formatting", options);
+    if (!committed) {
+      return false;
+    }
+
+    useUiStore.getState().setRowClipboard(structuredClone(serializeResult.payload), "cut");
+    return true;
+  },
+  pasteRows: (workspaceId, blockId, targetRowId, options) => {
+    const state = get();
+    if (!state.settings) {
+      return false;
+    }
+
+    const payload = useUiStore.getState().clipboardPayload;
+    if (!payload) {
+      return false;
+    }
+
+    const workspace = state.workspacesById[workspaceId];
+    if (!workspace) {
+      return false;
+    }
+
+    const block = workspace.blocks.find((b) => b.id === blockId);
+    if (!block) {
+      return false;
+    }
+
+    const mapResult = mapClipboardRowsToBlock(payload, block, {
+      generateRowId: () => createId("row"),
+    });
+    if (!mapResult.ok) {
+      return false;
+    }
+
+    const nextWorkspace = updateBlockInWorkspace(workspace, blockId, (block) => {
+      const orderedRows = getRowsInDisplayOrder(block.rows);
+      let insertIndex: number;
+      if (targetRowId !== null) {
+        insertIndex = orderedRows.findIndex((row) => row.id === targetRowId);
+        if (insertIndex < 0) {
+          return null;
+        }
+      } else {
+        insertIndex = orderedRows.length;
+      }
+
+      const merged = [
+        ...orderedRows.slice(0, insertIndex),
+        ...mapResult.rows,
+        ...orderedRows.slice(insertIndex),
+      ];
+      return replaceBlockRows(block, merged);
     });
 
     if (!nextWorkspace) {

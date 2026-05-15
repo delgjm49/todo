@@ -21,7 +21,7 @@ See [`agents/CLOSING.md`](../agents/CLOSING.md) for the entry format and rules.
 | TICKET-047 Block row sorting domain logic | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 | TICKET-048 Sort menu UI | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 | TICKET-049 Internal row clipboard serialization | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
-| TICKET-050 Row clipboard UI (cut/copy/paste) | In Progress | Dispatched to Plan — Session 70 |
+| TICKET-050 Row clipboard UI (cut/copy/paste) | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 
 ---
 
@@ -1212,4 +1212,113 @@ Selected `TICKET-050` row clipboard UI (cut/copy/paste) as the next EPIC-09 chec
 
 ### Outcome
 Row clipboard UI is dispatched to Plan. The next session should use pickup mode and continue from `agents/channels/013-row-clipboard-ui-channel.md`.
+
+## Session 71 — 2026-05-15
+
+### Agent Type
+plan
+
+### Artifacts
+- Channel: `agents/channels/013-row-clipboard-ui-channel.md`
+- Dispatch: `agents/artifacts/013-row-clipboard-ui-dispatch.md`
+- Plan: `agents/artifacts/013-row-clipboard-ui-plan.md`
+
+### Summary
+Authored the TICKET-050 implementation plan covering uiStore clipboard/menu state (`clipboardPayload`, `clipboardOperation`, `rowMenu`), three new documentStore actions (`cutRows`, `copyRows`, `pasteRows`) routed through the existing TICKET-049 domain helpers, a new `RowContextMenu` component mirroring the BlockContextMenu pattern, and `RowView`/`MainPane` wiring for right-click open + paste-above vs end-of-block fallback. Plan also specifies targeted node:test coverage for the three store actions and the menu's enabled/disabled states, and explicitly keeps the work inside the dispatch scope (single-row selection only, no system clipboard, no hotkeys, no schema changes).
+
+### Outcome
+Plan is ready for Dev. The channel has been appended with a `Plan → Dev` message at `State = ready-for-dev`; Dev is expected to implement the plan, run `typecheck`/`test`/`build`/`lint`, write the complete artifact, and hand off to Review without committing.
+
+---
+
+## Session 72 — 2026-05-15
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: `agents/channels/013-row-clipboard-ui-channel.md`
+- Dispatch: `agents/artifacts/013-row-clipboard-ui-dispatch.md`
+- Plan: `agents/artifacts/013-row-clipboard-ui-plan.md`
+- Complete: `agents/artifacts/013-row-clipboard-ui-complete.md`
+
+### Summary
+Implemented `TICKET-050` row clipboard UI (cut/copy/paste). Extended `src/types/ui.ts` with `RowContextMenuState` and `RowClipboardOperation`. Extended `uiStore` with `rowMenu`, `clipboardPayload`, `clipboardOperation` fields and open/close/set/clear actions. Added `copyRows`, `cutRows`, `pasteRows` to `documentStore` — all routing through the existing TICKET-049 domain helpers, using `formatting` history transactions, and leaving the clipboard state intentionally repeatable after paste. Created `RowContextMenu` component with Cut/Copy/Paste menu buttons and disabled-state handling. Wired row-level right-click through `RowView` (selects row + opens menu) and block-area right-click through `BlockCard` (paste-at-end fallback). Rendered the menu in `MainPane` with backdrop dismissal and `canPaste` dry-run validation via `mapClipboardRowsToBlock`. Added 9 node:test cases for store actions and 5 jsdom cases for UI component states.
+
+### Outcome
+Implementation complete. All verification commands pass: `npm run typecheck`, `npm run test` (187/187 with existing React act warnings), `npm run build`, and `npm run lint`. The dispatch channel has been appended with the next `Dev → Review` message at `State = ready-for-review`.
+
+## Session 73 - 2026-05-15
+
+### Role
+Review
+
+### Dispatch
+013-row-clipboard-ui
+
+### Summary
+Reviewed the `TICKET-050` row clipboard UI implementation. Found one medium-severity mutual exclusion gap: the pre-existing menu openers (`openWorkspaceMenu`, `openBlockMenu`, `openColumnMenu`) in `uiStore` do not clear `rowMenu`, creating a scenario where two context menus can render simultaneously. The fix is three one-line additions of `rowMenu: null`. Everything else passed: all acceptance criteria met, all domain helpers wired correctly, all store actions produce correct undoable transactions, component styling matches existing patterns, test coverage is comprehensive (14 new tests), and all four verification commands pass.
+
+### Verdict
+FAIL — Return to Dev. One required fix: add `rowMenu: null` to `openWorkspaceMenu`, `openBlockMenu`, and `openColumnMenu` in `src/stores/uiStore.ts`.
+
+### Outcome
+Review complete. Dispatch channel appended with `Review → Dev` at `State = needs-dev-fix`.
+
+---
+
+## Session 74 — 2026-05-15
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: `agents/channels/013-row-clipboard-ui-channel.md`
+- Dispatch: `agents/artifacts/013-row-clipboard-ui-dispatch.md`
+- Plan: `agents/artifacts/013-row-clipboard-ui-plan.md`
+- Complete: `agents/artifacts/013-row-clipboard-ui-complete.md`
+- Review: `agents/artifacts/013-row-clipboard-ui-review.md`
+
+### Summary
+Applied the required Dev fix for the mutual exclusion gap found by Review. Added `rowMenu: null` to `openWorkspaceMenu`, `openBlockMenu`, and `openColumnMenu` in `src/stores/uiStore.ts` so that opening any other menu closes the row context menu. This mirrors the existing pattern where `openRowMenu` already clears the other three menus. Re-ran all four verification commands.
+
+### Outcome
+Fix applied and verified. `npm run typecheck`, `npm run test` (187/187), `npm run build`, and `npm run lint` all pass. The dispatch channel has been appended with the next `Dev → Review` message at `State = ready-for-re-review`; work remains open until Review returns `State = review-pass`.
+
+## Session 75 — 2026-05-15
+
+### Role
+Review
+
+### Dispatch
+013-row-clipboard-ui
+
+### Summary
+Re-reviewed the Dev fix for the mutual exclusion gap. Confirmed that `rowMenu: null` was added to `openWorkspaceMenu`, `openBlockMenu`, and `openColumnMenu` in `src/stores/uiStore.ts`. Verified all four verification commands pass (typecheck, test 187/187, build, lint). No remaining issues.
+
+### Verdict
+PASS — all acceptance criteria met, mutual exclusion gap fixed, all commands pass.
+
+### Outcome
+Review complete. Dispatch channel appended with `Review → Main` at `State = review-pass`.
+
+---
+
+## Session 76 — 2026-05-15
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: `agents/channels/013-row-clipboard-ui-channel.md`
+- Dispatch: `agents/artifacts/013-row-clipboard-ui-dispatch.md`
+- Plan: `agents/artifacts/013-row-clipboard-ui-plan.md`
+- Complete: `agents/artifacts/013-row-clipboard-ui-complete.md`
+- Review: `agents/artifacts/013-row-clipboard-ui-review.md`
+
+### Summary
+Closed the `TICKET-050` row clipboard UI (cut/copy/paste) dispatch after confirming the latest channel message was Review → Main with `State = review-pass` and the review artifact verdict was PASS. The feature exercised a full `Main → Plan → Dev → Review → Dev → Review → Main` route including a re-review loop for a mutual exclusion gap (uiStore menu openers not clearing `rowMenu`). Marked the channel closed and updated phase status.
+
+### Outcome
+TICKET-050 is complete. Next recommended checkpoint is `TICKET-051` plain text clipboard for text cells or `TICKET-046` type-specific inspector settings.
 

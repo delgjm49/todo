@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { BlockId, ColumnId, RowId, WorkspaceId } from "../domain/ids";
-import type { AppScreen, BlockContextMenuState, ColumnContextMenuState, Selection, WorkspaceContextMenuState } from "../types/ui.js";
+import type { InternalRowClipboardPayload } from "../domain/clipboard/index.js";
+import type { AppScreen, BlockContextMenuState, ColumnContextMenuState, RowClipboardOperation, RowContextMenuState, Selection, WorkspaceContextMenuState } from "../types/ui.js";
 
 export interface UiStoreState {
   screen: AppScreen;
@@ -8,6 +9,9 @@ export interface UiStoreState {
   workspaceMenu: WorkspaceContextMenuState | null;
   blockMenu: BlockContextMenuState | null;
   columnMenu: ColumnContextMenuState | null;
+  rowMenu: RowContextMenuState | null;
+  clipboardPayload: InternalRowClipboardPayload | null;
+  clipboardOperation: RowClipboardOperation | null;
   draggingWorkspaceId: WorkspaceId | null;
   dropTargetWorkspaceId: WorkspaceId | null;
   draggingBlockId: BlockId | null;
@@ -25,6 +29,10 @@ export interface UiStoreState {
   closeBlockMenu: () => void;
   openColumnMenu: (workspaceId: WorkspaceId, blockId: BlockId, columnId: ColumnId, x: number, y: number) => void;
   closeColumnMenu: () => void;
+  openRowMenu: (workspaceId: WorkspaceId, blockId: BlockId, targetRowId: RowId | null, x: number, y: number) => void;
+  closeRowMenu: () => void;
+  setRowClipboard: (payload: InternalRowClipboardPayload, operation: RowClipboardOperation) => void;
+  clearRowClipboard: () => void;
   setWorkspaceDragState: (draggingWorkspaceId: WorkspaceId | null, dropTargetWorkspaceId?: WorkspaceId | null) => void;
   setBlockDragState: (draggingBlockId: BlockId | null, dropTargetBlockId?: BlockId | null) => void;
   setRowDragState: (blockId: BlockId | null, rowId: RowId | null, dropTargetRowId?: RowId | null) => void;
@@ -44,6 +52,9 @@ export const useUiStore = create<UiStoreState>()((set) => ({
   workspaceMenu: null,
   blockMenu: null,
   columnMenu: null,
+  rowMenu: null,
+  clipboardPayload: null,
+  clipboardOperation: null,
   draggingWorkspaceId: null,
   dropTargetWorkspaceId: null,
   draggingBlockId: null,
@@ -59,6 +70,9 @@ export const useUiStore = create<UiStoreState>()((set) => ({
       workspaceMenu: null,
       blockMenu: null,
       columnMenu: null,
+      rowMenu: null,
+      clipboardPayload: null,
+      clipboardOperation: null,
       draggingWorkspaceId: null,
       dropTargetWorkspaceId: null,
       draggingBlockId: null,
@@ -69,12 +83,17 @@ export const useUiStore = create<UiStoreState>()((set) => ({
       selection: { kind: "none" },
     }),
   toggleInspector: () => set((state) => ({ inspectorOpen: !state.inspectorOpen })),
-  openWorkspaceMenu: (workspaceId, x, y) => set({ workspaceMenu: { workspaceId, x, y }, blockMenu: null, columnMenu: null }),
+  openWorkspaceMenu: (workspaceId, x, y) => set({ workspaceMenu: { workspaceId, x, y }, blockMenu: null, columnMenu: null, rowMenu: null }),
   closeWorkspaceMenu: () => set({ workspaceMenu: null }),
-  openBlockMenu: (workspaceId, blockId, x, y) => set({ blockMenu: { workspaceId, blockId, x, y }, workspaceMenu: null, columnMenu: null }),
+  openBlockMenu: (workspaceId, blockId, x, y) => set({ blockMenu: { workspaceId, blockId, x, y }, workspaceMenu: null, columnMenu: null, rowMenu: null }),
   closeBlockMenu: () => set({ blockMenu: null }),
-  openColumnMenu: (workspaceId, blockId, columnId, x, y) => set({ columnMenu: { workspaceId, blockId, columnId, x, y }, workspaceMenu: null, blockMenu: null }),
+  openColumnMenu: (workspaceId, blockId, columnId, x, y) => set({ columnMenu: { workspaceId, blockId, columnId, x, y }, workspaceMenu: null, blockMenu: null, rowMenu: null }),
   closeColumnMenu: () => set({ columnMenu: null }),
+  openRowMenu: (workspaceId, blockId, targetRowId, x, y) =>
+    set({ rowMenu: { workspaceId, blockId, targetRowId, x, y }, workspaceMenu: null, blockMenu: null, columnMenu: null }),
+  closeRowMenu: () => set({ rowMenu: null }),
+  setRowClipboard: (payload, operation) => set({ clipboardPayload: structuredClone(payload), clipboardOperation: operation }),
+  clearRowClipboard: () => set({ clipboardPayload: null, clipboardOperation: null }),
   setWorkspaceDragState: (draggingWorkspaceId, dropTargetWorkspaceId = null) =>
     set({ draggingWorkspaceId, dropTargetWorkspaceId }),
   setBlockDragState: (draggingBlockId, dropTargetBlockId = null) => set({ draggingBlockId, dropTargetBlockId }),

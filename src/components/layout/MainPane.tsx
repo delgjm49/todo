@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import { BlockCard } from "../block/BlockCard.js";
 import { BlockContextMenu } from "../block/BlockContextMenu.js";
 import { ColumnContextMenu } from "../block/ColumnContextMenu.js";
+import { RowContextMenu } from "../row/RowContextMenu.js";
 import { BLOCK_TEMPLATES } from "../../domain/templates/blockTemplates.js";
 import { useDocumentStore } from "../../stores/documentStore.js";
 import { useUiStore } from "../../stores/uiStore.js";
 import { getVisibleColumnsInDisplayOrder } from "../../domain/columns/createColumn.js";
+import { mapClipboardRowsToBlock } from "../../domain/clipboard/index.js";
 import type { BlockSort } from "../../types/block.js";
 import type { ColumnId } from "../../domain/ids.js";
 
@@ -28,6 +30,9 @@ export function MainPane() {
   const deleteColumn = useDocumentStore((state) => state.deleteColumn);
   const changeColumnType = useDocumentStore((state) => state.changeColumnType);
   const updateColumnSettings = useDocumentStore((state) => state.updateColumnSettings);
+  const cutRows = useDocumentStore((state) => state.cutRows);
+  const copyRows = useDocumentStore((state) => state.copyRows);
+  const pasteRows = useDocumentStore((state) => state.pasteRows);
   const activeWorkspaceId = useDocumentStore((state) => state.activeWorkspaceId);
   const activeWorkspace = workspaceIndex.find((entry) => entry.id === activeWorkspaceId) ?? workspaceIndex[0] ?? null;
   const inspectorOpen = useUiStore((state) => state.inspectorOpen);
@@ -37,6 +42,10 @@ export function MainPane() {
   const closeBlockMenu = useUiStore((state) => state.closeBlockMenu);
   const openColumnMenu = useUiStore((state) => state.openColumnMenu);
   const closeColumnMenu = useUiStore((state) => state.closeColumnMenu);
+  const rowMenu = useUiStore((state) => state.rowMenu);
+  const closeRowMenu = useUiStore((state) => state.closeRowMenu);
+  const openRowMenu = useUiStore((state) => state.openRowMenu);
+  const clipboardPayload = useUiStore((state) => state.clipboardPayload);
   const draggingBlockId = useUiStore((state) => state.draggingBlockId);
   const dropTargetBlockId = useUiStore((state) => state.dropTargetBlockId);
   const setBlockDragState = useUiStore((state) => state.setBlockDragState);
@@ -61,6 +70,13 @@ export function MainPane() {
   const activeColumnMenuBlock = columnMenu
     ? workspaceById[columnMenu.workspaceId]?.blocks.find((block) => block.id === columnMenu.blockId) ?? null
     : null;
+  const activeRowMenuBlock = rowMenu
+    ? workspaceById[rowMenu.workspaceId]?.blocks.find((block) => block.id === rowMenu.blockId) ?? null
+    : null;
+  const canPaste = (() => {
+    if (!clipboardPayload || !activeRowMenuBlock) return false;
+    return mapClipboardRowsToBlock(clipboardPayload, activeRowMenuBlock).ok;
+  })();
 
   useEffect(() => {
     if (editingBlockId && !blocks.some((block) => block.id === editingBlockId)) {
@@ -71,11 +87,12 @@ export function MainPane() {
   useEffect(() => {
     closeBlockMenu();
     closeColumnMenu();
+    closeRowMenu();
     setEditingBlockId(null);
     setBlockDragState(null);
     resetRowInteractionState();
     clearSelection();
-  }, [activeWorkspaceId, closeBlockMenu, closeColumnMenu, setBlockDragState, resetRowInteractionState, clearSelection]);
+  }, [activeWorkspaceId, closeBlockMenu, closeColumnMenu, closeRowMenu, setBlockDragState, resetRowInteractionState, clearSelection]);
 
   useEffect(() => () => resetBlockInteractionState(), [resetBlockInteractionState]);
   useEffect(() => () => resetRowInteractionState(), [resetRowInteractionState]);
@@ -174,6 +191,10 @@ export function MainPane() {
                 onOpenColumnMenu={(columnId, x, y) => {
                   setEditingBlockId(null);
                   openColumnMenu(block.workspaceId, block.id, columnId, x, y);
+                }}
+                onOpenRowMenu={(rowId, x, y) => {
+                  setEditingBlockId(null);
+                  openRowMenu(block.workspaceId, block.id, rowId, x, y);
                 }}
               />
             ))}
@@ -299,6 +320,43 @@ export function MainPane() {
               }}
               onUpdateSettings={(patch) => {
                 void updateColumnSettings(columnMenu.workspaceId, columnMenu.blockId, columnMenu.columnId, patch);
+              }}
+            />
+          </div>
+        </>
+      ) : null}
+
+      {rowMenu && activeRowMenuBlock ? (
+        <>
+          <div
+            aria-hidden="true"
+            className="fixed inset-0 z-40"
+            data-testid="row-menu-backdrop"
+            onPointerDown={() => closeRowMenu()}
+          />
+          <div
+            className="fixed z-50"
+            onPointerDown={(event) => event.stopPropagation()}
+            style={{ left: `${rowMenu.x}px`, top: `${rowMenu.y}px` }}
+          >
+            <RowContextMenu
+              canCutOrCopy={rowMenu.targetRowId !== null}
+              canPaste={canPaste}
+              onCopy={() => {
+                if (rowMenu.targetRowId) {
+                  void copyRows(rowMenu.workspaceId, rowMenu.blockId, [rowMenu.targetRowId]);
+                }
+                closeRowMenu();
+              }}
+              onCut={() => {
+                if (rowMenu.targetRowId) {
+                  void cutRows(rowMenu.workspaceId, rowMenu.blockId, [rowMenu.targetRowId]);
+                }
+                closeRowMenu();
+              }}
+              onPaste={() => {
+                void pasteRows(rowMenu.workspaceId, rowMenu.blockId, rowMenu.targetRowId);
+                closeRowMenu();
               }}
             />
           </div>

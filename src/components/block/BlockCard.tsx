@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type DragEvent, type KeyboardEvent } from "react";
 import type { Block } from "../../types/block.js";
-import type { ColumnId } from "../../domain/ids.js";
+import type { ColumnId, RowId } from "../../domain/ids.js";
 import { BlockColumnHeaderRow } from "./BlockColumnHeaderRow.js";
 import { RowView } from "../row/RowView.js";
 
@@ -17,6 +17,7 @@ export function BlockCard({
   onAddRow,
   onOpenMenu,
   onOpenColumnMenu,
+  onOpenRowMenu,
   onSelectBlock,
   onDragStart,
   onDragEnd,
@@ -35,6 +36,7 @@ export function BlockCard({
   onAddRow: () => void;
   onOpenMenu: (x: number, y: number) => void;
   onOpenColumnMenu?: (columnId: ColumnId, x: number, y: number) => void;
+  onOpenRowMenu?: (rowId: RowId | null, x: number, y: number) => void;
   onSelectBlock: () => void;
   onDragStart: () => void;
   onDragEnd: () => void;
@@ -168,7 +170,13 @@ export function BlockCard({
 
       {!block.collapsed ? (
         <div className="px-5 py-5">
-          <div className="overflow-x-auto rounded-2xl border border-border bg-panelMuted/35">
+          <div
+            className="overflow-x-auto rounded-2xl border border-border bg-panelMuted/35"
+            onContextMenu={(event) => {
+              event.preventDefault();
+              onOpenRowMenu?.(null, event.clientX, event.clientY);
+            }}
+          >
             <BlockColumnHeaderRow
               blockId={block.id}
               columns={block.columns}

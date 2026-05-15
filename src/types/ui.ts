@@ -30,6 +30,16 @@ export interface ColumnContextMenuState {
   y: number;
 }
 
+export interface RowContextMenuState {
+  workspaceId: WorkspaceId;
+  blockId: BlockId;
+  targetRowId: RowId | null;
+  x: number;
+  y: number;
+}
+
+export type RowClipboardOperation = "cut" | "copy";
+
 export interface RowDragState {
   blockId: BlockId;
   rowId: RowId;

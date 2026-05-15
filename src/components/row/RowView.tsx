@@ -26,6 +26,7 @@ export function RowView({ block, workspaceId }: { block: Block; workspaceId: str
   const selection = useUiStore((state) => state.selection);
   const selectRow = useUiStore((state) => state.selectRow);
   const selectCell = useUiStore((state) => state.selectCell);
+  const openRowMenu = useUiStore((state) => state.openRowMenu);
   const settings = useDocumentStore((state) => state.settings);
   const visibleColumns = getVisibleColumnsInDisplayOrder(block.columns);
   const rows = getRowsInDisplayOrder(block.rows);
@@ -58,6 +59,12 @@ export function RowView({ block, workspaceId }: { block: Block; workspaceId: str
             draggable
             key={row.id}
             onClick={() => selectRow(workspaceId, block.id, row.id)}
+            onContextMenu={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              selectRow(workspaceId, block.id, row.id);
+              openRowMenu(workspaceId, block.id, row.id, event.clientX, event.clientY);
+            }}
             onDragEnd={(event) => {
               event.stopPropagation();
               resetRowInteractionState();
