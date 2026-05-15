@@ -1,12 +1,11 @@
 <!-- AGENT-SPECIFIC-START -->
-# AGENTS.md — Todo AI Session Guide
+# GEMINI.md — Todo Gemini Session Guide
 
-This file provides guidance to Pi and OpenCode agents when working in this repository.
+This file provides guidance to the Gemini CLI when working in this repository.
 
-## Pi / OpenCode Notes
+## Gemini Notes
 
-- Pi reads this file automatically at session start.
-- Dispatch-auto pickup: when the session starts with `[dispatch-auto]`, role resolution follows the channel's `To` field per the dispatch-channel-protocol. Read the protocol doc after this file.
+- For sandbox environments where launching Tauri or Vite headless may be restricted, try the command first; if it fails due to sandbox restrictions, rerun with escalation.
 <!-- AGENT-SPECIFIC-END -->
 
 <!-- SHARED-START -->

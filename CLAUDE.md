@@ -1,16 +1,13 @@
-<!-- AGENT-SPECIFIC-START -->
-# AGENTS.md — Todo AI Session Guide
+# CLAUDE.md
 
-This file provides guidance to Pi and OpenCode agents when working in this repository.
+This file provides guidance to Claude Code when working in this repository.
 
-## Pi / OpenCode Notes
+## Claude Code Notes
 
-- Pi reads this file automatically at session start.
-- Dispatch-auto pickup: when the session starts with `[dispatch-auto]`, role resolution follows the channel's `To` field per the dispatch-channel-protocol. Read the protocol doc after this file.
-<!-- AGENT-SPECIFIC-END -->
+- Claude Code auto-loads this file at session start.
 
 <!-- SHARED-START -->
-<!-- Synced from CLAUDE.md — run tools/sync_agent_docs.py --apply to update -->
+
 ## Project
 
 A local-first desktop todo app focused on a polished, minimal interface and durable session-based workflow.
