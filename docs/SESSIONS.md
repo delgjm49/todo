@@ -21,6 +21,7 @@ See [`agents/CLOSING.md`](../agents/CLOSING.md) for the entry format and rules.
 | TICKET-047 Block row sorting domain logic | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 | TICKET-048 Sort menu UI | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 | TICKET-049 Internal row clipboard serialization | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
+| TICKET-050 Row clipboard UI (cut/copy/paste) | In Progress | Dispatched to Plan — Session 70 |
 
 ---
 
@@ -1194,4 +1195,21 @@ Closed the artifact-only dispatch-auto failure/retry smoke test after confirming
 
 ### Outcome
 Dispatch-auto failure/retry behavior was validated without app source, app tests, package/Tauri config, product docs, orchestration config, dispatch-auto code, or external script changes from workers. The temporary ignored local Review override was removed before close preparation, and the channel is marked closed pending Main commit/push approval.
+
+---
+
+## Session 70 — 2026-05-15
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: `agents/channels/013-row-clipboard-ui-channel.md`
+- Dispatch: `agents/artifacts/013-row-clipboard-ui-dispatch.md`
+
+### Summary
+Selected `TICKET-050` row clipboard UI (cut/copy/paste) as the next EPIC-09 checkpoint after the completed TICKET-049 internal row clipboard serialization. Created a scoped dispatch for wiring the existing domain clipboard helpers into uiStore clipboard state, documentStore cut/copy/paste actions, and a row-level context menu.
+
+### Outcome
+Row clipboard UI is dispatched to Plan. The next session should use pickup mode and continue from `agents/channels/013-row-clipboard-ui-channel.md`.
 
