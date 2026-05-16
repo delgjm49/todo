@@ -18,6 +18,7 @@ See [`agents/CLOSING.md`](../agents/CLOSING.md) for the entry format and rules.
 | TICKET-044 Formatting persistence | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 | TICKET-013 Store selectors/action helpers | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 | TICKET-045 Checkbox automation behavior | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
+| TICKET-046 Type-specific inspector settings | Complete | Closed after Review PASS; commit/push pending user approval |
 | TICKET-047 Block row sorting domain logic | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 | TICKET-048 Sort menu UI | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 | TICKET-049 Internal row clipboard serialization | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
@@ -1321,4 +1322,91 @@ Closed the `TICKET-050` row clipboard UI (cut/copy/paste) dispatch after confirm
 
 ### Outcome
 TICKET-050 is complete. Next recommended checkpoint is `TICKET-051` plain text clipboard for text cells or `TICKET-046` type-specific inspector settings.
+
+## Session 77 — 2026-05-15
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: `agents/channels/014-type-specific-inspector-settings-channel.md`
+- Dispatch: `agents/artifacts/014-type-specific-inspector-settings-dispatch.md`
+
+### Summary
+Confirmed `TICKET-046` type-specific inspector settings is a valid next dispatch after the completed row clipboard UI checkpoint. Created a scoped dispatch for inspector-based checkbox, dropdown, date, and time column settings, including dropdown option editing and selection target resolution for column/cell selections.
+
+### Outcome
+Type-specific inspector settings are dispatched to Plan. The next session should use pickup mode and continue from `agents/channels/014-type-specific-inspector-settings-channel.md`.
+
+## Session 78 — 2026-05-15
+
+### Role
+Plan
+
+### Dispatch
+014-type-specific-inspector-settings
+
+### Summary
+Created `agents/artifacts/014-type-specific-inspector-settings-plan.md` for `TICKET-046`. The plan defines a new `resolveColumnSettingsTarget` helper (mirroring `resolveSelectedFormattingTarget`), a new `TypeSpecificColumnSettings` inspector section with an inline dropdown options editor (add/rename/remove with trimmed/non-empty/unique validation), and wires it into `InspectorShell` after `BorderFormattingControls`. Mutations route through the existing `documentStore.updateColumnSettings`; the existing `ColumnContextMenu` settings toggles stay intact as the MVP-critical fallback. Tests cover target resolution, inspector rendering per selection kind, dropdown option validation, and the store-level `options` patch. No schema changes; no new keyboard shortcuts or context menu redesign.
+
+### Outcome
+Plan complete. Dispatch channel appended with `Plan → Dev` at `State = ready-for-dev`.
+
+## Session 79 — 2026-05-16
+
+### Role
+Dev
+
+### Dispatch
+014-type-specific-inspector-settings
+
+### Artifacts
+- Channel: `agents/channels/014-type-specific-inspector-settings-channel.md`
+- Dispatch: `agents/artifacts/014-type-specific-inspector-settings-dispatch.md`
+- Plan: `agents/artifacts/014-type-specific-inspector-settings-plan.md`
+- Complete: `agents/artifacts/014-type-specific-inspector-settings-complete.md`
+
+### Summary
+Implemented TICKET-046 type-specific inspector settings, recovering from two prior output-length stalls that left partial work. Added `resolveColumnSettingsTarget` resolver, `TypeSpecificColumnSettings` component (checkbox toggles, date/time alert toggle, dropdown options inline editor with add/rename/remove and validation), wired into `InspectorShell`. Fixed a JSDOM test issue where React's `onChange` doesn't fire for `<input type="text">` from native events — added `onInput` handlers mirroring DateCell/TimeCell. Removed an unused parameter to clear lint. All 210 tests pass, typecheck/build/lint clean.
+
+### Outcome
+Implementation complete, ready for Review.
+
+## Session 28 - 2026-05-16
+
+### Agent Type
+review
+
+### Dispatch
+014-type-specific-inspector-settings
+
+### Artifacts
+- Channel: `agents/channels/014-type-specific-inspector-settings-channel.md`
+- Plan: `agents/artifacts/014-type-specific-inspector-settings-plan.md`
+- Complete: `agents/artifacts/014-type-specific-inspector-settings-complete.md`
+- Review: `agents/artifacts/014-type-specific-inspector-settings-review.md`
+
+### Summary
+Reviewed TICKET-046 implementation against the plan. All plan steps addressed, all acceptance criteria met, all four verification commands pass. No correctness, completeness, quality, or data-integrity issues found. The `onInput` handler deviation for JSDOM compatibility is documented and justified. `act()` warnings in tests are pre-existing and cosmetic.
+
+### Outcome
+PASS — ready for Main to close the dispatch.
+
+## Session 80 — 2026-05-16
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: `agents/channels/014-type-specific-inspector-settings-channel.md`
+- Dispatch: `agents/artifacts/014-type-specific-inspector-settings-dispatch.md`
+- Plan: `agents/artifacts/014-type-specific-inspector-settings-plan.md`
+- Complete: `agents/artifacts/014-type-specific-inspector-settings-complete.md`
+- Review: `agents/artifacts/014-type-specific-inspector-settings-review.md`
+
+### Summary
+Closed the `TICKET-046` type-specific inspector settings dispatch after confirming the latest channel message was Review → Main with `State = review-pass` and the review artifact verdict was PASS with no required fixes. Confirmed there were no post-review source/test/artifact changes requiring re-review; only Main close bookkeeping was added.
+
+### Outcome
+TICKET-046 is complete. Commit and push are pending explicit user approval.
 

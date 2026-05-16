@@ -1637,4 +1637,59 @@ describe("document store autosave", () => {
     assert.equal(reloadedBlock.rows.length, block.rows.length);
     assert.equal(reloadedBlock.rows[0]?.cells[checkboxColumn.id]?.value, false);
   });
+
+  test("updateColumnSettings persists dropdown options and overwrites on subsequent calls", async () => {
+    const service = await createMemoryStorageService();
+    await useDocumentStore.getState().initializeAppData(service);
+    const workspaceId = useDocumentStore.getState().activeWorkspaceId;
+    assert.ok(workspaceId);
+
+    const block = useDocumentStore.getState().workspacesById[workspaceId]?.blocks[0];
+    assert.ok(block);
+
+    const textColumn = block.columns.find((c) => c.type === "text");
+    assert.ok(textColumn);
+
+    const addedRight = useDocumentStore
+      .getState()
+      .addColumnRight(workspaceId, block.id, textColumn.id, "dropdown", { service, autosaveDelayMs: 5 });
+    assert.equal(addedRight, true);
+
+    const dropdownColumn = useDocumentStore
+      .getState()
+      .workspacesById[workspaceId]?.blocks[0]?.columns.find((c) => c.type === "dropdown" && c.id !== textColumn.id);
+    assert.ok(dropdownColumn);
+
+    const firstUpdate = useDocumentStore
+      .getState()
+      .updateColumnSettings(workspaceId, block.id, dropdownColumn.id, { options: ["A", "B"] }, {
+        service,
+        autosaveDelayMs: 5,
+      });
+    assert.equal(firstUpdate, true);
+    const firstColumn = useDocumentStore
+      .getState()
+      .workspacesById[workspaceId]?.blocks[0]?.columns.find((c) => c.id === dropdownColumn.id);
+    assert.deepEqual(
+      (firstColumn?.settings as { options?: string[] })?.options,
+      ["A", "B"]
+    );
+
+    const secondUpdate = useDocumentStore
+      .getState()
+      .updateColumnSettings(workspaceId, block.id, dropdownColumn.id, { options: ["A", "B", "C"] }, {
+        service,
+        autosaveDelayMs: 5,
+      });
+    assert.equal(secondUpdate, true);
+    const secondColumn = useDocumentStore
+      .getState()
+      .workspacesById[workspaceId]?.blocks[0]?.columns.find((c) => c.id === dropdownColumn.id);
+    assert.deepEqual(
+      (secondColumn?.settings as { options?: string[] })?.options,
+      ["A", "B", "C"]
+    );
+
+    await wait(20);
+  });
 });

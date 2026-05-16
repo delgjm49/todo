@@ -215,3 +215,40 @@ If an agent forgets to update the channel:
 1. Start Main with `main`.
 2. Reference the relevant artifacts and channel.
 3. Main reconstructs the missing channel message, notes the repair in `docs/SESSIONS.md`, and provides the next pickup instruction.
+
+### Output-length / context-exhaustion stalls
+
+Sometimes a worker exits successfully after changing files but does not append the required next `## Message` block. Common signs:
+
+- dispatch-auto reports `ran but did not append a new message`
+- the worker process exit code is `0`
+- source/test files changed, but no complete/review artifact or next channel message exists
+- the worker session JSONL ends with a provider stop reason such as `length`, `max_tokens`, or context/output exhaustion
+
+First classify the stall:
+
+- **Single-turn output limit**: the session JSONL shows a stop reason like `length` / `max_tokens`, often with an output token count at the per-turn cap. The model was cut off while speaking, but the session may still have enough total context to continue.
+- **Full context exhaustion**: the session or provider reports context-window/token-limit errors, prompt-too-long errors, or the worker repeatedly fails immediately because the accumulated session is too large.
+
+Recovery for a **single-turn output-limit** stall:
+
+1. Treat the repo as partially implemented and dirty; do not discard changes automatically.
+2. Keep the existing role session directory so dispatch-auto can resume it.
+3. Append a new `Main → <Role>` recovery message to the channel. The message should say that the prior turn hit the single-turn output limit, list known changed files, and instruct the worker to continue concisely from the existing state rather than re-debugging from scratch.
+4. The recovery task should explicitly prioritize close requirements and output budget, for example: “Do not repeat prior analysis. Inspect current files/tests, make the smallest remaining fixes, run required verification, write/update the artifact, append the next channel message, and keep final output short.”
+5. Retry dispatch-auto for the channel only after the recovery message is appended.
+
+Recovery for **full context exhaustion** or repeated output-limit stalls:
+
+1. Treat the repo as partially implemented and dirty; do not discard changes automatically.
+2. Move the exhausted role session directory aside so the next worker starts fresh, for example:
+
+   ```bash
+   mv agents/channels/.sessions/014-feature-channel-Dev \
+      agents/channels/.sessions/014-feature-channel-Dev.stalled-YYYYMMDD-HHMMSS
+   ```
+
+3. Append a new `Main → <Role>` recovery message to the channel. The message should explicitly say that partial work exists, list known changed files, mention the prior stall, and instruct the worker to inspect `git status --short` before continuing.
+4. Retry dispatch-auto for the channel only after the recovery message is appended.
+
+Prefer same-session continuation for a one-off output-length cutoff when the session still has usable context. Prefer a fresh session when the context is exhausted, when the worker was stuck in an unproductive reasoning loop, or when the same role stalls repeatedly before satisfying close requirements.
