@@ -15,6 +15,7 @@ src-tauri/target
 
 # Dispatch-auto orchestrator runtime files (per-machine, not synced).
 .dispatch-auto.log
+.dispatch-auto-*.log
 agents/channels/.sessions/
 
 # Dispatch-auto per-machine config overrides (Claude account paths, Pi profile
