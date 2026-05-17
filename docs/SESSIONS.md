@@ -2316,3 +2316,40 @@ First Review pass for Dispatch 027 (DeepSeek V4 Flash Forced Loop Smoke). Re-rea
 ### Outcome
 First Review pass complete. Channel advanced to `004-review-to-dev.md` with `State = needs-dev-fix`. Dev must update the marker to `loop-state: second-pass`, create the complete artifact, and route back to Review via `005-dev-to-review.md`. No product code was touched.
 
+
+## Session 130 — 2026-05-17
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: agents/channels/027-deepseek-v4-flash-loop-smoke/
+- Dispatch: agents/artifacts/027-deepseek-v4-flash-loop-smoke-dispatch.md
+- Plan: agents/artifacts/027-deepseek-v4-flash-loop-smoke-plan.md
+- Marker: agents/artifacts/027-deepseek-v4-flash-loop-smoke-marker.md
+- Complete: agents/artifacts/027-deepseek-v4-flash-loop-smoke-complete.md
+
+### Summary
+Second Dev pass for Dispatch 027 (DeepSeek V4 Flash Forced Loop Smoke). Re-read `messages/004-review-to-dev.md` from disk, confirmed `## To = Dev` and `State = needs-dev-fix`. Updated the marker from `loop-state: first-pass` to `loop-state: second-pass`. Created the complete artifact at `agents/artifacts/027-deepseek-v4-flash-loop-smoke-complete.md` documenting both Dev passes and the marker transition. Appended this session entry and created `messages/005-dev-to-review.md` routing Review to verify the marker state, confirm the complete artifact, and route to Main with `State = review-pass`.
+
+### Outcome
+Marker transitioned to `loop-state: second-pass` and complete artifact created. Channel advanced to `005-dev-to-review.md` with `State = ready-for-review`. No product code was touched. Next: Review pickup to verify the loop completion and route to Main.
+
+## Session 131 — 2026-05-17
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: agents/channels/027-deepseek-v4-flash-loop-smoke/
+- Dispatch: agents/artifacts/027-deepseek-v4-flash-loop-smoke-dispatch.md
+- Plan: agents/artifacts/027-deepseek-v4-flash-loop-smoke-plan.md
+- Marker: agents/artifacts/027-deepseek-v4-flash-loop-smoke-marker.md
+- Complete: agents/artifacts/027-deepseek-v4-flash-loop-smoke-complete.md
+- Review: agents/artifacts/027-deepseek-v4-flash-loop-smoke-review.md
+
+### Summary
+Second (final) Review pass for Dispatch 027 (DeepSeek V4 Flash Forced Loop Smoke). Re-read `messages/005-dev-to-review.md` from disk, confirmed `## To = Review` and `State = ready-for-review`. Verified the marker file contains exactly `loop-state: second-pass`, the complete artifact exists and documents both Dev passes, and no product code was modified (`git diff --name-only` shows only marker.md and SESSIONS.md). Created the review artifact at `agents/artifacts/027-deepseek-v4-flash-loop-smoke-review.md` with PASS verdict.
+
+### Outcome
+Review verdict: PASS. All forced-loop criteria met. The full required route `Main → Plan → Dev → Review → Dev → Review → Main` has been exercised successfully. The spool channel has been appended with `006-review-to-main.md` at `State = review-pass`. Ready for Main to close the dispatch.
