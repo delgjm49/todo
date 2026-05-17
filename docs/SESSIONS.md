@@ -1885,3 +1885,144 @@ First Dev pass for Dispatch Smoke v6. Created the marker file at `agents/artifac
 ### Outcome
 First Dev pass complete. Marker created with correct first-pass state. Channel appended with Dev → Review message (Message 3) at `State = ready-for-review`. Ready for first Review pass (intentional loop-back to Dev).
 
+---
+
+## Session 106 — 2026-05-16
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: agents/channels/022-dispatch-smoke-v7/
+- Dispatch: agents/artifacts/022-dispatch-smoke-v7-dispatch.md
+
+### Summary
+Created Dispatch Smoke v7 — the first Phase 3 spool-format dispatch test. The dispatch uses the standard forced-loop pattern (`Main → Plan → Dev → Review → Dev → Review → Main`) with trivial artifact-only work. The primary test objective is validating the spool-format channel workflow end-to-end: directory-based channels with individual numbered message files, worker role resolution from file metadata, and proper message sequencing through the forced re-review loop. The channel is at `agents/channels/022-dispatch-smoke-v7/` (spool directory) — not a legacy single-file channel.
+
+### Outcome
+Dispatch is queued for Plan. The next session should use pickup mode and continue from `agents/channels/022-dispatch-smoke-v7/`.
+
+---
+
+## Session 107 — 2026-05-16
+
+### Agent Type
+plan
+
+### Artifacts
+- Channel: `agents/channels/022-dispatch-smoke-v7/`
+- Dispatch: `agents/artifacts/022-dispatch-smoke-v7-dispatch.md`
+- Plan: `agents/artifacts/022-dispatch-smoke-v7-plan.md`
+
+### Summary
+Created the implementation plan for Smoke v7 — the first Phase 3 spool-format dispatch test. The plan is artifact-only with a forced `Main → Plan → Dev → Review → Dev → Review → Main` route. It explicitly warns workers about spool-format differences vs legacy single-file channels (individual message files in `messages/`, directory-based pickup path, role resolution from latest file's `## To` field). The plan defines the first-pass Dev marker (`smoke-v7-state: first-pass`), the intentional Review → Dev loop-back, the second-pass Dev re-read from disk, marker update (`smoke-v7-state: second-pass`), complete artifact creation, and final Review verification expecting exactly 6 message files with correct routing.
+
+### Outcome
+Plan is ready for Dev. The dispatch channel has been appended with `002-plan-to-dev.md` at `State = ready-for-dev`. Next session should continue as Dev with `pickup agents/channels/022-dispatch-smoke-v7/`.
+
+---
+
+## Session 108 — 2026-05-16
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: agents/channels/022-dispatch-smoke-v7/
+- Dispatch: agents/artifacts/022-dispatch-smoke-v7-dispatch.md
+- Plan: agents/artifacts/022-dispatch-smoke-v7-plan.md
+- Marker: agents/artifacts/022-dispatch-smoke-v7-marker.md
+
+### Summary
+First Dev pass for Smoke v7 — the first Phase 3 spool-format dispatch test. Created the marker file at `agents/artifacts/022-dispatch-smoke-v7-marker.md` with the exact line `smoke-v7-state: first-pass`. Verified marker content via grep. Confirmed no app source, app tests, package/Tauri config, product docs, orchestration config, dispatch-auto code, or external scripts were modified. Appended `003-dev-to-review.md` to the spool-format dispatch channel at `State = ready-for-review`.
+
+### Outcome
+First Dev pass complete. Marker created with correct first-pass state. Channel messages directory now contains 3 files: `001-main-to-plan.md`, `002-plan-to-dev.md`, `003-dev-to-review.md`. Ready for first Review pass (intentional loop-back to Dev).
+
+---
+
+## Session 109 — 2026-05-16
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: agents/channels/022-dispatch-smoke-v7/
+- Plan: agents/artifacts/022-dispatch-smoke-v7-plan.md
+- Marker: agents/artifacts/022-dispatch-smoke-v7-marker.md
+- Review: agents/artifacts/022-dispatch-smoke-v7-review.md
+
+### Summary
+First Review pass for Smoke v7 — Phase 3 Spool-Format Dispatch Test. Verified the first-pass marker contains exactly `smoke-v7-state: first-pass`. Confirmed no app source, app tests, package/Tauri config, product docs, orchestration config, dispatch-auto code, or external scripts were modified by workers (the only non-artifact changes — `agents/orchestration.json` workerMode change and `agents/prompts/main.md` pickup instruction update — are Main-owned setup changes that preceded this dispatch). Per the smoke test forced-loop design, returned to Dev with `State = needs-dev-fix` even though the first pass is technically correct. Appended `004-review-to-dev.md` to the spool-format dispatch channel.
+
+### Outcome
+First Review pass complete. Intentional return to Dev for second pass. Channel messages directory now contains 4 files: `001-main-to-plan.md`, `002-plan-to-dev.md`, `003-dev-to-review.md`, `004-review-to-dev.md`. Ready for second Dev pass.
+
+---
+
+## Session 110 — 2026-05-16
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: agents/channels/022-dispatch-smoke-v7/
+- Dispatch: agents/artifacts/022-dispatch-smoke-v7-dispatch.md
+- Plan: agents/artifacts/022-dispatch-smoke-v7-plan.md
+- Marker: agents/artifacts/022-dispatch-smoke-v7-marker.md
+- Complete: agents/artifacts/022-dispatch-smoke-v7-complete.md
+
+### Summary
+Second Dev pass for Smoke v7 — re-read channel from disk, confirmed latest message is `004-review-to-dev.md` with `## To = Dev` and `State = needs-dev-fix`. Updated the marker from `smoke-v7-state: first-pass` to `smoke-v7-state: second-pass`. Created the complete artifact documenting both Dev passes with verification results. Appended `005-dev-to-review.md` at `State = ready-for-review`.
+
+### Outcome
+Second Dev pass complete. Marker updated to second-pass. Complete artifact created. Channel messages directory now contains 5 files. Ready for second Review pass to verify and return `State = review-pass` to Main.
+
+---
+
+## Session 111 — 2026-05-16
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: agents/channels/022-dispatch-smoke-v7/
+- Plan: agents/artifacts/022-dispatch-smoke-v7-plan.md
+- Marker: agents/artifacts/022-dispatch-smoke-v7-marker.md
+- Complete: agents/artifacts/022-dispatch-smoke-v7-complete.md
+- Review: agents/artifacts/022-dispatch-smoke-v7-review.md
+
+### Summary
+Second Review pass for Smoke v7 — Phase 3 Spool-Format Dispatch Test. Verified all criteria:
+1. Marker updated to `smoke-v7-state: second-pass` ✅
+2. Complete artifact documents both Dev passes with verification results ✅
+3. Channel has exactly 5 message files with correct routing (no gaps) ✅
+4. No app source, app tests, package/Tauri config, product docs, orchestration config, dispatch-auto code, or external scripts modified by workers ✅
+5. Forced `Review → Dev → Review` re-review loop exercised successfully ✅
+
+Updated the review artifact with second-pass findings and PASS verdict. Appended `006-review-to-main.md` at `State = review-pass`.
+
+### Outcome
+Second Review pass complete. All smoke test criteria pass. Channel messages directory now contains 6 files with correct routing and no gaps: `001-main-to-plan.md`, `002-plan-to-dev.md`, `003-dev-to-review.md`, `004-review-to-dev.md`, `005-dev-to-review.md`, `006-review-to-main.md`. Terminal message routed to Main. Ready for Main to verify final state, revert `workerMode` if needed, commit, and push.
+
+---
+
+## Session 112 — 2026-05-16
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: agents/channels/022-dispatch-smoke-v7/
+- Dispatch: agents/artifacts/022-dispatch-smoke-v7-dispatch.md
+- Plan: agents/artifacts/022-dispatch-smoke-v7-plan.md
+- Marker: agents/artifacts/022-dispatch-smoke-v7-marker.md
+- Complete: agents/artifacts/022-dispatch-smoke-v7-complete.md
+- Review: agents/artifacts/022-dispatch-smoke-v7-review.md
+
+### Summary
+Closed Dispatch Smoke v7 — the first Phase 3 spool-format dispatch test. The full forced loop `Main → Plan → Dev → Review → Dev → Review → Main` completed successfully. All 6 spool message files are present with correct routing and no gaps. The Review verdict was PASS with no issues found. Reverted `agents/orchestration.json` workerMode from `interactive` to `subprocess`. Committed and pushed.
+
+### Outcome
+Dispatch Smoke v7 is closed. The spool-format channel workflow is validated end-to-end. Phase 3 dispatch format is ready for production use.
+
