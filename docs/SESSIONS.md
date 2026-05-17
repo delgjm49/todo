@@ -2353,3 +2353,54 @@ Second (final) Review pass for Dispatch 027 (DeepSeek V4 Flash Forced Loop Smoke
 
 ### Outcome
 Review verdict: PASS. All forced-loop criteria met. The full required route `Main → Plan → Dev → Review → Dev → Review → Main` has been exercised successfully. The spool channel has been appended with `006-review-to-main.md` at `State = review-pass`. Ready for Main to close the dispatch.
+
+## Session 132 — 2026-05-17
+
+### Agent Type
+plan
+
+### Artifacts
+- Channel: agents/channels/028-claude-all-roles-smoke/
+- Dispatch: agents/artifacts/028-claude-all-roles-smoke-dispatch.md
+- Plan: agents/artifacts/028-claude-all-roles-smoke-plan.md
+
+### Summary
+Plan phase for Dispatch 028 (Claude All-Roles Smoke — Phase 4 Interactive Worker Validation). Reviewed the dispatch artifact describing a happy-path artifact-only smoke validating Claude Code as Plan, Dev, and Review workers end-to-end. Created the plan artifact documenting Dev task (create completion summary, route to Review) and Review task (validate all three roles launched interactively, create review artifact, route to Main with review-pass). This is an artifact-only dispatch with no product code changes.
+
+### Outcome
+Plan is ready for Dev. The dispatch channel has been appended with `messages/002-plan-to-dev.md` routing Dev to create the completion artifact. Next: Dev pickup to create the complete artifact and advance to Review.
+
+## Session 133 — 2026-05-17
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: agents/channels/028-claude-all-roles-smoke/
+- Dispatch: agents/artifacts/028-claude-all-roles-smoke-dispatch.md
+- Plan: agents/artifacts/028-claude-all-roles-smoke-plan.md
+- Complete: agents/artifacts/028-claude-all-roles-smoke-complete.md
+
+### Summary
+Dev phase for Dispatch 028 (Claude All-Roles Smoke — Phase 4 Interactive Worker Validation). Picked up dispatch via dispatch-auto pickup, re-read `messages/002-plan-to-dev.md` from disk, confirmed `## To` = Dev and `State = ready-for-dev`. Created the completion artifact at `agents/artifacts/028-claude-all-roles-smoke-complete.md` documenting that Dev has routed to Review for final validation. Created `messages/003-dev-to-review.md` instructing Review to validate all three roles launched as Claude Code interactives, create the review artifact, and route to Main with `State = review-pass`.
+
+### Outcome
+Dev task complete. Channel advanced to `003-dev-to-review.md` with `State = ready-for-review`. No product code was touched. Next: Review pickup to validate the all-roles smoke and route to Main with review-pass verdict.
+
+## Session 134 — 2026-05-17
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: agents/channels/028-claude-all-roles-smoke/
+- Dispatch: agents/artifacts/028-claude-all-roles-smoke-dispatch.md
+- Plan: agents/artifacts/028-claude-all-roles-smoke-plan.md
+- Complete: agents/artifacts/028-claude-all-roles-smoke-complete.md
+- Review: agents/artifacts/028-claude-all-roles-smoke-review.md
+
+### Summary
+Review phase for Dispatch 028 (Claude All-Roles Smoke — Phase 4 Interactive Worker Validation). Picked up dispatch via dispatch-auto pickup, re-read `messages/003-dev-to-review.md` from disk, confirmed `## To` = Review and `State = ready-for-review`. Reviewed all artifacts to validate that all three worker roles (Plan, Dev, Review) successfully launched as Claude Code interactives. Confirmed message files correctly sequenced (001 → 002 → 003), no product code was modified, and dispatch protocol followed correctly. Created `agents/artifacts/028-claude-all-roles-smoke-review.md` documenting findings and verdict (PASS). Created `messages/004-review-to-main.md` routing to Main with `State = review-pass`.
+
+### Outcome
+Review task complete. All three worker roles (Plan, Dev, Review) successfully validated as Claude Code interactive workers in dispatch-auto workflow. Channel advanced to `004-review-to-main.md` with `State = review-pass`. Dispatch is ready for Main sign-off and closing.
