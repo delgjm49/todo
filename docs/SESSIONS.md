@@ -2215,3 +2215,54 @@ Closed Dispatch 025 as a guard-refusal result rather than the intended validator
 ### Outcome
 Guard-refusal smoke passed: the Phase 3 pickup prompt was strong enough to prevent a live Pi worker from creating a forbidden wrong filename. This did not exercise dispatch-auto's post-turn rejection path for an actually-created wrong filename; that should be tested separately with a deterministic controlled worker/harness.
 
+## Session 124 — 2026-05-17
+
+### Agent Type
+plan
+
+### Artifacts
+- Channel: agents/channels/026-deepseek-v4-flash-smoke/
+- Dispatch: agents/artifacts/026-deepseek-v4-flash-smoke-dispatch.md
+- Plan: agents/artifacts/026-deepseek-v4-flash-smoke-plan.md
+
+### Summary
+Picked up Dispatch 026 as Plan via dispatch-auto pickup. Re-read `messages/001-main-to-plan.md` from disk, confirmed `## To` = Plan. Created the plan artifact at `agents/artifacts/026-deepseek-v4-flash-smoke-plan.md` and appended `002-plan-to-dev.md` routing Dev to perform artifact-only smoke completion and route to Review.
+
+### Outcome
+Plan step complete. Channel advanced to `002-plan-to-dev.md` with `State = ready-for-dev`. No product code was touched. Next: Dev pickup to create the complete artifact and route to Review.
+
+## Session 125 — 2026-05-17
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: agents/channels/026-deepseek-v4-flash-smoke/
+- Dispatch: agents/artifacts/026-deepseek-v4-flash-smoke-dispatch.md
+- Plan: agents/artifacts/026-deepseek-v4-flash-smoke-plan.md
+- Complete: agents/artifacts/026-deepseek-v4-flash-smoke-complete.md
+
+### Summary
+Picked up Dispatch 026 as Dev via dispatch-auto pickup. Re-read `messages/002-plan-to-dev.md` from disk, confirmed `## To` = Dev. Created the Dev complete artifact at `agents/artifacts/026-deepseek-v4-flash-smoke-complete.md`, appended this session entry, and created `messages/003-dev-to-review.md` routing Review to create the review artifact and route to Main with `State = review-pass`.
+
+### Outcome
+Dev step complete. Channel advanced to `003-dev-to-review.md` with `State = ready-for-review`. No product code was touched. Next: Review pickup to create the review artifact and route to Main.
+
+## Session 126 — 2026-05-17
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: agents/channels/026-deepseek-v4-flash-smoke/
+- Dispatch: agents/artifacts/026-deepseek-v4-flash-smoke-dispatch.md
+- Plan: agents/artifacts/026-deepseek-v4-flash-smoke-plan.md
+- Complete: agents/artifacts/026-deepseek-v4-flash-smoke-complete.md
+- Review: agents/artifacts/026-deepseek-v4-flash-smoke-review.md
+
+### Summary
+Picked up Dispatch 026 as Review via dispatch-auto pickup. Re-read `messages/003-dev-to-review.md` from disk, confirmed `## To` = Review. Reviewed the Dev complete artifact, found no issues, and created the review artifact at `agents/artifacts/026-deepseek-v4-flash-smoke-review.md`. Appended this session entry and created `messages/004-review-to-main.md` routing to Main with `State = review-pass`.
+
+### Outcome
+Review PASS. Channel advanced to `004-review-to-main.md` with `State = review-pass`. No product code was touched. Next: Main pickup to close the dispatch cycle.
+
