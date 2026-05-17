@@ -1481,3 +1481,407 @@ Closed the Phase 2 Interactive Pane Smoke dispatch after Review PASS. Confirmed 
 ### Outcome
 Channel marked closed. Commit pending explicit user approval.
 
+## Session 85 — 2026-05-16
+
+### Agent Type
+plan
+
+### Artifacts
+- Channel: `agents/channels/016-phase2-interactive-pane-reuse-loop-channel.md`
+- Dispatch: `agents/artifacts/016-phase2-interactive-pane-reuse-loop-dispatch.md`
+- Plan: `agents/artifacts/016-phase2-interactive-pane-reuse-loop-plan.md`
+
+### Summary
+Created the tiny artifact-only plan for the Phase 2 Interactive Pane Reuse Loop dispatch. The plan explicitly requires the forced route `Main → Plan → Dev → Review → Dev → Review → Main`, including a first-pass marker, intentional Review return to Dev, second-pass marker update, and final Review PASS.
+
+### Outcome
+Plan is ready for Dev. The dispatch channel has been appended with the next Plan → Dev message.
+
+
+## Session 86 — 2026-05-16
+
+### Agent Type
+plan
+
+### Artifacts
+- Channel: agents/channels/018-phase2-interactive-pane-reuse-loop-zen-channel.md
+- Dispatch: agents/artifacts/018-phase2-interactive-pane-reuse-loop-zen-dispatch.md
+- Plan: agents/artifacts/018-phase2-interactive-pane-reuse-loop-zen-plan.md
+
+### Summary
+Created the tiny artifact-only implementation plan for the Phase 2 Interactive Pane Reuse Loop Zen dispatch. The plan explicitly requires the forced route `Main → Plan → Dev → Review → Dev → Review → Main`, including a first-pass marker with `phase2-reuse-loop-zen-state: first-pass`, intentional Review return to Dev, second-pass marker update to `phase2-reuse-loop-zen-state: second-pass`, and final Review PASS.
+
+### Outcome
+Plan is ready for Dev. The dispatch channel has been appended with the next Plan → Dev message.
+
+## Session 87 — 2026-05-16
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: agents/channels/018-phase2-interactive-pane-reuse-loop-zen-channel.md
+- Dispatch: agents/artifacts/018-phase2-interactive-pane-reuse-loop-zen-dispatch.md
+- Plan: agents/artifacts/018-phase2-interactive-pane-reuse-loop-zen-plan.md
+- Marker: agents/artifacts/018-phase2-interactive-pane-reuse-loop-zen-marker.md
+
+### Summary
+First Dev pass for Phase 2 Interactive Pane Reuse Loop Zen. Created the marker file with `phase2-reuse-loop-zen-state: first-pass` and verified its content. Appended Dev → Review message to the dispatch channel.
+
+### Outcome
+First Dev pass complete. Marker created with correct first-pass state. Channel appended for Review. Ready for Review's intentional loop-back to Dev.
+
+## Session 88 — 2026-05-16
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: agents/channels/018-phase2-interactive-pane-reuse-loop-zen-channel.md
+- Dispatch: agents/artifacts/018-phase2-interactive-pane-reuse-loop-zen-dispatch.md
+- Plan: agents/artifacts/018-phase2-interactive-pane-reuse-loop-zen-plan.md
+- Marker: agents/artifacts/018-phase2-interactive-pane-reuse-loop-zen-marker.md
+- Review: agents/artifacts/018-phase2-interactive-pane-reuse-loop-zen-review.md
+
+### Summary
+First Review pass for Phase 2 Interactive Pane Reuse Loop Zen. Verified marker contains `phase2-reuse-loop-zen-state: first-pass`. Wrote review artifact with **FAIL — Return to Dev** verdict as required by the dispatch's forced loop. Returned to Dev with `State = needs-dev-fix`, instructing Dev to update the marker to `second-pass` and create the complete artifact.
+
+### Outcome
+First Review pass complete. Review artifact written. Channel appended with Review → Dev message. Ready for second Dev pass.
+
+## Session 89 — 2026-05-16
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: agents/channels/018-phase2-interactive-pane-reuse-loop-zen-channel.md
+- Dispatch: agents/artifacts/018-phase2-interactive-pane-reuse-loop-zen-dispatch.md
+- Plan: agents/artifacts/018-phase2-interactive-pane-reuse-loop-zen-plan.md
+- Marker: agents/artifacts/018-phase2-interactive-pane-reuse-loop-zen-marker.md
+- Review: agents/artifacts/018-phase2-interactive-pane-reuse-loop-zen-review.md
+- Complete: agents/artifacts/018-phase2-interactive-pane-reuse-loop-zen-complete.md
+
+### Summary
+Second Dev pass for Phase 2 Interactive Pane Reuse Loop Zen. Updated the marker from `phase2-reuse-loop-zen-state: first-pass` to `phase2-reuse-loop-zen-state: second-pass`. Created the complete artifact documenting both Dev passes with verification results. All verifications passed.
+
+### Outcome
+Second Dev pass complete. Marker updated to second-pass. Complete artifact created. Channel appended with Dev → Review message. Ready for second Review pass.
+
+## Session 90 — 2026-05-16
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: agents/channels/018-phase2-interactive-pane-reuse-loop-zen-channel.md
+- Dispatch: agents/artifacts/018-phase2-interactive-pane-reuse-loop-zen-dispatch.md
+- Plan: agents/artifacts/018-phase2-interactive-pane-reuse-loop-zen-plan.md
+- Marker: agents/artifacts/018-phase2-interactive-pane-reuse-loop-zen-marker.md
+- Review: agents/artifacts/018-phase2-interactive-pane-reuse-loop-zen-review.md
+- Complete: agents/artifacts/018-phase2-interactive-pane-reuse-loop-zen-complete.md
+
+### Summary
+Second (final) Review pass for Phase 2 Interactive Pane Reuse Loop Zen. Verified marker contains `phase2-reuse-loop-zen-state: second-pass`. Verified complete artifact documents both Dev passes. Ran verification commands — all passed. Updated review artifact with **PASS** verdict.
+
+### Outcome
+Second Review pass complete. All acceptance criteria met. Review artifact updated with PASS. Channel appended with Review → Main message. Dispatch is ready for Main to close.
+
+## Session 91 — 2026-05-16
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: agents/channels/018-phase2-interactive-pane-reuse-loop-zen-channel.md
+- Dispatch: agents/artifacts/018-phase2-interactive-pane-reuse-loop-zen-dispatch.md
+- Plan: agents/artifacts/018-phase2-interactive-pane-reuse-loop-zen-plan.md
+- Marker: agents/artifacts/018-phase2-interactive-pane-reuse-loop-zen-marker.md
+- Complete: agents/artifacts/018-phase2-interactive-pane-reuse-loop-zen-complete.md
+- Review: agents/artifacts/018-phase2-interactive-pane-reuse-loop-zen-review.md
+
+### Summary
+Main close for Phase 2 Interactive Pane Reuse Loop Zen. Reviewed full channel audit trail — all 6 messages present, route `Main → Plan → Dev → Review → Dev → Review → Main` followed exactly. All verifications green. Channel marked closed.
+
+### Outcome
+Dispatch closed. Channel status updated to `closed`. Ready for commit and push pending user approval.
+
+---
+
+## Session 92 — 2026-05-16
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: `agents/channels/019-phase2-interactive-smoke-v4-channel.md`
+- Dispatch: `agents/artifacts/019-phase2-interactive-smoke-v4-dispatch.md`
+
+### Summary
+Created a fresh Phase 2 interactive smoke test (v4) to validate the current dispatch-auto system end-to-end. Set `workerMode: "interactive"` in `agents/orchestration.json` for the duration of the test. The dispatch uses the standard forced-loop pattern (`Main → Plan → Dev → Review → Dev → Review → Main`) with trivial artifact-only work.
+
+### Outcome
+Dispatch is queued for Plan. The next session should use pickup mode and continue from `agents/channels/019-phase2-interactive-smoke-v4-channel.md`.
+
+---
+
+## Session 93 — 2026-05-16
+
+### Agent Type
+plan
+
+### Artifacts
+- Channel: `agents/channels/019-phase2-interactive-smoke-v4-channel.md`
+- Dispatch: `agents/artifacts/019-phase2-interactive-smoke-v4-dispatch.md`
+- Plan: `agents/artifacts/019-phase2-interactive-smoke-v4-plan.md`
+
+### Summary
+Created the implementation plan for Phase 2 Interactive Smoke v4. The plan is a tiny artifact-only plan that explicitly requires the forced `Review → Dev` loop with first-pass marker creation, intentional Review return, second-pass marker update, and final Review pass. Appended Plan → Dev message to the dispatch channel with `State = ready-for-dev`.
+
+### Outcome
+Plan complete. Dispatch channel updated with Plan → Dev message. Ready for first Dev pass.
+
+---
+
+## Session 94 — 2026-05-16
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: `agents/channels/019-phase2-interactive-smoke-v4-channel.md`
+- Dispatch: `agents/artifacts/019-phase2-interactive-smoke-v4-dispatch.md`
+- Plan: `agents/artifacts/019-phase2-interactive-smoke-v4-plan.md`
+- Marker: `agents/artifacts/019-phase2-interactive-smoke-v4-marker.md`
+
+### Summary
+First Dev pass for Phase 2 Interactive Smoke v4. Created the marker file at `agents/artifacts/019-phase2-interactive-smoke-v4-marker.md` with the exact line `smoke-v4-state: first-pass` and verified its content. No app source, app tests, package/Tauri config, product docs, orchestration config, dispatch-auto code, or external scripts were modified.
+
+### Outcome
+First Dev pass complete. Marker created with correct first-pass state. Channel appended with Dev → Review message at `State = ready-for-review`. Ready for first Review pass (intentional loop-back to Dev).
+
+---
+
+## Session 95 — 2026-05-16
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: `agents/channels/019-phase2-interactive-smoke-v4-channel.md`
+- Dispatch: `agents/artifacts/019-phase2-interactive-smoke-v4-dispatch.md`
+- Plan: `agents/artifacts/019-phase2-interactive-smoke-v4-plan.md`
+- Marker: `agents/artifacts/019-phase2-interactive-smoke-v4-marker.md`
+- Review: `agents/artifacts/019-phase2-interactive-smoke-v4-review.md`
+
+### Summary
+First Review pass for Phase 2 Interactive Smoke v4. Confirmed the marker contains `smoke-v4-state: first-pass` as expected. No app source, tests, config, dispatch-auto code, or external scripts were modified. **Intentionally returned FAIL — Return to Dev** with `State = needs-dev-fix` per the dispatch plan to exercise the forced `Review → Dev` loop. Review artifact written documenting the finding and fix instructions.
+
+### Outcome
+Review verdict: FAIL — Return to Dev (intentional, per plan). Channel status updated to `needs-dev-fix` and appended with `Review → Dev` message instructing Dev to update the marker to `second-pass` and create the complete artifact. Work is not done until Review returns `State = review-pass`.
+
+---
+
+## Session 96 — 2026-05-16
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: `agents/channels/019-phase2-interactive-smoke-v4-channel.md`
+- Dispatch: `agents/artifacts/019-phase2-interactive-smoke-v4-dispatch.md`
+- Plan: `agents/artifacts/019-phase2-interactive-smoke-v4-plan.md`
+- Marker: `agents/artifacts/019-phase2-interactive-smoke-v4-marker.md`
+- Review: `agents/artifacts/019-phase2-interactive-smoke-v4-review.md`
+- Complete: `agents/artifacts/019-phase2-interactive-smoke-v4-complete.md`
+
+### Summary
+Second Dev pass for Phase 2 Interactive Smoke v4 (forced `Review → Dev` loop). Updated the marker from `smoke-v4-state: first-pass` to `smoke-v4-state: second-pass`. Created the complete artifact at `agents/artifacts/019-phase2-interactive-smoke-v4-complete.md` with lightweight verification results documenting both Dev passes. No app source, app tests, package/Tauri config, product docs, orchestration config, dispatch-auto code, or external scripts were modified.
+
+### Outcome
+Second Dev pass complete. Marker updated to second-pass. Complete artifact created. Channel appended with Dev → Review message at `State = ready-for-review`. Ready for second Review pass to verify and return `State = review-pass`.
+
+---
+
+## Session 97 — 2026-05-16
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: `agents/channels/019-phase2-interactive-smoke-v4-channel.md`
+- Dispatch: `agents/artifacts/019-phase2-interactive-smoke-v4-dispatch.md`
+- Plan: `agents/artifacts/019-phase2-interactive-smoke-v4-plan.md`
+- Marker: `agents/artifacts/019-phase2-interactive-smoke-v4-marker.md`
+- Complete: `agents/artifacts/019-phase2-interactive-smoke-v4-complete.md`
+- Review: `agents/artifacts/019-phase2-interactive-smoke-v4-review.md`
+
+### Summary
+Second Review pass for Phase 2 Interactive Smoke v4. Confirmed marker contains `smoke-v4-state: second-pass`, complete artifact documents both Dev passes with verification results, and no app source, tests, config, dispatch-auto code, or external scripts were modified. Updated the review artifact with the PASS verdict.
+
+### Outcome
+Review verdict: **PASS**. The full required route `Main → Plan → Dev → Review → Dev → Review → Main` has been exercised successfully. The forced Review → Dev loop completed as designed. Channel status updated to `review-pass` and appended with `Review → Main` message. Ready for Main to close the dispatch.
+
+---
+
+## Session 98 — 2026-05-16
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: `agents/channels/019-phase2-interactive-smoke-v4-channel.md`
+- Dispatch: `agents/artifacts/019-phase2-interactive-smoke-v4-dispatch.md`
+- Plan: `agents/artifacts/019-phase2-interactive-smoke-v4-plan.md`
+- Marker: `agents/artifacts/019-phase2-interactive-smoke-v4-marker.md`
+- Complete: `agents/artifacts/019-phase2-interactive-smoke-v4-complete.md`
+- Review: `agents/artifacts/019-phase2-interactive-smoke-v4-review.md`
+
+### Summary
+Closed the Phase 2 Interactive Smoke v4 dispatch after confirming the full audit trail (Main → Plan → Dev → Review → Dev → Review → Main) with a final PASS verdict. Reverted `workerMode` in `agents/orchestration.json` back to `"subprocess"` after the interactive-mode smoke test completed.
+
+### Outcome
+Dispatch 019 is closed. Smoke test validated the current dispatch-auto system end-to-end in Phase 2 interactive mode. The forced Review → Dev loop was exercised as designed. No commit or push was performed per the user's request.
+
+---
+
+## Session 99 — 2026-05-16
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: `agents/channels/020-dispatch-smoke-v5-channel.md`
+- Dispatch: `agents/artifacts/020-dispatch-smoke-v5-dispatch.md`
+
+### Summary
+Created a fresh dispatch smoke test (v5) to validate the current dispatch-auto system end-to-end after recent refinements/tweaks. The dispatch uses the standard forced-loop pattern (`Main → Plan → Dev → Review → Dev → Review → Main`) with trivial artifact-only work, modeled on the 019 smoke test.
+
+### Outcome
+Dispatch is queued for Plan. The next session should use pickup mode and continue from `agents/channels/020-dispatch-smoke-v5-channel.md`.
+
+---
+
+## Session 100 — 2026-05-16
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: `agents/channels/020-dispatch-smoke-v5-channel.md`
+- Dispatch: `agents/artifacts/020-dispatch-smoke-v5-dispatch.md`
+- Plan: `agents/artifacts/020-dispatch-smoke-v5-plan.md`
+- Marker: `agents/artifacts/020-dispatch-smoke-v5-marker.md`
+- Review: `agents/artifacts/020-dispatch-smoke-v5-review.md`
+
+### Summary
+Closed the 020 Dispatch Smoke v5 as-is after the chain stopped at the second Dev pass ("Dev ran but did not append a new message"). The smoke test successfully exercised the Main → Plan → Dev → Review route including the intentional FAIL return to Dev. The forced Review → Dev loop worked; the fix pass stalled on bookkeeping, a known intermittent Dev-output pattern. The chain was not retried per user direction.
+
+### Outcome
+Dispatch 020 marked closed. No commit or push.
+
+## Session 100 — 2026-05-16
+
+### Agent Type
+plan
+
+### Artifacts
+- Channel: agents/channels/020-dispatch-smoke-v5-channel.md
+- Dispatch: agents/artifacts/020-dispatch-smoke-v5-dispatch.md
+- Plan: agents/artifacts/020-dispatch-smoke-v5-plan.md
+
+### Summary
+Created the implementation plan for the `Dispatch Smoke v5` meta-workflow smoke test. The plan is tiny and artifact-only, explicitly requiring the forced route `Main → Plan → Dev → Review → Dev → Review → Main`. The first Dev pass creates a marker with `smoke-v5-state: first-pass`; first Review intentionally returns to Dev; second Dev updates the marker to `second-pass` and creates the complete artifact; second Review returns PASS to Main.
+
+### Outcome
+Plan is ready for Dev. The dispatch channel has been appended with the next `Plan → Dev` message at `State = ready-for-dev`.
+
+---
+
+## Session 101 — 2026-05-16
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: agents/channels/020-dispatch-smoke-v5-channel.md
+- Dispatch: agents/artifacts/020-dispatch-smoke-v5-dispatch.md
+- Plan: agents/artifacts/020-dispatch-smoke-v5-plan.md
+- Marker: agents/artifacts/020-dispatch-smoke-v5-marker.md
+
+### Summary
+First Dev pass for Dispatch Smoke v5. Created the marker file at `agents/artifacts/020-dispatch-smoke-v5-marker.md` with the exact line `smoke-v5-state: first-pass`. Verified marker content, `git diff --check` (no whitespace errors), and `git diff --name-only` confirming no app source, app tests, package/Tauri config, product docs, orchestration config, dispatch-auto code, or external scripts were modified. Appended Dev → Review message to the dispatch channel with `State = ready-for-review`.
+
+### Outcome
+First Dev pass complete. Marker created with correct first-pass state. Channel appended with Dev → Review message at `State = ready-for-review`. Ready for first Review pass (intentional loop-back to Dev).
+
+
+## Session 102 — 2026-05-16
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: agents/channels/020-dispatch-smoke-v5-channel.md
+- Dispatch: agents/artifacts/020-dispatch-smoke-v5-dispatch.md
+- Plan: agents/artifacts/020-dispatch-smoke-v5-plan.md
+- Marker: agents/artifacts/020-dispatch-smoke-v5-marker.md
+- Review: agents/artifacts/020-dispatch-smoke-v5-review.md
+
+### Summary
+First Review pass for Dispatch Smoke v5. Verified the marker file contains `smoke-v5-state: first-pass`. Confirmed no app source, app tests, package/Tauri config, product docs, orchestration config, dispatch-auto code, or external scripts were modified. Per the plan's design, intentionally returned FAIL — Return to Dev with `State = needs-dev-fix` to force the required Review → Dev loop. Appended Review → Dev message to the dispatch channel.
+
+### Outcome
+Review verdict: **FAIL — Return to Dev** (intentional, per plan design). Marker is correct for first pass. Dev must update the marker to `smoke-v5-state: second-pass` and create the complete artifact, then route back to Review for final pass.
+
+---
+
+## Session 103 — 2026-05-16
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: `agents/channels/021-dispatch-smoke-v6-channel.md`
+- Dispatch: `agents/artifacts/021-dispatch-smoke-v6-dispatch.md`
+
+### Summary
+Created Dispatch Smoke v6 to validate dispatch-auto pickup hardening for reused interactive worker sessions. The dispatch uses the standard forced-loop pattern (`Main → Plan → Dev → Review → Dev → Review → Main`) with trivial artifact-only work. The primary test objective is ensuring the second Dev pass re-reads the channel from disk, ignores stale remembered state, recomputes its active role from the latest message addressed to Dev, and appends a fresh `Dev → Review` message — addressing the suspected stale-context root cause that stalled v5.
+
+### Outcome
+Dispatch is queued for Plan. The next session should use pickup mode and continue from `agents/channels/021-dispatch-smoke-v6-channel.md`.
+
+## Session 104 — 2026-05-16
+
+### Agent Type
+plan
+
+### Artifacts
+- Channel: agents/channels/021-dispatch-smoke-v6-channel.md
+- Dispatch: agents/artifacts/021-dispatch-smoke-v6-dispatch.md
+- Plan: agents/artifacts/021-dispatch-smoke-v6-plan.md
+
+### Summary
+Created the implementation plan for Dispatch Smoke v6. The plan is tiny and artifact-only, explicitly requiring the forced route `Main → Plan → Dev → Review → Dev → Review → Main`. The primary test objective is validating dispatch-auto pickup hardening for reused interactive worker sessions — the second Dev pass must re-read the channel from disk, ignore stale remembered state, recompute its active role from the latest message addressed to Dev, and append a fresh `Dev → Review` message. The plan includes a concrete stale-context warning with countermeasures for Dev.
+
+### Outcome
+Plan is ready for Dev. The dispatch channel has been appended with the next `Plan → Dev` message at `State = ready-for-dev`.
+
+
+## Session 105 — 2026-05-16
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: agents/channels/021-dispatch-smoke-v6-channel.md
+- Dispatch: agents/artifacts/021-dispatch-smoke-v6-dispatch.md
+- Plan: agents/artifacts/021-dispatch-smoke-v6-plan.md
+- Marker: agents/artifacts/021-dispatch-smoke-v6-marker.md
+
+### Summary
+First Dev pass for Dispatch Smoke v6. Created the marker file at `agents/artifacts/021-dispatch-smoke-v6-marker.md` with the exact line `smoke-v6-state: first-pass`. Verified marker content via grep. Confirmed no app source, app tests, package/Tauri config, product docs, orchestration config, dispatch-auto code, or external scripts were modified. Appended Dev → Review message to the dispatch channel with `State = ready-for-review`.
+
+### Outcome
+First Dev pass complete. Marker created with correct first-pass state. Channel appended with Dev → Review message (Message 3) at `State = ready-for-review`. Ready for first Review pass (intentional loop-back to Dev).
+

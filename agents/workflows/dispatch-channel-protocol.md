@@ -1,254 +1,175 @@
 # Dispatch Channel Protocol
 
-Dispatch channels are append-only message logs for passing work between agents without long copy/paste prompts in chat.
-
-## Purpose
-
-This protocol solves four recurring workflow problems:
-
-1. Users had to manually copy long prompts mixed into agent summaries.
-2. Agents sometimes forgot to include the next prompt in chat, or hid it inside an artifact.
-3. Main could not easily audit whether handoffs were happening correctly.
-4. Copy/paste prompts consumed chat tokens even though they only existed to bootstrap the next session.
-
-A dispatch channel keeps the message chain on disk, next to the dispatch artifacts. Each agent appends the next agent's instructions to the channel and tells the user only that the next message is ready.
+Dispatch channels are message-per-file spools for passing work between Main, Plan, Dev, and Review without long copy/paste prompts in chat.
 
 ## Location and Naming
 
-Dispatch channels live in:
+New dispatch channels live in a directory under `agents/channels/`:
 
 ```text
-agents/channels/
+agents/channels/###-feature-slug/
+  messages/
+    001-main-to-plan.md
+    002-plan-to-dev.md
+    003-dev-to-review.md
+  .sessions/        # dispatch-auto runtime state; gitignored
 ```
 
-Naming convention:
+Before using spool channels, ensure `.gitignore` contains:
+
+```gitignore
+agents/channels/*/.sessions/
+```
+
+Legacy single-file channels (`agents/channels/*-channel.md`) are historical/smoke-readable only. New dispatches must use spool directories.
+
+## Message File Rules
+
+Message files are immutable. Agents must never edit, delete, rename, or replace an existing `messages/*.md` file.
+
+Each handoff creates exactly one new file using the next sequential number:
 
 ```text
-agents/channels/###-feature-slug-channel.md
+NNN-from-to.md
 ```
 
-Example:
+Valid route tokens are exactly:
+
+- `main`
+- `plan`
+- `dev`
+- `review`
+
+Examples:
 
 ```text
-agents/channels/005-block-editor-polish-channel.md
+001-main-to-plan.md
+002-plan-to-dev.md
+003-dev-to-review.md
+004-review-to-dev.md
+005-dev-to-review.md
+006-review-to-main.md
 ```
 
-The channel number and slug should match the dispatch artifact whenever possible.
+Do not create placeholder future messages, README/notes files, or trailing checklist files in `messages/`. Anything in `messages/` that is not a valid numbered message file is a channel-structure error.
 
-## Channel Format
+## Message Format
 
 ```markdown
-# Dispatch Channel: [Feature Name]
+# Message 002 — Plan → Dev — YYYY-MM-DD
 
-## Summary
-- Dispatch: agents/artifacts/###-feature-dispatch.md
-- Current status: ready-for-plan / ready-for-dev / ready-for-review / ready-for-re-review / needs-dev-fix / needs-plan-revision / needs-main-fix / review-pass / closed
-- Created by: Main
-- Created: YYYY-MM-DD
-
-## Message 1 — Main → Plan — YYYY-MM-DD
-
-### To
+## From
 Plan
 
-### State
-ready-for-plan
+## To
+Dev
 
-### Read
+## State
+ready-for-dev
+
+## Read
 - agents/artifacts/###-feature-dispatch.md
+- agents/artifacts/###-feature-plan.md
 
-### Task
-Create the implementation plan for this dispatch. Write the plan to `agents/artifacts/###-feature-plan.md`.
+## Task
+Implement the plan.
 
-### Close Requirements
-- Append the next message to this channel for Dev.
-- Update `docs/SESSIONS.md`.
+## Close Requirements
+- Create exactly one next message file in this channel's messages directory.
+- Update docs/SESSIONS.md.
 - Do not commit; Main handles git.
 ```
 
-Each later agent appends a new `## Message N — From → To — YYYY-MM-DD` section. Use the next sequential integer based on existing messages in the channel (count the existing `## Message` headings, then add 1).
+Allowed `State` values:
 
-## Pickup Prompt
+- `ready-for-plan`
+- `ready-for-dev`
+- `ready-for-review`
+- `needs-dev-fix`
+- `needs-main-fix`
+- `review-pass`
+- `stalled`
+- `error`
 
-The user can start the next session with a minimal prompt:
+Routing is determined by `## To`. A channel is terminal for dispatch-auto when the latest message is addressed to `Main`.
+
+## Pickup Rules
+
+Human pickup:
 
 ```text
-pickup agents/channels/###-feature-slug-channel.md
+pickup agents/channels/###-feature-slug/
 ```
 
-The pickup agent reads the channel, finds the most recent message, assumes the role named in `### To`, reads the listed files, and performs the task.
+A human-invoked pickup is always Main. If the latest message is addressed to Plan/Dev/Review, the chain was interrupted; Main should diagnose and re-route, not do worker work.
 
-If the user omits the path:
+Orchestrator pickup starts with `[dispatch-auto]` and includes the latest file and allowed next filename(s). In that case the worker must:
 
-```text
-pickup
-```
-
-The agent should find the most recently modified file in `agents/channels/`, confirm it is the intended channel, then continue from the latest message.
-
-## Role Resolution Rules
-
-When a session starts with `pickup`:
-
-1. Read `AGENTS.md` for project context.
-2. Read `agents/workflows/dispatch-channel-protocol.md` for pickup mechanics.
-3. Read the channel named in the prompt, or the most recently modified channel if no path is given.
-4. Find the last `## Message` block.
-5. **Determine your active role based on how pickup was invoked**:
-   - **Orchestrator-invoked pickup** (the user prompt that triggered this turn starts with `[dispatch-auto]`): use the block's `### To` value as your active role:
-     - `Main` → Main Orchestrator
-     - `Plan` → Planning agent
-     - `Dev` → Dev agent
-     - `Review` → Review agent
-   - **Human-invoked pickup** (no `[dispatch-auto]` tag in the prompt): you are always **Main**. Workers are spawned only by the orchestrator, never by humans. If the channel's latest `### To` is a worker (Plan / Dev / Review), the chain was interrupted — your job is to diagnose and re-route by appending a fresh `Main → <Role>` message, **never to do the worker's work yourself**.
-6. Follow the `### Read`, `### Task`, and `### Close Requirements` sections from that message (Main, when re-routing, instead writes a fresh `Main → <Role>` message — it does not execute the worker's task).
-
-If the channel is missing, ambiguous, contains no `## Message` blocks, or the `### To` role is invalid, stop and ask the user for the channel path or intended role.
-
-**Tag commitment**: the `[dispatch-auto]` prefix is reserved for the orchestrator. Humans must never start a prompt with `[dispatch-auto]`. This is the single source of truth for "is this turn machine-driven or human-driven."
+1. Re-read the exact latest file named in the pickup prompt from disk.
+2. Ignore remembered/cached channel state from earlier turns.
+3. Confirm that file's `## To` matches the expected role.
+4. Perform the task.
+5. Create exactly one new message file with one of the allowed filenames named in the pickup prompt.
+6. Never edit existing message files.
 
 ## Agent Responsibilities
 
 ### Main
 
 - Creates the dispatch artifact.
-- Creates the dispatch channel.
-- Appends `Main → Plan` or `Main → Dev` as the first message.
-- If Review returns `needs-main-fix`, applies the requested fixes and appends `Main → Review` with `State = ready-for-re-review`; Main must not mark the dispatch closed until Review later returns `review-pass`.
-- Tells the user: `Next message is ready in agents/channels/... Start the next session with: pickup agents/channels/...`
-- Commits and pushes only when appropriate.
+- Creates `agents/channels/<slug>/messages/001-main-to-plan.md`.
+- Commits/pushes only after explicit user approval.
 
 ### Plan
 
-- Reads the latest channel message addressed to Plan.
+- Reads the pickup-specified latest message file.
 - Creates or revises the plan artifact.
-- Appends `Plan → Dev` with the plan path and dev instructions.
+- Creates `002-plan-to-dev.md` for normal progress.
+- May create `002-plan-to-main.md` with `State = needs-main-fix`, `stalled`, or `error` if it cannot proceed safely.
 - Updates `docs/SESSIONS.md`.
 - Does not commit.
 
 ### Dev
 
-- Reads the latest channel message addressed to Dev.
+- Reads the pickup-specified latest message file.
 - Implements or fixes the requested work.
-- Creates or updates the complete artifact.
-- Appends `Dev → Review` with the plan, complete, and any review context paths.
+- Creates/updates the complete artifact.
+- Creates `NNN-dev-to-review.md` for normal progress.
+- May create `NNN-dev-to-main.md` with `State = needs-main-fix`, `stalled`, or `error` if it cannot proceed safely.
 - Updates `docs/SESSIONS.md`.
 - Does not commit.
 
 ### Review
 
-- Reads the latest channel message addressed to Review.
-- Reviews the work. Review is **read-only on implementation and test files** — if code needs to change, route back to Dev rather than editing inline. Review may update the channel and the review artifact.
-- Creates or updates the review artifact.
-- Appends one of:
-  - `Review → Main` with `State = review-pass` for PASS / PASS WITH NOTES with no required fixes
-  - `Review → Dev` with `State = needs-dev-fix` for fixable implementation failures
-  - `Review → Plan` with `State = needs-plan-revision` for design failures
-  - `Review → Main` with `State = needs-main-fix` for fixes that only Main can or should apply
+- Reads the pickup-specified latest message file.
+- Reviews the work. Review is read-only on implementation and test files.
+- Creates/updates the review artifact.
+- Creates one of:
+  - `NNN-review-to-main.md` with `State = review-pass` for pass
+  - `NNN-review-to-dev.md` with `State = needs-dev-fix` for fixable implementation failures
+  - `NNN-review-to-main.md` with `State = needs-main-fix`, `stalled`, or `error` for Main/human triage
 - Updates `docs/SESSIONS.md`.
 - Does not commit.
 
 ## Chat Output Rule
 
-Agents should not output long next-session prompts in chat.
-
-Instead, final chat output should be short:
+Agents should not output long next-session prompts in chat. Keep final output short:
 
 ```text
-Implementation complete. Next message is ready for Review in agents/channels/###-feature-slug-channel.md.
-Start the next session with:
-
-pickup agents/channels/###-feature-slug-channel.md
-
+Work complete. Next message is ready in agents/channels/###-feature-slug/messages/NNN-from-to.md.
 Do not commit — Main handles git operations.
 ```
 
-## Mandatory Re-Review Rule
+## Required Re-Review Rule
 
-If Review identifies any required fix, the work is not done after that fix is applied. The fixer must append a new message back to Review, and Review must confirm an all-clear verdict before Main can close the dispatch.
+If Review identifies any required fix, the fixer must create a new message back to Review, and Review must confirm a pass before Main closes the dispatch.
 
-Required-fix loops:
-
-```text
-Review → Dev  → Dev fixes  → Dev → Review  → Review confirms or loops again
-Review → Plan → Plan revises → Plan → Dev → Dev → Review → Review confirms or loops again
-Review → Main → Main fixes → Main → Review → Review confirms or loops again
-```
-
-`PASS WITH NOTES` is only for genuinely optional, intentionally deferred suggestions. Review should require fixes for actionable low-severity items when they are reasonable within the current dispatch. If the review asks someone to change files before completion, or if an item is clear/trivial/helpful enough that it should be changed now, the verdict/state must route to Dev, Plan, or Main for fixes and then back to Review.
-
-If any source, test, artifact, or user-facing documentation files change after Review has already returned `State = review-pass` but before Main closes the dispatch, Main must route back to Review (`Main → Review`, `State = ready-for-re-review`) instead of closing directly. Main-only close bookkeeping such as SESSIONS/channel closing text is exempt.
-
-Main may only mark a dispatch `closed` after the latest Review message has `State = review-pass` and no post-review implementation/doc changes remain unreviewed.
-
-## Review FAIL → Dev Requirement
-
-For Review returning work to Dev, the appended channel message must include this close block verbatim under `### Close Requirements`:
-
-```markdown
----
-## ⚠️ BEFORE YOU END
-When you finish fixing the issues:
-- [ ] Update the complete artifact with fix notes
-- [ ] Update docs/SESSIONS.md with a session entry
-- [ ] Append the next Dev → Review message to this dispatch channel
-- [ ] Output only the short pickup instruction to the user
-- [ ] Do NOT commit — Main handles git
-```
-
-This replaces the old requirement to paste the full checklist into chat.
-
-## Audit Trail
-
-Because every handoff is appended to one dispatch channel, Main can audit the complete chain for a feature:
+Typical route:
 
 ```text
 Main → Plan → Dev → Review → Dev → Review → Main
 ```
 
-Main should read the channel before closing a feature to confirm the workflow was followed.
-
 ## Recovery
 
-If an agent forgets to update the channel:
-
-1. Start Main with `main`.
-2. Reference the relevant artifacts and channel.
-3. Main reconstructs the missing channel message, notes the repair in `docs/SESSIONS.md`, and provides the next pickup instruction.
-
-### Output-length / context-exhaustion stalls
-
-Sometimes a worker exits successfully after changing files but does not append the required next `## Message` block. Common signs:
-
-- dispatch-auto reports `ran but did not append a new message`
-- the worker process exit code is `0`
-- source/test files changed, but no complete/review artifact or next channel message exists
-- the worker session JSONL ends with a provider stop reason such as `length`, `max_tokens`, or context/output exhaustion
-
-First classify the stall:
-
-- **Single-turn output limit**: the session JSONL shows a stop reason like `length` / `max_tokens`, often with an output token count at the per-turn cap. The model was cut off while speaking, but the session may still have enough total context to continue.
-- **Full context exhaustion**: the session or provider reports context-window/token-limit errors, prompt-too-long errors, or the worker repeatedly fails immediately because the accumulated session is too large.
-
-Recovery for a **single-turn output-limit** stall:
-
-1. Treat the repo as partially implemented and dirty; do not discard changes automatically.
-2. Keep the existing role session directory so dispatch-auto can resume it.
-3. Append a new `Main → <Role>` recovery message to the channel. The message should say that the prior turn hit the single-turn output limit, list known changed files, and instruct the worker to continue concisely from the existing state rather than re-debugging from scratch.
-4. The recovery task should explicitly prioritize close requirements and output budget, for example: “Do not repeat prior analysis. Inspect current files/tests, make the smallest remaining fixes, run required verification, write/update the artifact, append the next channel message, and keep final output short.”
-5. Retry dispatch-auto for the channel only after the recovery message is appended.
-
-Recovery for **full context exhaustion** or repeated output-limit stalls:
-
-1. Treat the repo as partially implemented and dirty; do not discard changes automatically.
-2. Move the exhausted role session directory aside so the next worker starts fresh, for example:
-
-   ```bash
-   mv agents/channels/.sessions/014-feature-channel-Dev \
-      agents/channels/.sessions/014-feature-channel-Dev.stalled-YYYYMMDD-HHMMSS
-   ```
-
-3. Append a new `Main → <Role>` recovery message to the channel. The message should explicitly say that partial work exists, list known changed files, mention the prior stall, and instruct the worker to inspect `git status --short` before continuing.
-4. Retry dispatch-auto for the channel only after the recovery message is appended.
-
-Prefer same-session continuation for a one-off output-length cutoff when the session still has usable context. Prefer a fresh session when the context is exhausted, when the worker was stuck in an unproductive reasoning loop, or when the same role stalls repeatedly before satisfying close requirements.
+If an agent creates the wrong file, forgets to create a file, or modifies an existing message file, stop the chain and ask Main/user for repair. Gaps in numbering require manual repair; there is no automatic recovery mode in Phase 3 v1.

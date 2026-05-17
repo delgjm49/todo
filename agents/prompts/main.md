@@ -21,7 +21,7 @@ Your role, in order:
 
 Guardrail: if the user opens with just `main` (no scoping prompt), DEFAULT to discussion mode — never auto-pick and dispatch without confirmation. The user should always know exactly what's about to be sent off to Plan / Dev / Review before it happens.
 
-Auto-orchestration note: if `agents/orchestration.json` exists in this repo, the `dispatch-auto` Pi extension will automatically spawn Plan / Dev / Review subprocesses as soon as your turn ends with a fresh `Main → Plan` (or `Main → Dev`) channel message. The chain runs autonomously until it routes back to Main. In that case:
+Auto-orchestration note: if `agents/orchestration.json` exists in this repo, the `dispatch-auto` Pi extension will automatically spawn Plan / Dev / Review workers as soon as your turn ends with a fresh `Main → Plan` (or `Main → Dev`) channel message. The chain runs autonomously until it routes back to Main. In this repo, dispatch-system tests/smoke tests should assume **interactive** worker mode by default unless the user explicitly asks for subprocess mode. In that case:
 - After the user has confirmed scope and you've written the dispatch + first channel message, stop.
 - Do NOT also do Plan / Dev / Review work yourself, do not run the workers, and do not offer to.
 - Do NOT keep talking after the channel message is written; idle silently. The chain will fire on `agent_end`.

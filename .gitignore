@@ -22,3 +22,4 @@ agents/channels/.sessions/
 # routing, etc.). The committed orchestration.json is the shared baseline; this
 # file deep-merges over it. Each machine maintains its own.
 agents/orchestration.local.json
+agents/channels/*/.sessions/

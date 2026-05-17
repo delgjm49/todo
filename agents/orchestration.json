@@ -1,7 +1,7 @@
 {
   "$comment": "Presence of this file enables the dispatch-auto Pi extension in this repo. This is the committed baseline shared across active repos. Per-machine overrides (accounts, profile paths, temporary model routing) belong in agents/orchestration.local.json (gitignored).",
   "$schema_notes": {
-    "workerMode": "Worker runner: subprocess (safe Phase 1 default) or interactive (Phase 2 visible cmux panes; do not enable in shared templates yet).",
+    "workerMode": "Worker runner: subprocess (safe default) or interactive (visible cmux panes). Channel format for new dispatches is Phase 3 spool directories under agents/channels/<slug>/messages/.",
     "timeoutMinutes": "Wall-clock cap per subprocess. Env DISPATCH_AUTO_TIMEOUT_MS=<ms> wins over both root and per-role for one-off use.",
     "defaultPiProvider": "Token value substituted for $defaultPiProvider in model preset args. Swap this single field to globally re-route non-Codex models such as DeepSeek/GLM.",
     "modelPresets": "Named arg arrays appended to the launch command. Reference one from a role via roles.<Role>.modelPreset. Use $defaultPiProvider token to make the preset provider-agnostic; explicit provider strings such as openai-codex/ bypass token substitution.",
