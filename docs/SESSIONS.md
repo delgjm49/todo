@@ -2185,3 +2185,33 @@ Closed Dispatch 024 after validating the Phase 3 fresh-session retry smoke. The 
 ### Outcome
 Fresh-session retry smoke passed. The durable spool channel recovered from a missing next message without relying on the failed worker session, and no product implementation files were changed.
 
+## Session 122 — 2026-05-17
+
+### Agent Type
+plan
+
+### Artifacts
+- Channel: agents/channels/025-wrong-filename-smoke/
+- Dispatch: agents/artifacts/025-wrong-filename-smoke-dispatch.md
+
+### Summary
+Picked up Dispatch 025 as Plan and re-read `messages/001-main-to-plan.md` from disk. The first-attempt marker was absent, but the task's requested invalid handoff filename conflicted with this dispatch-auto turn's allowed next filenames, so Plan stopped rather than creating a forbidden channel message.
+
+### Outcome
+Returned to Main with `002-plan-to-main.md` at `State = error`. No marker, plan artifact, or invalid channel message was created; Main should reconcile whether to run the invalid first-attempt smoke or repair/retry the dispatch state.
+
+## Session 123 — 2026-05-17
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: agents/channels/025-wrong-filename-smoke/
+- Dispatch: agents/artifacts/025-wrong-filename-smoke-dispatch.md
+
+### Summary
+Closed Dispatch 025 as a guard-refusal result rather than the intended validator rejection. The live Pi Plan worker read the Main instruction asking it to create forbidden `002-plan-to-review.md`, compared that against dispatch-auto's explicit allowed next filenames, and refused to create the invalid file. It used the allowed Plan → Main escape hatch instead, writing `002-plan-to-main.md` with `State = error`.
+
+### Outcome
+Guard-refusal smoke passed: the Phase 3 pickup prompt was strong enough to prevent a live Pi worker from creating a forbidden wrong filename. This did not exercise dispatch-auto's post-turn rejection path for an actually-created wrong filename; that should be tested separately with a deterministic controlled worker/harness.
+
