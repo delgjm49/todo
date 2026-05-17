@@ -2115,3 +2115,73 @@ Closed the TICKET-064 packaging assets and Windows build config dispatch after c
 ### Outcome
 TICKET-064 is complete and committed/pushed. The app now has a valid app icon, proper window metadata (title, dimensions, centering), and bundle identity (identifier, publisher, copyright) for Windows packaging.
 
+## Session 118 — 2026-05-17
+
+### Agent Type
+plan
+
+### Artifacts
+- Channel: agents/channels/024-fresh-retry-smoke/
+- Dispatch: agents/artifacts/024-fresh-retry-smoke-dispatch.md
+- Plan: agents/artifacts/024-fresh-retry-smoke-plan.md
+
+### Summary
+Continued Dispatch 024 as the fresh Plan retry after confirming the intentional first-attempt marker already existed. Created the artifact-only implementation plan directing Dev to produce the complete artifact, avoid product code changes, update the session log, and route the spool channel to Review.
+
+### Outcome
+Plan is ready for Dev. The spool channel has been appended with `002-plan-to-dev.md` at `State = ready-for-dev`; Dev should continue from `agents/channels/024-fresh-retry-smoke/` and must not edit existing message files.
+
+## Session 119 — 2026-05-17
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: agents/channels/024-fresh-retry-smoke/
+- Dispatch: agents/artifacts/024-fresh-retry-smoke-dispatch.md
+- Plan: agents/artifacts/024-fresh-retry-smoke-plan.md
+- Complete: agents/artifacts/024-fresh-retry-smoke-complete.md
+
+### Summary
+Completed the artifact-only fresh retry smoke after confirming the retry marker was present and the Plan retry had already written the durable Dev handoff. Wrote the complete artifact, appended the next spool message for Review, and kept product source, tests, config, and docs unchanged outside workflow bookkeeping.
+
+### Outcome
+Implementation complete, ready for Review. The spool channel has been appended with `003-dev-to-review.md` at `State = ready-for-review`.
+
+## Session 120 — 2026-05-17
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: agents/channels/024-fresh-retry-smoke/
+- Dispatch: agents/artifacts/024-fresh-retry-smoke-dispatch.md
+- Plan: agents/artifacts/024-fresh-retry-smoke-plan.md
+- Complete: agents/artifacts/024-fresh-retry-smoke-complete.md
+- Review: agents/artifacts/024-fresh-retry-smoke-review.md
+
+### Summary
+Reviewed the artifact-only fresh retry smoke completion against the dispatch and plan. Confirmed the retry marker exists, Dev's completion artifact and session entry are present, no product implementation/test/config files were detected as changed for this smoke, and the spool sequence was intact before Review closeout.
+
+### Outcome
+Review verdict: PASS. The spool channel has been appended with `004-review-to-main.md` at `State = review-pass`; Main can close the dispatch.
+
+## Session 121 — 2026-05-17
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: agents/channels/024-fresh-retry-smoke/
+- Dispatch: agents/artifacts/024-fresh-retry-smoke-dispatch.md
+- First-attempt marker: agents/artifacts/024-fresh-retry-smoke-first-attempt-marker.md
+- Plan: agents/artifacts/024-fresh-retry-smoke-plan.md
+- Complete: agents/artifacts/024-fresh-retry-smoke-complete.md
+- Review: agents/artifacts/024-fresh-retry-smoke-review.md
+
+### Summary
+Closed Dispatch 024 after validating the Phase 3 fresh-session retry smoke. The first Plan session intentionally stopped without creating `002-plan-to-dev.md`; dispatch-auto stopped with `Plan ran but did not create next message file`. Main archived the failed Plan session under the channel `.sessions` directory so the next retry could not reuse that conversation. A subsequent `/dispatch retry agents/channels/024-fresh-retry-smoke` launched a fresh Plan session, completed Plan → Dev → Review, and ended at `004-review-to-main.md` with `State = review-pass`.
+
+### Outcome
+Fresh-session retry smoke passed. The durable spool channel recovered from a missing next message without relying on the failed worker session, and no product implementation files were changed.
+
