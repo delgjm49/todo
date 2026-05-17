@@ -2026,3 +2026,92 @@ Closed Dispatch Smoke v7 — the first Phase 3 spool-format dispatch test. The f
 ### Outcome
 Dispatch Smoke v7 is closed. The spool-format channel workflow is validated end-to-end. Phase 3 dispatch format is ready for production use.
 
+---
+
+## Session 113 — 2026-05-16
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: agents/channels/023-packaging-assets/
+- Dispatch: agents/artifacts/023-packaging-assets-dispatch.md
+
+### Summary
+Created the first real Phase 3 spool-format productive dispatch for `TICKET-064` (packaging assets and Windows build config). Selected this as the lowest-risk real task — static assets and Tauri config only, no `src/` changes. The dispatch uses the spool-format directory at `agents/channels/023-packaging-assets/` with `messages/001-main-to-plan.md`. The local override at `agents/orchestration.local.json` already has `workerMode: "interactive"` from prior smoke testing.
+
+### Outcome
+`TICKET-064` packaging assets is dispatched to Plan. The next session should use pickup mode and continue from `agents/channels/023-packaging-assets/`.
+
+---
+
+## Session 114 — 2026-05-16
+
+### Agent Type
+plan
+
+### Artifacts
+- Channel: agents/channels/023-packaging-assets/
+- Dispatch: agents/artifacts/023-packaging-assets-dispatch.md
+- Plan: agents/artifacts/023-packaging-assets-plan.md
+
+### Summary
+Created the implementation plan for `TICKET-064` packaging assets and Windows build config. Inspected the current Tauri config and icon directory, confirmed `src-tauri/icons/` contains `.gitkeep` and `icon.ico` but no `icon.png`, and verified the baseline `npm run typecheck && npm run build` passes before implementation. The plan specifies a Node-built-in PNG generation approach, exact Tauri window/bundle metadata updates, and post-change verification using `npm run tauri:build -- --no-bundle --ci`.
+
+### Outcome
+Plan is ready for Dev. The spool channel has been appended with `002-plan-to-dev.md` at `State = ready-for-dev`; Dev should continue from `agents/channels/023-packaging-assets/` and must not edit existing message files.
+
+## Session 115 — 2026-05-17
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: agents/channels/023-packaging-assets/
+- Dispatch: agents/artifacts/023-packaging-assets-dispatch.md
+- Complete: agents/artifacts/023-packaging-assets-complete.md
+
+### Summary
+Implemented the packaging assets and Windows build config dispatch by generating `src-tauri/icons/icon.png` with a Node-built-in PNG script and updating `src-tauri/tauri.conf.json` with the requested identifier, window metadata, and bundle metadata. Verified the icon, app build, and Tauri config validation, then prepared the Dev → Review handoff.
+
+### Outcome
+Implementation is complete and ready for Review. The spool channel has been appended with `003-dev-to-review.md` at `State = ready-for-review`.
+
+---
+
+## Session 116 — 2026-05-17
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: agents/channels/023-packaging-assets/
+- Dispatch: agents/artifacts/023-packaging-assets-dispatch.md
+- Plan: agents/artifacts/023-packaging-assets-plan.md
+- Complete: agents/artifacts/023-packaging-assets-complete.md
+- Review: agents/artifacts/023-packaging-assets-review.md
+
+### Summary
+Reviewed the `TICKET-064` packaging assets and Windows build config implementation. Confirmed the generated icon is valid, Tauri config metadata matches the plan, scope stayed out of React/Rust source and storage behavior, and required verification commands pass.
+
+### Outcome
+Review verdict: PASS. The spool channel has been appended with `004-review-to-main.md` at `State = review-pass`; ready for Main to close and handle git operations.
+
+## Session 117 — 2026-05-17
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: agents/channels/023-packaging-assets/
+- Dispatch: agents/artifacts/023-packaging-assets-dispatch.md
+- Plan: agents/artifacts/023-packaging-assets-plan.md
+- Complete: agents/artifacts/023-packaging-assets-complete.md
+- Review: agents/artifacts/023-packaging-assets-review.md
+
+### Summary
+Closed the TICKET-064 packaging assets and Windows build config dispatch after confirming the latest channel message was Review → Main with `State = review-pass` and the review artifact verdict was PASS with no required fixes. The spool channel audit trail completed cleanly: 4 messages, correct routing, no gaps. This was the first real (non-smoke) Phase 3 spool-format dispatch to run the full Main → Plan → Dev → Review → Main route in interactive worker mode.
+
+### Outcome
+TICKET-064 is complete and committed/pushed. The app now has a valid app icon, proper window metadata (title, dimensions, centering), and bundle identity (identifier, publisher, copyright) for Windows packaging.
+
