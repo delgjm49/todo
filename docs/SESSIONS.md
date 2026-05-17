@@ -2266,3 +2266,53 @@ Picked up Dispatch 026 as Review via dispatch-auto pickup. Re-read `messages/003
 ### Outcome
 Review PASS. Channel advanced to `004-review-to-main.md` with `State = review-pass`. No product code was touched. Next: Main pickup to close the dispatch cycle.
 
+## Session 127 — 2026-05-17
+
+### Agent Type
+plan
+
+### Artifacts
+- Channel: agents/channels/027-deepseek-v4-flash-loop-smoke/
+- Dispatch: agents/artifacts/027-deepseek-v4-flash-loop-smoke-dispatch.md
+- Plan: agents/artifacts/027-deepseek-v4-flash-loop-smoke-plan.md
+
+### Summary
+Picked up Dispatch 027 as Plan via dispatch-auto pickup. Re-read `messages/001-main-to-plan.md` from disk, confirmed `## To` = Plan. Created the plan artifact at `agents/artifacts/027-deepseek-v4-flash-loop-smoke-plan.md` describing the forced Dev (×2) and Review (×2) loop steps per the dispatch's Forced Loop Semantics section. Appended `002-plan-to-dev.md` routing Dev to perform the first Dev pass: create the loop marker with `loop-state: first-pass`, route to Review via `003-dev-to-review.md`, and explicitly tell Review this is the first pass so Review routes back with `needs-dev-fix`.
+
+### Outcome
+Plan step complete. Channel advanced to `002-plan-to-dev.md` with `State = ready-for-dev`. No product code was touched. Next: Dev pickup to perform the first Dev pass (create marker, route to Review).
+
+## Session 128 — 2026-05-17
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: agents/channels/027-deepseek-v4-flash-loop-smoke/
+- Dispatch: agents/artifacts/027-deepseek-v4-flash-loop-smoke-dispatch.md
+- Plan: agents/artifacts/027-deepseek-v4-flash-loop-smoke-plan.md
+- Marker: agents/artifacts/027-deepseek-v4-flash-loop-smoke-marker.md
+
+### Summary
+First Dev pass for Dispatch 027. Marker created with `loop-state: first-pass`. No complete artifact created yet (per loop semantics, complete artifact is created on the second Dev pass after Review returns `needs-dev-fix`).
+
+### Outcome
+Marker created and channel advanced to `003-dev-to-review.md` with `State = ready-for-review`. No product code was touched. Next: Review pickup to perform the first Review pass (intentionally return `needs-dev-fix` to Dev).
+
+## Session 129 — 2026-05-17
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: agents/channels/027-deepseek-v4-flash-loop-smoke/
+- Dispatch: agents/artifacts/027-deepseek-v4-flash-loop-smoke-dispatch.md
+- Plan: agents/artifacts/027-deepseek-v4-flash-loop-smoke-plan.md
+- Marker: agents/artifacts/027-deepseek-v4-flash-loop-smoke-marker.md
+
+### Summary
+First Review pass for Dispatch 027 (DeepSeek V4 Flash Forced Loop Smoke). Re-read `messages/003-dev-to-review.md` from disk, confirmed `## To = Review` and `State = ready-for-review`. Confirmed the marker file contains exactly `loop-state: first-pass`. Intentionally returned `State = needs-dev-fix` to Dev per the dispatch's Forced Loop Semantics section 2. No review artifact written yet (final Review pass writes the review artifact).
+
+### Outcome
+First Review pass complete. Channel advanced to `004-review-to-dev.md` with `State = needs-dev-fix`. Dev must update the marker to `loop-state: second-pass`, create the complete artifact, and route back to Review via `005-dev-to-review.md`. No product code was touched.
+
