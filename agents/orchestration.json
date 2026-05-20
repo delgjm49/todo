@@ -4,41 +4,14 @@
     "workerMode": "Worker runner: interactive (visible cmux panes — current committed default after Phase 4 validation 2026-05-18) or subprocess (fallback for machines without cmux; opt back in via agents/orchestration.local.json setting workerMode='subprocess'). Channel format for new dispatches is Phase 3 spool directories under agents/channels/<slug>/messages/.",
     "timeoutMinutes": "Wall-clock cap per subprocess. Env DISPATCH_AUTO_TIMEOUT_MS=<ms> wins over both root and per-role for one-off use.",
     "defaultPiProvider": "Token value substituted for $defaultPiProvider in model preset args. Swap this single field to globally re-route non-Codex models such as DeepSeek/GLM.",
-    "modelPresets": "Named arg arrays appended to the launch command. Reference one from a role via roles.<Role>.modelPreset. Use $defaultPiProvider token to make the preset provider-agnostic; explicit provider strings such as openai-codex/ bypass token substitution.",
     "roles.<Role>.binary": "pi (default) or claude. Claude uses --session-id on first call, --resume on subsequent calls; Pi uses --session-dir + --continue.",
     "roles.<Role>.configDir": "Sets CLAUDE_CONFIG_DIR (claude) or PI_CODING_AGENT_DIR (pi). Use only in agents/orchestration.local.json unless all machines share the same profile layout.",
-    "roles.<Role>.modelPreset": "Key into modelPresets. Resolved args are appended before extraArgs.",
+    "roles.<Role>.modelPreset": "Key into the v3 global catalog (agents/orchestration.global.json in meta-workflow). Resolved args are appended before extraArgs.",
     "roles.<Role>.extraArgs": "Appended after the preset and before the prompt. Use for per-role one-offs."
   },
   "workerMode": "interactive",
   "timeoutMinutes": 30,
   "defaultPiProvider": "opencode-go",
-  "modelPresets": {
-    "gpt-5.5-codex": [
-      "--model",
-      "openai-codex/gpt-5.5:high"
-    ],
-    "gpt-5.4-codex": [
-      "--model",
-      "openai-codex/gpt-5.4:high"
-    ],
-    "gpt-5.4-mini-codex": [
-      "--model",
-      "openai-codex/gpt-5.4-mini:high"
-    ],
-    "deepseek-v4-pro": [
-      "--model",
-      "$defaultPiProvider/deepseek-v4-pro"
-    ],
-    "deepseek-v4-flash": [
-      "--model",
-      "$defaultPiProvider/deepseek-v4-flash:high"
-    ],
-    "glm-5.1": [
-      "--model",
-      "$defaultPiProvider/glm-5.1:high"
-    ]
-  },
   "roles": {
     "Plan": {
       "binary": "pi",
