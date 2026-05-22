@@ -12,18 +12,5 @@
   "workerMode": "interactive",
   "timeoutMinutes": 30,
   "defaultPiProvider": "opencode-go",
-  "roles": {
-    "Plan": {
-      "binary": "pi",
-      "modelPreset": "gpt-5.5-codex"
-    },
-    "Dev": {
-      "binary": "pi",
-      "modelPreset": "deepseek-v4-pro"
-    },
-    "Review": {
-      "binary": "pi",
-      "modelPreset": "deepseek-v4-pro"
-    }
-  }
+  "roles": {}
 }
