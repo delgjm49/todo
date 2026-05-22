@@ -2404,3 +2404,85 @@ Review phase for Dispatch 028 (Claude All-Roles Smoke — Phase 4 Interactive Wo
 
 ### Outcome
 Review task complete. All three worker roles (Plan, Dev, Review) successfully validated as Claude Code interactive workers in dispatch-auto workflow. Channel advanced to `004-review-to-main.md` with `State = review-pass`. Dispatch is ready for Main sign-off and closing.
+
+## Session 135 — 2026-05-22
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: agents/channels/029-windows-subprocess-smoke/
+- Dispatch: agents/artifacts/029-windows-subprocess-smoke-dispatch.md
+
+### Summary
+Scoped and dispatched Dispatch 029 (Windows Subprocess Smoke), a tiny docs-only/artifact-only dispatch-auto smoke intended to verify the local Windows subprocess worker path. Confirmed the local orchestration override is already set to `workerMode: subprocess`, then created the dispatch artifact and first Main → Plan spool message.
+
+### Outcome
+Dispatch 029 is ready for dispatch-auto pickup. Channel initialized at `agents/channels/029-windows-subprocess-smoke/messages/001-main-to-plan.md` with `State = ready-for-plan`. No product code was touched.
+
+## Session 136 — 2026-05-22
+
+### Agent Type
+plan
+
+### Artifacts
+- Channel: agents/channels/029-windows-subprocess-smoke/
+- Dispatch: agents/artifacts/029-windows-subprocess-smoke-dispatch.md
+- Plan: agents/artifacts/029-windows-subprocess-smoke-plan.md
+
+### Summary
+Created the minimal plan for Dispatch 029 (Windows Subprocess Smoke). The plan keeps the dispatch artifact-only, instructing Dev to write the completion note, append the session log, and route the channel to Review without touching product or orchestration files.
+
+### Outcome
+Plan task complete. Channel advanced to `agents/channels/029-windows-subprocess-smoke/messages/002-plan-to-dev.md` with `State = ready-for-dev`. Next: Dev pickup to create the completion artifact and continue the smoke.
+
+## Session 137 — 2026-05-22
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: `agents/channels/029-windows-subprocess-smoke/`
+- Dispatch: `agents/artifacts/029-windows-subprocess-smoke-dispatch.md`
+- Complete: `agents/artifacts/029-windows-subprocess-smoke-complete.md`
+
+### Summary
+Completed the Dispatch 029 Dev handoff for the Windows subprocess smoke. Wrote the minimal completion artifact, appended the Dev → Review channel message, and kept the scope limited to docs/artifacts/channel-only files.
+
+### Outcome
+Dispatch 029 advanced to `agents/channels/029-windows-subprocess-smoke/messages/003-dev-to-review.md` with `State = ready-for-review`.
+
+## Session 138 — 2026-05-22
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: `agents/channels/029-windows-subprocess-smoke/`
+- Dispatch: `agents/artifacts/029-windows-subprocess-smoke-dispatch.md`
+- Complete: `agents/artifacts/029-windows-subprocess-smoke-complete.md`
+- Review: `agents/artifacts/029-windows-subprocess-smoke-review.md`
+
+### Summary
+Reviewed the Dispatch 029 artifact-only Windows subprocess smoke. Confirmed the channel stayed within docs/artifacts/channel-only scope, the completion artifact is minimal and correct, and the required handoff files are present.
+
+### Outcome
+Review verdict: PASS. Channel advanced to `agents/channels/029-windows-subprocess-smoke/messages/004-review-to-main.md` with `State = review-pass`.
+
+## Session 139 — 2026-05-22
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: agents/channels/029-windows-subprocess-smoke/
+- Dispatch: agents/artifacts/029-windows-subprocess-smoke-dispatch.md
+- Plan: agents/artifacts/029-windows-subprocess-smoke-plan.md
+- Complete: agents/artifacts/029-windows-subprocess-smoke-complete.md
+- Review: agents/artifacts/029-windows-subprocess-smoke-review.md
+
+### Summary
+Closed Dispatch 029 (Windows Subprocess Smoke) after the patched subprocess launch path was retried successfully. Confirmed the channel reached Review → Main with `State = review-pass`, the review artifact verdict was PASS, and the changed files are limited to Dispatch 029 artifacts/channel files plus `docs/SESSIONS.md`.
+
+### Outcome
+Dispatch 029 is terminal/closed by protocol at `agents/channels/029-windows-subprocess-smoke/messages/004-review-to-main.md`. The smoke validates that the Windows subprocess dispatch-auto chain can complete `Main → Plan → Dev → Review → Main` after the global launch fix.
