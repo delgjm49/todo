@@ -2737,3 +2737,63 @@ Reviewed the hotkey layer implementation against the plan. All acceptance criter
 
 ### Outcome
 PASS. Review → Main message created. Ready for Main to close the dispatch.
+
+## Session 155 — 2026-05-25
+
+### Agent Type
+main
+
+### Artifacts
+- `agents/artifacts/032-alert-evaluation-domain-logic-dispatch.md`
+- `agents/channels/032-alert-evaluation-domain-logic/messages/001-main-to-plan.md`
+
+### Summary
+Closed TICKET-052 (hotkey layer) after Review PASS, archiving sessions 151–154 and updating the living summary. Then dispatched TICKET-053 (alert evaluation domain logic) as the next product ticket. The alerts epic UI scaffolding (column toggles, workspace summary type, dock badge) already exists; this dispatch scopes the pure domain evaluation layer that computes active alerts from date/time cell values against current time, with due-time semantics per the tech spec.
+
+### Outcome
+TICKET-052 closed and committed. TICKET-053 dispatched to Plan. Next: Plan creates implementation plan at `agents/artifacts/032-alert-evaluation-domain-logic-plan.md` and appends `002-plan-to-dev.md`.
+
+## Session 156 — 2026-05-25
+
+### Agent Type
+plan
+
+### Artifacts
+- `agents/artifacts/032-alert-evaluation-domain-logic-plan.md`
+- `agents/channels/032-alert-evaluation-domain-logic/messages/002-plan-to-dev.md`
+
+### Summary
+Created implementation plan for TICKET-053 (alert evaluation domain logic). The plan specifies two domain modules under `src/domain/alerts/`: `evaluateRow.ts` for row-level alert detection (date due at 09:00 local, time due at HH:MM today, checkbox suppression, invalid value handling) and `evaluateWorkspace.ts` for computing `WorkspaceAlertSummary` across all blocks. Test file at `src/tests/unit/alertEvaluation.test.ts` covers 17 cases. No architectural decisions beyond what the tech spec already defines.
+
+### Outcome
+Plan complete. Dispatched to Dev via `002-plan-to-dev.md`. Next: Dev implements the plan and hands off to Review.
+
+## Session 157 — 2026-05-25
+
+### Agent Type
+dev
+
+### Artifacts
+- `agents/artifacts/032-alert-evaluation-domain-logic-complete.md`
+- `agents/channels/032-alert-evaluation-domain-logic/messages/003-dev-to-review.md`
+
+### Summary
+Implemented alert evaluation domain logic per the plan. Created `evaluateRow.ts` (row-level alert detection with date due at 09:00 local, time due at HH:MM today, checkbox suppression, invalid/null value protection), `evaluateWorkspace.ts` (computes `WorkspaceAlertSummary` across all blocks/rows with primary alert tracking), barrel `index.ts`, and 25 unit tests covering all required cases plus edge cases. Deleted `.gitkeep`. All 263 tests pass; lint is clean.
+
+### Outcome
+Implementation complete. Handed off to Review via `003-dev-to-review.md` with `State = ready-for-review`. Next: Review verifies the implementation against the plan and artifacts.
+
+## Session 158 — 2026-05-25
+
+### Agent Type
+review
+
+### Artifacts
+- `agents/artifacts/032-alert-evaluation-domain-logic-review.md`
+- `agents/channels/032-alert-evaluation-domain-logic/messages/004-review-to-main.md`
+
+### Summary
+Reviewed alert evaluation domain logic implementation against the plan. All acceptance criteria met: `evaluateRow` correctly handles date due-at-09:00, time due-at-HH:MM, checkbox suppression, invalid/null values; `evaluateWorkspace` produces correct `WorkspaceAlertSummary` with count and primary alert identifiers. 25 tests cover all 17 required cases plus edge cases. Reran `npm run test` (263 pass, 0 fail) and `npm run lint` (clean). No issues found.
+
+### Outcome
+PASS. Dispatched to Main via `004-review-to-main.md` with `State = review-pass`. Next: Main closes the dispatch, commits, and pushes.
