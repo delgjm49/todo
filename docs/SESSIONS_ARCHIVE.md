@@ -3166,3 +3166,51 @@ PASS. Review artifact written. Channel message `004-review-to-main.md` appended.
 **Summary:** Reviewed TICKET-058. All 6 fields have interactive controls with correct persistence, validation, swatches. 17 tests cover all scenarios. 335 pass, 1 pre-existing unrelated fail, lint clean. No issues found.
 
 **Outcome:** PASS. Handed off to Main for close.
+
+---
+
+## Session 187 — Main dispatch — 2026-05-25
+
+**Artifacts:**
+- `agents/artifacts/059-workspace-default-settings-dispatch.md`
+- `agents/channels/059-workspace-default-settings/messages/001-main-to-plan.md`
+
+**Summary:** Dispatched TICKET-059 (Workspace default settings UI) to Plan. Final P2 ticket for Full Planned v1.
+
+**Outcome:** Dispatched. Plan pane failed on first attempt (transient infrastructure issue). Repair message 002-main-to-plan.md sent for retry.
+
+---
+
+## Session 188 — Plan — 2026-05-25
+
+**Artifacts:**
+- `agents/artifacts/059-workspace-default-settings-plan.md`
+- `agents/channels/059-workspace-default-settings/messages/003-plan-to-dev.md`
+
+**Summary:** Created implementation plan for TICKET-059. 6 files in scope: extend AppDefaults, update validation, wire workspace creation, SettingsPage interactive controls, tests.
+
+**Outcome:** Plan complete. Dispatched to Dev.
+
+---
+
+## Session 189 — Dev — 2026-05-25
+
+**Artifacts:**
+- `agents/artifacts/059-workspace-default-settings-complete.md`
+- `agents/channels/059-workspace-default-settings/messages/004-dev-to-review.md`
+
+**Summary:** Implemented TICKET-059. Extended AppDefaults with 3 workspace style fields. Added validation coercion. Wired createWorkspace to read from settings defaults. Interactive controls with swatches + accent toggle. 13 tests.
+
+**Outcome:** Implementation complete. Dispatched to Review.
+
+---
+
+## Session 190 — Review PASS — 2026-05-25
+
+**Artifacts:**
+- `agents/artifacts/059-workspace-default-settings-review.md`
+- `agents/channels/059-workspace-default-settings/messages/005-review-to-main.md`
+
+**Summary:** Reviewed TICKET-059. All acceptance criteria met. AppDefaults extended, validation coerces, workspace creation reads defaults, SettingsPage interactive with conditional accent. 13 tests pass, TS clean, lint clean. No issues found.
+
+**Outcome:** PASS. Handed off to Main for close.

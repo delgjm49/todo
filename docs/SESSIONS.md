@@ -28,6 +28,7 @@ Last updated: 2026-05-25
 | TICKET-056 Alert navigation and highlight | Complete | Closed via full workflow — alerts epic complete |
 | TICKET-057 Theme mode switching | Complete | Closed via full workflow with re-review |
 | TICKET-058 Editor default settings UI | Complete | Closed via full workflow — 17 tests, no issues found |
+| TICKET-059 Workspace default settings UI | Complete | Closed via full workflow — 13 tests, no issues found, one Plan retry due to pane failure |
 | TICKET-063 Autosave dirty-state UX | Complete | Closed via full workflow — no issues found |
 | TICKET-065 Manual QA and release blockers | Complete | Closed via full workflow — audit-only, no code changes, no critical defects found |
 | Phase 3 spool channels | Complete | Validated end-to-end |
@@ -35,21 +36,25 @@ Last updated: 2026-05-25
 
 ## Last Sessions
 
-- **Session 186 — Review PASS** (2026-05-25): Reviewed and passed TICKET-058 editor default settings UI. All 6 fields interactive with validation + swatches. 335 tests pass, lint clean. No issues found.
-- **Session 185 — Dev** (2026-05-25): Implemented 6 interactive AppDefaults controls with validation, color swatches, blur persistence. 17 tests. Removed duplicate read-only entries.
-- **Session 184 — Plan** (2026-05-25): Created plan for TICKET-058: 6 interactive controls, validation, test coverage.
-- **Session 183 — Main dispatch** (2026-05-25): Dispatched TICKET-058 to Plan.
+- **Session 190 — Review PASS** (2026-05-25): Reviewed and passed TICKET-059 workspace default settings UI. All acceptance criteria met. 348 tests pass, TS clean, lint clean. No issues found.
+- **Session 189 — Dev** (2026-05-25): Implemented TICKET-059: extended AppDefaults with 3 workspace style fields, added validation coercion, wired createWorkspace to settings defaults, interactive controls with conditional accent. 13 tests.
+- **Session 188 — Plan** (2026-05-25): Created plan for TICKET-059 after initial Plan pane failure and repair retry.
+- **Session 187 — Main dispatch** (2026-05-25): Dispatched TICKET-059 to Plan.
 
 ## Next Recommended
 
-**MVP Core P1 is complete.** Remaining for Full Planned v1 (MVP Extended):
+**Full Planned v1 (MVP Core + Extended) is now complete** per the user's scoped list (TICKET-057 through TICKET-065, including 058 and 059).
 
-1. **TICKET-059**: Workspace default settings UI (default background, text color, accent) — P2
+Remaining in the broader backlog (not explicitly scoped by the user for this session):
+- **TICKET-060**: Expand unit coverage for domain helpers — P1, Size L
+- **TICKET-061**: Add integration tests for critical editing flows — P1, Size L
+- **TICKET-062**: Add Playwright smoke flow — P2, Size M
 
 **Completed:**
 - Alerts epic (053–056): complete
 - Theme mode (057): complete
 - Editor defaults (058): complete
+- Workspace defaults (059): complete
 - Autosave UX (063): complete
 - Manual QA (065): complete — no critical defects found
 

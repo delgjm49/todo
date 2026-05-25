@@ -514,6 +514,18 @@ export function validateSettingsFile(value: unknown): ValidationResult<Persisted
         defaultsInput.workspaceAccentEnabled,
         DEFAULT_SETTINGS.defaults.workspaceAccentEnabled
       ),
+      workspaceBackground: toCssColor(
+        defaultsInput.workspaceBackground,
+        DEFAULT_SETTINGS.defaults.workspaceBackground
+      ),
+      workspaceTextColor: toCssColor(
+        defaultsInput.workspaceTextColor,
+        DEFAULT_SETTINGS.defaults.workspaceTextColor
+      ),
+      workspaceAccentColor: toCssColor(
+        defaultsInput.workspaceAccentColor,
+        DEFAULT_SETTINGS.defaults.workspaceAccentColor
+      ),
     },
   };
 

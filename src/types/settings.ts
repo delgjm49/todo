@@ -8,6 +8,9 @@ export interface AppDefaults {
   blockBorderColor: string;
   blockBorderWidth: number;
   workspaceAccentEnabled: boolean;
+  workspaceBackground: string;
+  workspaceTextColor: string;
+  workspaceAccentColor: string;
 }
 
 export interface Settings {

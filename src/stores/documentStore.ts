@@ -342,7 +342,8 @@ function createWorkspaceDocument(workspaceId: WorkspaceId): WorkspaceDocument {
 function createWorkspaceIndexEntry(
   workspaceId: WorkspaceId,
   title: string,
-  order: number
+  order: number,
+  styleOverrides?: Partial<WorkspaceStyle>
 ): WorkspaceIndexEntry {
   const template = createDefaultWorkspaceIndexEntry();
   return {
@@ -350,7 +351,10 @@ function createWorkspaceIndexEntry(
     id: workspaceId,
     title,
     order,
-    style: structuredClone(template.style),
+    style: {
+      ...structuredClone(template.style),
+      ...structuredClone(styleOverrides ?? {}),
+    },
   };
 }
 
@@ -531,13 +535,30 @@ function reindexSnapshotWorkspaces(workspaceIndex: WorkspaceIndexEntry[]): Works
   return updateWorkspaceIndexOrder(workspaceIndex);
 }
 
-function createDefaultWorkspaceState(title?: string): {
+function createDefaultWorkspaceState(title?: string, settings?: Settings | null): {
   workspace: WorkspaceDocument;
   workspaceIndexEntry: WorkspaceIndexEntry;
 } {
   const workspaceId = createId("workspace");
   const workspace = createWorkspaceDocument(workspaceId);
-  const workspaceIndexEntry = createWorkspaceIndexEntry(workspaceId, title?.trim() || "Workspace", 0);
+
+  const styleFromDefaults: Partial<WorkspaceStyle> | undefined = settings
+    ? {
+        background: settings.defaults.workspaceBackground,
+        textColor: settings.defaults.workspaceTextColor,
+        accentStripe: {
+          enabled: settings.defaults.workspaceAccentEnabled,
+          color: settings.defaults.workspaceAccentColor,
+        },
+      }
+    : undefined;
+
+  const workspaceIndexEntry = createWorkspaceIndexEntry(
+    workspaceId,
+    title?.trim() || "Workspace",
+    0,
+    styleFromDefaults
+  );
   return { workspace, workspaceIndexEntry };
 }
 
@@ -1017,7 +1038,10 @@ export const useDocumentStore = create<DocumentStoreState>()((set, get) => {
       return false;
     }
 
-    const created = createDefaultWorkspaceState(title ?? getDefaultWorkspaceTitle(state.workspaceIndex.length));
+    const created = createDefaultWorkspaceState(
+      title ?? getDefaultWorkspaceTitle(state.workspaceIndex.length),
+      state.settings
+    );
     const nextWorkspaceIndex = reindexSnapshotWorkspaces([
       ...structuredClone(state.workspaceIndex),
       created.workspaceIndexEntry,

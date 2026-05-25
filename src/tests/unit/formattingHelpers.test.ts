@@ -15,6 +15,9 @@ function makeDefaults(overrides: Partial<AppDefaults> = {}): AppDefaults {
     blockBorderColor: "#e5e7eb",
     blockBorderWidth: 1,
     workspaceAccentEnabled: false,
+    workspaceBackground: "#1F2937",
+    workspaceTextColor: "#F9FAFB",
+    workspaceAccentColor: "#60A5FA",
     ...overrides,
   };
 }

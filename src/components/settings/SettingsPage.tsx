@@ -16,6 +16,12 @@ export function SettingsPage() {
   const [localBlockBorderColor, setLocalBlockBorderColor] = useState(settings?.defaults.blockBorderColor ?? "#374151");
   const [localBlockBorderWidth, setLocalBlockBorderWidth] = useState(String(settings?.defaults.blockBorderWidth ?? 1));
 
+  // Local form state for workspace defaults inputs
+  const [localWsBackground, setLocalWsBackground] = useState(settings?.defaults.workspaceBackground ?? "#1F2937");
+  const [localWsTextColor, setLocalWsTextColor] = useState(settings?.defaults.workspaceTextColor ?? "#F9FAFB");
+  const [localWsAccentEnabled, setLocalWsAccentEnabled] = useState(settings?.defaults.workspaceAccentEnabled ?? true);
+  const [localWsAccentColor, setLocalWsAccentColor] = useState(settings?.defaults.workspaceAccentColor ?? "#60A5FA");
+
   function saveDefault<K extends keyof AppDefaults>(key: K, value: AppDefaults[K]) {
     if (!settings) return;
     updateSettings({ defaults: { ...settings.defaults, [key]: value } });
@@ -41,7 +47,7 @@ export function SettingsPage() {
 
   const hexRegex = /^#[0-9a-fA-F]{6}$/;
 
-  function validateAndSaveHexColor(key: "textColor" | "cellBackground" | "blockBorderColor", raw: string, setter: (v: string) => void) {
+  function validateAndSaveHexColor(key: "textColor" | "cellBackground" | "blockBorderColor" | "workspaceBackground" | "workspaceTextColor" | "workspaceAccentColor", raw: string, setter: (v: string) => void) {
     if (!hexRegex.test(raw)) {
       setter(settings?.defaults[key] ?? "#000000");
       return;
@@ -202,12 +208,79 @@ export function SettingsPage() {
               </div>
             </div>
           </SettingsSection>
-          <SettingsSection
-            title="Workspace defaults"
-            entries={[
-              ["Accent enabled", settings?.defaults.workspaceAccentEnabled ? "Yes" : "No"],
-            ]}
-          />
+          <SettingsSection title="Workspace defaults">
+            <div className="mt-4 space-y-3">
+              {/* Background color */}
+              <div className="flex items-center justify-between gap-4 border-b border-border/60 pb-3 last:border-b-0 last:pb-0">
+                <span className="text-sm text-textMuted">Background color</span>
+                <div className="flex items-center gap-2">
+                  <div
+                    className="h-5 w-5 shrink-0 rounded border border-border"
+                    style={{ backgroundColor: localWsBackground }}
+                  />
+                  <input
+                    type="text"
+                    value={localWsBackground}
+                    onChange={(e) => setLocalWsBackground(e.target.value)}
+                    onBlur={(e) => validateAndSaveHexColor("workspaceBackground", e.target.value, setLocalWsBackground)}
+                    className="w-28 rounded-md border border-border bg-panel px-2 py-1 text-sm text-text text-right focus:border-accent/60 focus:outline-none"
+                  />
+                </div>
+              </div>
+              {/* Default text color */}
+              <div className="flex items-center justify-between gap-4 border-b border-border/60 pb-3 last:border-b-0 last:pb-0">
+                <span className="text-sm text-textMuted">Default text</span>
+                <div className="flex items-center gap-2">
+                  <div
+                    className="h-5 w-5 shrink-0 rounded border border-border"
+                    style={{ backgroundColor: localWsTextColor }}
+                  />
+                  <input
+                    type="text"
+                    value={localWsTextColor}
+                    onChange={(e) => setLocalWsTextColor(e.target.value)}
+                    onBlur={(e) => validateAndSaveHexColor("workspaceTextColor", e.target.value, setLocalWsTextColor)}
+                    className="w-28 rounded-md border border-border bg-panel px-2 py-1 text-sm text-text text-right focus:border-accent/60 focus:outline-none"
+                  />
+                </div>
+              </div>
+              {/* Accent enabled */}
+              <div className="flex items-center justify-between gap-4 border-b border-border/60 pb-3 last:border-b-0 last:pb-0">
+                <span className="text-sm text-textMuted">Accent enabled</span>
+                <label className="relative inline-flex cursor-pointer items-center">
+                  <input
+                    type="checkbox"
+                    checked={localWsAccentEnabled}
+                    onChange={() => {
+                      const next = !localWsAccentEnabled;
+                      setLocalWsAccentEnabled(next);
+                      saveDefault("workspaceAccentEnabled", next);
+                    }}
+                    className="h-4 w-4 rounded border-border bg-panel text-accent focus:ring-accent/40"
+                  />
+                </label>
+              </div>
+              {/* Accent color (shown only when accent enabled) */}
+              {localWsAccentEnabled && (
+                <div className="flex items-center justify-between gap-4 border-b border-border/60 pb-3 last:border-b-0 last:pb-0">
+                  <span className="text-sm text-textMuted">Accent color</span>
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="h-5 w-5 shrink-0 rounded border border-border"
+                      style={{ backgroundColor: localWsAccentColor }}
+                    />
+                    <input
+                      type="text"
+                      value={localWsAccentColor}
+                      onChange={(e) => setLocalWsAccentColor(e.target.value)}
+                      onBlur={(e) => validateAndSaveHexColor("workspaceAccentColor", e.target.value, setLocalWsAccentColor)}
+                      className="w-28 rounded-md border border-border bg-panel px-2 py-1 text-sm text-text text-right focus:border-accent/60 focus:outline-none"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </SettingsSection>
         </div>
       </div>
     </main>

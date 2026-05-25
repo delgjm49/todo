@@ -103,6 +103,9 @@ describe("row editing ui", () => {
           blockBorderColor: "#374151",
           blockBorderWidth: 1,
           workspaceAccentEnabled: true,
+          workspaceBackground: "#1F2937",
+          workspaceTextColor: "#F9FAFB",
+          workspaceAccentColor: "#60A5FA",
         },
       },
       workspaceIndex: [
@@ -185,6 +188,9 @@ describe("row editing ui", () => {
           blockBorderColor: "#374151",
           blockBorderWidth: 1,
           workspaceAccentEnabled: true,
+          workspaceBackground: "#1F2937",
+          workspaceTextColor: "#F9FAFB",
+          workspaceAccentColor: "#60A5FA",
         },
       },
       workspaceIndex: [
@@ -239,6 +245,9 @@ describe("row editing ui", () => {
           blockBorderColor: "#374151",
           blockBorderWidth: 1,
           workspaceAccentEnabled: true,
+          workspaceBackground: "#1F2937",
+          workspaceTextColor: "#F9FAFB",
+          workspaceAccentColor: "#60A5FA",
         },
       },
       workspaceIndex: [
@@ -383,6 +392,9 @@ describe("row editing ui", () => {
           blockBorderColor: "#374151",
           blockBorderWidth: 1,
           workspaceAccentEnabled: true,
+          workspaceBackground: "#1F2937",
+          workspaceTextColor: "#F9FAFB",
+          workspaceAccentColor: "#60A5FA",
         },
       },
       workspaceIndex: [
@@ -517,6 +529,9 @@ describe("row editing ui", () => {
           blockBorderColor: "#374151",
           blockBorderWidth: 1,
           workspaceAccentEnabled: true,
+          workspaceBackground: "#1F2937",
+          workspaceTextColor: "#F9FAFB",
+          workspaceAccentColor: "#60A5FA",
         },
       },
       workspaceIndex: [
@@ -586,6 +601,9 @@ describe("row editing ui", () => {
           blockBorderColor: "#374151",
           blockBorderWidth: 1,
           workspaceAccentEnabled: true,
+          workspaceBackground: "#1F2937",
+          workspaceTextColor: "#F9FAFB",
+          workspaceAccentColor: "#60A5FA",
         },
       },
       workspaceIndex: [
