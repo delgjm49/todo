@@ -2962,3 +2962,63 @@ Reviewed TICKET-056 (alert navigation and highlight) implementation against the 
 
 ### Outcome
 PASS. Review artifact written. Channel message `004-review-to-main.md` appended. Next: Main closes the feature, commits, and pushes.
+
+---
+
+## Session 170 — Main dispatch — 2026-05-25
+
+**Artifacts:**
+- `agents/artifacts/057-theme-mode-switching-dispatch.md`
+- `agents/channels/057-theme-mode-switching/messages/001-main-to-plan.md`
+
+**Summary:** Dispatched TICKET-057 (Theme mode switching) to Plan. Scope: light/dark theme CSS variables, document class toggle, interactive SettingsPage control, persistence, tests. App already has `ThemeMode` type and `settings.theme` field but no switching mechanism.
+
+**Outcome:** Dispatched. Awaiting Plan → Dev → Review chain completion.
+
+---
+
+## Session 171 — Dev — 2026-05-25
+
+**Artifacts:**
+- `agents/artifacts/057-theme-mode-switching-complete.md`
+- `agents/channels/057-theme-mode-switching/messages/003-dev-to-review.md`
+
+**Summary:** Implemented TICKET-057 (Theme mode switching). Steps completed: Tailwind config `darkMode: "class"`, CSS variables split into `html.dark`/`html.light`, `useTheme` hook, `updateSettings` action in documentStore, SettingsPage interactive segmented control, `App.tsx` integration, and 4 tests. All 307 tests pass, lint clean.
+
+**Outcome:** Complete. Handed off to Review.
+
+---
+
+## Session 172 — Review — 2026-05-25
+
+**Artifacts:**
+- `agents/artifacts/057-theme-mode-switching-review.md`
+- `agents/channels/057-theme-mode-switching/messages/004-review-to-dev.md`
+
+**Summary:** Reviewed TICKET-057. Found one medium-severity issue: tests 1–2 used a test-only `ThemeApplier` component instead of the actual `useTheme` hook, giving false coverage. Also noted complete artifact test count was incorrect (claimed 5, had 4).
+
+**Outcome:** FAIL — returned to Dev for fixes.
+
+---
+
+## Session 173 — Dev fix round — 2026-05-25
+
+**Artifacts:**
+- `agents/artifacts/057-theme-mode-switching-complete.md` (updated)
+- `agents/channels/057-theme-mode-switching/messages/005-dev-to-review.md`
+
+**Summary:** Fixed both review issues: replaced `ThemeApplier` with actual `useTheme` hook via `ThemeTestHarness`; corrected artifact test count to 4. Re-verified: 307 tests pass, lint clean.
+
+**Outcome:** Complete. Handed back to Review.
+
+---
+
+## Session 174 — Review re-review — 2026-05-25
+
+**Artifacts:**
+- `agents/artifacts/057-theme-mode-switching-review.md` (updated)
+- `agents/channels/057-theme-mode-switching/messages/006-review-to-main.md`
+
+**Summary:** Re-reviewed TICKET-057 after fix round. Both issues resolved. Verification passed: 307/307 tests, lint clean.
+
+**Outcome:** PASS. Handed off to Main for close.

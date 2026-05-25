@@ -62,6 +62,10 @@ export interface DocumentStoreState {
   retrySave: (service?: StorageService) => Promise<boolean>;
   setActiveWorkspaceId: (workspaceId: WorkspaceId | null) => void;
   markDirty: (dirty: boolean) => void;
+  updateSettings: (
+    settingsPatch: Partial<Settings>,
+    options?: DocumentMutationOptions
+  ) => boolean;
   beginDocumentTransaction: (kind: HistoryTransactionKind) => void;
   updateDocumentTransaction: (snapshot: AppDocumentSnapshot) => void;
   commitDocumentTransaction: (options?: DocumentMutationOptions) => boolean;
@@ -912,6 +916,17 @@ export const useDocumentStore = create<DocumentStoreState>()((set, get) => {
   retrySave: async (service) => get().saveAll(service),
   setActiveWorkspaceId: (workspaceId) => set({ activeWorkspaceId: workspaceId }),
   markDirty: (dirty) => set({ dirty }),
+  updateSettings: (settingsPatch, options) => {
+    const state = get();
+    if (!state.settings) {
+      return false;
+    }
+    const nextSettings = { ...state.settings, ...settingsPatch };
+    set({ settings: structuredClone(nextSettings) });
+    get().markDirty(true);
+    scheduleAutosave(options?.service, options?.autosaveDelayMs, get().saveAll);
+    return true;
+  },
   beginDocumentTransaction: (kind) => {
     clearAutosaveTimer();
     const snapshot = currentSnapshotFromState(get());

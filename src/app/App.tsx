@@ -3,8 +3,11 @@ import { AppShell } from "../components/layout/AppShell.js";
 import { SettingsPage } from "../components/settings/SettingsPage.js";
 import { useDocumentStore } from "../stores/documentStore.js";
 import { useUiStore } from "../stores/uiStore.js";
+import { useTheme } from "../hooks/useTheme.js";
 
 export function App() {
+  useTheme();
+
   const screen = useUiStore((state) => state.screen);
   const isHydrating = useDocumentStore((state) => state.isHydrating);
   const isInitialized = useDocumentStore((state) => state.isInitialized);

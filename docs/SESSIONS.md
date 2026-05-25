@@ -26,25 +26,24 @@ Last updated: 2026-05-25
 | TICKET-054 In-app alert scheduler | Complete | Closed via full workflow |
 | TICKET-055 Dock alert indicators | Complete | Closed via Main → Dev → Review (direct to Dev, S-sized) |
 | TICKET-056 Alert navigation and highlight | Complete | Closed via full workflow — alerts epic complete |
+| TICKET-057 Theme mode switching | Complete | Closed via full workflow with re-review |
 | Phase 3 spool channels | Complete | Validated end-to-end |
 | Windows subprocess dispatch-auto | Complete | Validated on Windows 11 |
 
 ## Last Sessions
 
-- **Session 169 — Review PASS** (2026-05-25): Reviewed and passed TICKET-056 alert navigation and highlight. 303/303 tests pass, zero lint warnings, zero type errors. No issues found.
-- **Session 168 — Dev** (2026-05-25): Implemented `useAlertNavigation` hook with two-phase scroll, flash animation, session dedup, 17 unit tests.
-- **Session 167 — Plan** (2026-05-25): Created implementation plan for TICKET-056 alert navigation and highlight.
-- **Session 166 — Main dispatch** (2026-05-25): Closed TICKET-055 and dispatched TICKET-056 to Plan.
-- **Session 165 — Review PASS** (2026-05-25): Reviewed and passed TICKET-055 dock alert indicators. 286/286 tests pass.
-- **Session 164 — Dev** (2026-05-25): Implemented polished `AlertBadge` in `WorkspaceCard.tsx` with dot indicator, overflow cap, note subtext, accessibility. 12 tests.
+- **Session 174 — Review PASS** (2026-05-25): Re-reviewed and passed TICKET-057 theme mode switching after Dev fix round. 307/307 tests pass, lint clean. Both initial issues resolved.
+- **Session 173 — Dev fix round** (2026-05-25): Fixed review issues: replaced test-only `ThemeApplier` with real `useTheme` hook in tests; corrected artifact test count.
+- **Session 172 — Review** (2026-05-25): Found test coverage gap (test-only component instead of real hook) and artifact count error. Returned to Dev.
+- **Session 171 — Dev** (2026-05-25): Implemented TICKET-057 theme mode switching: CSS variables, `useTheme` hook, `updateSettings` action, SettingsPage toggle, App.tsx integration, 4 tests.
+- **Session 170 — Main dispatch** (2026-05-25): Dispatched TICKET-057 to Plan.
 
 ## Next Recommended
 
-1. **TICKET-057**: Theme mode switching — last remaining P1; light/dark theme + saved preference
-2. **TICKET-063**: Autosave debounce and dirty-state UX
-3. **TICKET-065**: Manual QA pass and release blocker fixes
+1. **TICKET-063**: Autosave debounce and dirty-state UX
+2. **TICKET-065**: Manual QA pass and release blocker fixes
 
-**Alerts epic (053–056): complete.**
+**Alerts epic (053–056): complete. Theme mode (057): complete.**
 
 ## Blockers / Open Questions
 
