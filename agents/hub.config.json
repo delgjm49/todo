@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "projectName": "Todo",
+  "freshBrief": "A local-first desktop todo app focused on a polished, minimal interface and durable session-based workflow.",
+  "sessionLog": "docs/SESSIONS.md",
+  "briefingDocs": [
+    "docs/TODO_APP_PLAN.md",
+    "docs/TODO_APP_TECH_SPEC.md",
+    "docs/TODO_APP_UI_SPEC.md",
+    "docs/TODO_APP_IMPLEMENTATION_BACKLOG.md",
+    "docs/TODO_APP_PLAN_REVIEW.md"
+  ],
+  "backlogDocs": [
+    "docs/TODO_APP_IMPLEMENTATION_BACKLOG.md",
+    "docs/TODO_APP_PLAN_REVIEW.md"
+  ],
+  "dispatchDocs": [
+    "agents/README.md",
+    "agents/workflows/dispatch-channel-protocol.md",
+    "agents/ARTIFACTS.md",
+    "agents/CLOSING.md"
+  ],
+  "hubNotes": [
+    "Hub should help choose or shape the next app slice, not launch dispatch on its own.",
+    "Workers do not need docs/SESSIONS.md unless their dispatch explicitly asks for it.",
+    "Shipping target is Windows 11; macOS is a development convenience."
+  ]
+}

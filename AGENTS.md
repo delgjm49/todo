@@ -33,24 +33,28 @@ A local-first desktop todo app focused on a polished, minimal interface and dura
 
 ## Agent Workflow
 
-This project uses a **multi-agent workflow**: Main → Plan → Dev → Review, with append-only dispatch channels carrying handoffs between sessions.
+This project uses a **multi-agent workflow**: Hub for repo-aware briefing/triage, then Main → Plan → Dev → Review for dispatch work, with append-only dispatch channels carrying handoffs between sessions.
 
 - Full protocol: [`agents/README.md`](agents/README.md)
+- Hub protocol: [`agents/workflows/hub-protocol.md`](agents/workflows/hub-protocol.md)
 - Dispatch channels: [`agents/workflows/dispatch-channel-protocol.md`](agents/workflows/dispatch-channel-protocol.md)
 - Prompt templates: [`agents/prompts/`](agents/prompts/)
 - Artifact format: [`agents/ARTIFACTS.md`](agents/ARTIFACTS.md)
 - Review protocol: [`agents/workflows/review-protocol.md`](agents/workflows/review-protocol.md)
 - Closing protocol: [`agents/CLOSING.md`](agents/CLOSING.md)
 
-**Session start**: The first line of your message determines your role. Say `main`, `plan`, `dev`, `review`, `pickup agents/channels/###-feature-slug/`, or bare `pickup`. New dispatches use Phase 3 spool directories under `agents/channels/<slug>/messages/`; legacy `*-channel.md` files are historical only.
+**Session start**: The first line of your message determines your role. Say `hub`, `main`, `plan`, `dev`, `review`, `pickup agents/channels/###-feature-slug/`, or bare `pickup`. New dispatches use Phase 3 spool directories under `agents/channels/<slug>/messages/`; legacy `*-channel.md` files are historical only.
 
 **Mandatory first read for every session**: After reading this file, you MUST read your role's prompt template **before doing any work** (orient, write artifacts, append messages, run commands). The role-specific rules — including guardrails like "discuss scope before dispatching" and "never commit without explicit user approval" — live only in those files. Skipping the prompt template will cause you to violate rules you didn't know existed.
 
+- `hub` → read [`agents/prompts/hub.md`](agents/prompts/hub.md), then [`agents/workflows/hub-protocol.md`](agents/workflows/hub-protocol.md) and [`agents/hub.config.json`](agents/hub.config.json)
 - `main` → read [`agents/prompts/main.md`](agents/prompts/main.md)
 - `plan` → read [`agents/prompts/plan.md`](agents/prompts/plan.md)
 - `dev` → read [`agents/prompts/dev.md`](agents/prompts/dev.md)
 - `review` → read [`agents/prompts/review.md`](agents/prompts/review.md)
 - `pickup` → see Pickup mode below
+
+**Hub mode**: Hub is a non-memory, non-dispatch repo assistant for briefing, Q&A, brainstorming, backlog/session triage, and dispatch preparation. Hub does not replace Main and does not launch Plan / Dev / Review unless the user explicitly changes scope.
 
 **Pickup mode**: If the session starts with `pickup`, read this file first, then [`agents/workflows/dispatch-channel-protocol.md`](agents/workflows/dispatch-channel-protocol.md), then the named dispatch channel. If no channel path is given, use the most recently modified channel in `agents/channels/`. The protocol doc's Role Resolution Rules section determines your active role (it depends on the `[dispatch-auto]` tag). Then read the matching `agents/prompts/<role>.md` template before acting.
 

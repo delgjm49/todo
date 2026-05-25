@@ -6,7 +6,8 @@ The Todo app uses a **multi-agent development workflow**. Instead of one agent d
 
 | Agent | Trigger Phrase | Role |
 |-------|---------------|------|
-| **Main** (Orchestrator) | `"main"` | Entry point. Guides the session, decides scope, writes dispatch artifacts, creates dispatch channels, and commits/pushes completed work. |
+| **Hub** (Repo Assistant) | `"hub"` | Repo-aware briefing, Q&A, brainstorming, backlog/session triage, and dispatch preparation. Not a dispatch worker and no persistent memory. |
+| **Main** (Orchestrator) | `"main"` | Entry point for official dispatch. Guides the session, decides scope, writes dispatch artifacts, creates dispatch channels, and commits/pushes completed work. |
 | **Plan** (Planner) | `"plan"` | Takes a dispatch, creates detailed implementation plans. Can dispatch directly to Dev for small scoped work. |
 | **Dev** (Builder) | `"dev"` | Takes a plan, implements it, and writes completion artifacts. |
 | **Review** (Reviewer) | `"review"` | Takes a plan + completed work, reviews for correctness/completeness, and writes findings. |
@@ -17,6 +18,7 @@ The Todo app uses a **multi-agent development workflow**. Instead of one agent d
 Every session begins with a **first message** that identifies the agent type. The agent reads `AGENTS.md` for project context, **then reads its role's prompt template** (the role-specific guardrails live there — skipping this step causes the agent to operate without rules it should be following), then assumes its role.
 
 ```
+Session start: "hub"                          → read agents/prompts/hub.md, agents/workflows/hub-protocol.md, agents/hub.config.json → Hub assistant mode
 Session start: "main"                         → read agents/prompts/main.md   → Main Orchestrator mode
 Session start: "plan"                         → read agents/prompts/plan.md   → Planning mode (manual fallback)
 Session start: "dev"                          → read agents/prompts/dev.md    → Dev mode (manual fallback)
@@ -52,7 +54,17 @@ Dispatch channels carry handoff messages. They live in `agents/channels/`.
 
 See [`workflows/dispatch-channel-protocol.md`](workflows/dispatch-channel-protocol.md).
 
-## Standard Flow
+## Hub Flow
+
+Use Hub before Main when you want orientation or discussion without launching dispatch:
+
+```text
+hub
+```
+
+Hub reads `agents/hub.config.json`, provides a concise briefing or recommendation, and can draft dispatch-ready context. Hub does not create channels, launch workers, or maintain memory unless the user explicitly changes the scope.
+
+## Standard Dispatch Flow
 
 ```
 Main Orchestrator
@@ -105,7 +117,8 @@ agents/channels/
 
 ## Quick Reference
 
-- **Starting work**: Start with `main`; Main creates a dispatch artifact and dispatch channel
+- **Orienting / triage**: Start with `hub`; Hub briefs, answers, brainstorms, or prepares dispatch context without launching workers
+- **Starting dispatch work**: Start with `main`; Main creates a dispatch artifact and dispatch channel
 - **Continuing work**: Start with `pickup agents/channels/###-feature-slug/`
 - **Manual fallback**: Use [`prompts/plan.md`](prompts/plan.md), [`prompts/dev.md`](prompts/dev.md), or [`prompts/review.md`](prompts/review.md) with explicit artifact paths
 - **Dispatch channels**: See [`workflows/dispatch-channel-protocol.md`](workflows/dispatch-channel-protocol.md)

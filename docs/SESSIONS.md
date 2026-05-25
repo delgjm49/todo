@@ -2651,3 +2651,20 @@ Closed `TICKET-051` plain text clipboard for text cells after confirming the lat
 
 ### Outcome
 TICKET-051 is complete. The channel is terminal/closed by protocol at `agents/channels/030-plain-text-cell-clipboard/messages/007-review-to-main.md`; reviewed feature files, artifacts, channel messages, and session log updates are ready to commit and push.
+
+## Session 150 — 2026-05-25
+
+### Agent Type
+hub-workflow closeout
+
+### Artifacts
+- Hub prompt: `agents/prompts/hub.md`
+- Hub protocol: `agents/workflows/hub-protocol.md`
+- Hub config: `agents/hub.config.json`
+- Workflow docs: `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `agents/README.md`
+
+### Summary
+Installed the new non-memory repo Hub mode from `meta-workflow`. Hub is a repo-aware briefing, Q&A, brainstorming, backlog/session triage, and dispatch-preparation assistant. It is intentionally not Terra-like, does not keep persistent memory, and does not launch or replace Main / Plan / Dev / Review.
+
+### Outcome
+Future orientation sessions can start with `hub`. Official dispatch and git closeout remain owned by `main`; implementation/review work remains in the existing Plan / Dev / Review flow.
