@@ -23,7 +23,7 @@ Last updated: 2026-05-25
 | TICKET-051 Plain text clipboard for text cells | Complete | Closed after re-review loop |
 | TICKET-052 Hotkey layer | Complete | Closed via full workflow |
 | TICKET-053 Alert evaluation domain logic | Complete | Closed via full workflow |
-| TICKET-054 In-app alert scheduler | Not started | |
+| TICKET-054 In-app alert scheduler | Complete | Closed via full workflow |
 | TICKET-055 Dock alert indicators | Not started | |
 | TICKET-056 Alert navigation and highlight | Not started | |
 | Phase 3 spool channels | Complete | Validated end-to-end |
@@ -31,18 +31,18 @@ Last updated: 2026-05-25
 
 ## Last Sessions
 
-- **Session 158 — Review PASS** (2026-05-25): Reviewed and passed TICKET-053 alert evaluation domain logic. 263/263 tests pass, zero lint warnings, zero type errors. No issues found.
-- **Session 157 — Dev** (2026-05-25): Implemented `evaluateRow.ts` and `evaluateWorkspace.ts` with 25 unit tests covering all alert evaluation rules.
-- **Session 156 — Plan** (2026-05-25): Created implementation plan for TICKET-053 alert evaluation domain logic.
-- **Session 155 — Main dispatch** (2026-05-25): Closed TICKET-052 and dispatched TICKET-053 to Plan.
-- **Session 154 — Review PASS** (2026-05-25): Reviewed and passed TICKET-052 hotkey layer. 237/237 tests pass.
-- **Session 153 — Dev** (2026-05-25): Implemented centralized `useHotkeys` hook, mounted in `AppShell`, with 20 unit tests.
+- **Session 162 — Review PASS** (2026-05-25): Reviewed and passed TICKET-054 in-app alert scheduler. 274/274 tests pass, zero lint warnings, zero type errors. No issues found.
+- **Session 161 — Dev** (2026-05-25): Implemented `useAlertScheduler` hook, `updateWorkspaceAlertSummary` store action, edit-triggered re-evaluation, 11 unit tests.
+- **Session 160 — Plan** (2026-05-25): Created implementation plan for TICKET-054 in-app alert scheduler.
+- **Session 159 — Main dispatch** (2026-05-25): Closed TICKET-053 and dispatched TICKET-054 to Plan.
+- **Session 158 — Review PASS** (2026-05-25): Reviewed and passed TICKET-053 alert evaluation domain logic. 263/263 tests pass.
+- **Session 157 — Dev** (2026-05-25): Implemented `evaluateRow.ts` and `evaluateWorkspace.ts` with 25 unit tests.
 
 ## Next Recommended
 
-1. **TICKET-054**: In-app alert scheduler — natural next after evaluation logic; wires domain helpers to periodic checks
-2. **TICKET-055**: Dock alert indicators
-3. **TICKET-056**: Alert navigation and highlight
+1. **TICKET-055**: Dock alert indicators — polish the existing badge into a proper visual indicator; small S-sized ticket
+2. **TICKET-056**: Alert navigation and highlight
+3. **TICKET-057**: Theme mode switching
 
 ## Blockers / Open Questions
 

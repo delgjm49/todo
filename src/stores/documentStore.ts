@@ -1,6 +1,7 @@
 import { create } from "zustand";
+import { evaluateWorkspace } from "../domain/alerts/index.js";
 import type { AppDocument, AppDocumentSnapshot, LoadedAppData, SaveFailure, SaveOutcome, SaveStatus } from "../types/app";
-import type { WorkspaceDocument, WorkspaceIndexEntry } from "../types/workspace";
+import type { WorkspaceAlertSummary, WorkspaceDocument, WorkspaceIndexEntry } from "../types/workspace";
 import type { Block, BlockSort } from "../types/block";
 import type { BlockId, ColumnId, RowId, WorkspaceId } from "../domain/ids";
 import { createId } from "../domain/ids.js";
@@ -89,6 +90,10 @@ export interface DocumentStoreState {
     targetWorkspaceId: WorkspaceId,
     options?: DocumentMutationOptions
   ) => boolean;
+  updateWorkspaceAlertSummary: (
+    workspaceId: WorkspaceId,
+    alertSummary: WorkspaceAlertSummary | null,
+  ) => void;
   createBlockFromTemplate: (
     templateType: (typeof BLOCK_TEMPLATES)[number]["type"],
     options?: DocumentMutationOptions
@@ -1159,6 +1164,33 @@ export const useDocumentStore = create<DocumentStoreState>()((set, get) => {
 
     return commitSnapshot(set, get, nextSnapshot, "drag", options);
   },
+  updateWorkspaceAlertSummary: (workspaceId, alertSummary) => {
+    const state = get();
+    if (!state.settings) return;
+
+    const entryIndex = state.workspaceIndex.findIndex((e) => e.id === workspaceId);
+    if (entryIndex < 0) return;
+
+    const current = state.workspaceIndex[entryIndex].alertSummary;
+    // Skip if summary is unchanged (same count and same primary target)
+    if (
+      (current?.count ?? 0) === (alertSummary?.count ?? 0) &&
+      current?.blockId === alertSummary?.blockId &&
+      current?.rowId === alertSummary?.rowId &&
+      current?.columnId === alertSummary?.columnId
+    ) {
+      return;
+    }
+
+    const nextIndex = state.workspaceIndex.map((entry) =>
+      entry.id === workspaceId
+        ? { ...structuredClone(entry), alertSummary: alertSummary?.count === 0 ? null : alertSummary }
+        : structuredClone(entry)
+    );
+
+    set({ workspaceIndex: nextIndex });
+    scheduleAutosave(undefined, undefined, state.saveAll);
+  },
   createBlockFromTemplate: (templateType, options) => {
     const state = get();
     if (!state.settings) {
@@ -1801,7 +1833,22 @@ export const useDocumentStore = create<DocumentStoreState>()((set, get) => {
       loadedWorkspaceIds: structuredClone(state.loadedWorkspaceIds),
     };
 
-    return commitSnapshot(set, get, nextSnapshot, "typing", options);
+    const committed = commitSnapshot(set, get, nextSnapshot, "typing", options);
+    if (committed) {
+      // Schedule immediate re-evaluation for this workspace
+      queueMicrotask(() => {
+        const freshState = get();
+        const freshDoc = freshState.workspacesById[workspaceId];
+        if (freshDoc) {
+          const summary = evaluateWorkspace(freshDoc, new Date());
+          freshState.updateWorkspaceAlertSummary(
+            workspaceId,
+            summary.count === 0 ? null : summary,
+          );
+        }
+      });
+    }
+    return committed;
   },
   updateTimeCellValue: (workspaceId, blockId, rowId, columnId, value, options) => {
     const state = get();
@@ -1862,7 +1909,22 @@ export const useDocumentStore = create<DocumentStoreState>()((set, get) => {
       loadedWorkspaceIds: structuredClone(state.loadedWorkspaceIds),
     };
 
-    return commitSnapshot(set, get, nextSnapshot, "typing", options);
+    const committed = commitSnapshot(set, get, nextSnapshot, "typing", options);
+    if (committed) {
+      // Schedule immediate re-evaluation for this workspace
+      queueMicrotask(() => {
+        const freshState = get();
+        const freshDoc = freshState.workspacesById[workspaceId];
+        if (freshDoc) {
+          const summary = evaluateWorkspace(freshDoc, new Date());
+          freshState.updateWorkspaceAlertSummary(
+            workspaceId,
+            summary.count === 0 ? null : summary,
+          );
+        }
+      });
+    }
+    return committed;
   },
   updateDropdownCellValue: (workspaceId, blockId, rowId, columnId, value, options) => {
     const state = get();

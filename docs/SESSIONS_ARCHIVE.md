@@ -2797,3 +2797,63 @@ Reviewed alert evaluation domain logic implementation against the plan. All acce
 
 ### Outcome
 PASS. Dispatched to Main via `004-review-to-main.md` with `State = review-pass`. Next: Main closes the dispatch, commits, and pushes.
+
+## Session 159 — 2026-05-25
+
+### Agent Type
+main
+
+### Artifacts
+- `agents/artifacts/033-in-app-alert-scheduler-dispatch.md`
+- `agents/channels/033-in-app-alert-scheduler/messages/001-main-to-plan.md`
+
+### Summary
+Closed TICKET-053 (alert evaluation domain logic) after Review PASS, archiving sessions 155–158 and updating the living summary. Then dispatched TICKET-054 (in-app alert scheduler) as the next product ticket. The scheduler bridges the gap between the TICKET-053 evaluation layer and the existing UI scaffolding by periodically running evaluation and updating workspace alert summaries in the store.
+
+### Outcome
+TICKET-053 closed and committed. TICKET-054 dispatched to Plan. Next: Plan creates implementation plan at `agents/artifacts/033-in-app-alert-scheduler-plan.md` and appends `002-plan-to-dev.md`.
+
+## Session 160 — 2026-05-25
+
+### Agent Type
+plan
+
+### Artifacts
+- `agents/artifacts/033-in-app-alert-scheduler-plan.md`
+- `agents/channels/033-in-app-alert-scheduler/messages/002-plan-to-dev.md`
+
+### Summary
+Created implementation plan for TICKET-054 (in-app alert scheduler). The plan covers 4 files: a new `useAlertScheduler` hook for startup scan + 30s interval polling, a `updateWorkspaceAlertSummary` store action (direct set without undo history), edit-triggered re-evaluation via `queueMicrotask` in `updateDateCellValue`/`updateTimeCellValue`, mounting in `AppShell`, and 10 unit test cases. No schema changes needed — `alertSummary` field already exists and is persisted.
+
+### Outcome
+Plan created and dispatched to Dev. Next: Dev implements the plan and appends `003-dev-to-review.md`.
+
+## Session 161 — 2026-05-25
+
+### Agent Type
+dev
+
+### Artifacts
+- `agents/artifacts/033-in-app-alert-scheduler-complete.md`
+- `agents/channels/033-in-app-alert-scheduler/messages/003-dev-to-review.md`
+
+### Summary
+Implemented TICKET-054 (in-app alert scheduler). Created `src/hooks/useAlertScheduler.ts` with startup scan, 30s polling interval, and cleanup. Added `updateWorkspaceAlertSummary` store action (direct set, no undo history, no-op guarding, autosave trigger). Added `queueMicrotask` edit-triggered re-evaluation inside `updateDateCellValue` and `updateTimeCellValue`. Mounted `useAlertScheduler()` in `AppShell.tsx`. Wrote 11 unit tests in `src/tests/unit/alertScheduler.test.ts` covering store action, startup scan, edit-triggered, edge cases, and the interval constant. All 274 tests pass; lint is clean.
+
+### Outcome
+Implementation complete and dispatched to Review. Next: Review evaluates the implementation against the plan and appends `004-review-to-main.md` (pass) or `004-review-to-dev.md` (needs fixes).
+
+## Session 162 — 2026-05-25
+
+### Agent Type
+review
+
+### Artifacts
+- `agents/artifacts/033-in-app-alert-scheduler-review.md`
+- `agents/channels/033-in-app-alert-scheduler/messages/004-review-to-main.md`
+
+### Summary
+Reviewed TICKET-054 (in-app alert scheduler) implementation against the plan. All 5 plan steps implemented correctly across 4 files. Store action correctly bypasses undo history, no-op guard prevents unnecessary re-renders, edit-triggered re-evaluation uses `queueMicrotask` for fresh state, hook mounts cleanly in AppShell. Verified: `npm run test:build` PASS, `npm run test` PASS (274/274), `npm run lint` PASS.
+
+### Outcome
+PASS — no issues found. Channel message `004-review-to-main.md` created. Next: Main closes the dispatch, commits, and pushes.
