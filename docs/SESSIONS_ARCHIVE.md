@@ -2857,3 +2857,48 @@ Reviewed TICKET-054 (in-app alert scheduler) implementation against the plan. Al
 
 ### Outcome
 PASS — no issues found. Channel message `004-review-to-main.md` created. Next: Main closes the dispatch, commits, and pushes.
+
+## Session 163 — 2026-05-25
+
+### Agent Type
+main
+
+### Artifacts
+- `agents/artifacts/034-dock-alert-indicators-dispatch.md`
+- `agents/channels/034-dock-alert-indicators/messages/001-main-to-dev.md`
+
+### Summary
+Closed TICKET-054 (in-app alert scheduler) after Review PASS, archiving sessions 159–162 and updating the living summary. Then dispatched TICKET-055 (dock alert indicators) as the next product ticket. This is an S-sized UI polish ticket — the scheduler is already populating alert data, so this ticket focuses on making the dock badge visually polished and informative. Routed directly to Dev (skipping Plan) given the small, clear scope.
+
+### Outcome
+TICKET-054 closed and committed. TICKET-055 dispatched to Dev. Next: Dev implements directly and appends `002-dev-to-review.md`.
+
+## Session 164 — 2026-05-25
+
+### Agent Type
+dev
+
+### Artifacts
+- `agents/artifacts/034-dock-alert-indicators-complete.md`
+- `agents/channels/034-dock-alert-indicators/messages/002-dev-to-review.md`
+
+### Summary
+Implemented TICKET-055 (dock alert indicators). Replaced the basic warning pill in `WorkspaceCard.tsx` with a polished `AlertBadge` sub-component featuring: dot + formatted count indicator, "99+" overflow cap, optional note subtext with truncation, `role="status"` and `aria-label` for accessibility, and `data-testid` attributes for testability. Wrote 12 component tests covering all badge states (null, undefined, zero, single, multiple, overflow, note presence/absence, aria-labels, integration with card). All 286 tests pass, lint passes.
+
+### Outcome
+Complete artifact written to `agents/artifacts/034-dock-alert-indicators-complete.md`. Dev → Review channel message appended. Next: Review inspects the implementation against the dispatch scope.
+
+## Session 165 — 2026-05-25
+
+### Agent Type
+review
+
+### Artifacts
+- `agents/artifacts/034-dock-alert-indicators-review.md`
+- `agents/channels/034-dock-alert-indicators/messages/003-review-to-main.md`
+
+### Summary
+Reviewed TICKET-055 (dock alert indicators). Inspected `AlertBadge` component in `WorkspaceCard.tsx` and all 12 tests in `workspaceCard.test.tsx` against the dispatch acceptance criteria. All criteria met. Re-ran `tsc --noEmit`, `npm run test` (286/286 pass), and `npm run lint` (clean). No issues found.
+
+### Outcome
+PASS. Review → Main channel message created. Next: Main closes the dispatch, commits, and pushes.

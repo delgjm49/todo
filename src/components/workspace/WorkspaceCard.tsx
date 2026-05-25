@@ -1,5 +1,5 @@
 import type { DragEvent } from "react";
-import type { WorkspaceIndexEntry } from "../../types/workspace.js";
+import type { WorkspaceIndexEntry, WorkspaceAlertSummary } from "../../types/workspace.js";
 
 export function WorkspaceCard({
   entry,
@@ -71,9 +71,7 @@ export function WorkspaceCard({
             </div>
           </div>
           {entry.alertSummary?.count ? (
-            <div className="rounded-full border border-warning/40 bg-warning/10 px-2 py-1 text-xs font-medium text-warning">
-              {entry.alertSummary.count}
-            </div>
+            <AlertBadge summary={entry.alertSummary} />
           ) : null}
         </div>
         <div className="mt-3 flex items-center gap-2 text-xs opacity-70">
@@ -83,5 +81,43 @@ export function WorkspaceCard({
         </div>
       </div>
     </button>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// AlertBadge — polished visual indicator for workspace alert state
+// ---------------------------------------------------------------------------
+
+function formatAlertCount(count: number): string {
+  if (count > 99) return "99+";
+  return String(count);
+}
+
+function AlertBadge({ summary }: { summary: WorkspaceAlertSummary }) {
+  const count = summary.count;
+
+  return (
+    <div
+      className="flex shrink-0 flex-col items-end gap-0.5"
+      data-testid="alert-badge"
+    >
+      <div
+        className="flex items-center gap-1.5 rounded-full bg-warning/20 px-2.5 py-1 text-xs font-semibold text-warning ring-1 ring-warning/40"
+        role="status"
+        aria-label={`${count} active alert${count > 1 ? "s" : ""}`}
+      >
+        <span className="h-1.5 w-1.5 rounded-full bg-warning" aria-hidden="true" />
+        <span data-testid="alert-count">{formatAlertCount(count)}</span>
+      </div>
+      {summary.note ? (
+        <span
+          className="max-w-[100px] truncate text-[10px] leading-tight text-warning/65"
+          data-testid="alert-note"
+          aria-label={`Note: ${summary.note}`}
+        >
+          {summary.note}
+        </span>
+      ) : null}
+    </div>
   );
 }
