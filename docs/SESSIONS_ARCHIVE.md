@@ -2674,3 +2674,66 @@ Installed the new non-memory repo Hub mode from `meta-workflow`. Hub is a repo-a
 
 ### Outcome
 Future orientation sessions can start with `hub`. Official dispatch and git closeout remain owned by `main`; implementation/review work remains in the existing Plan / Dev / Review flow.
+
+## Session 151 — 2026-05-25
+
+### Agent Type
+main
+
+### Artifacts
+- `agents/artifacts/031-hotkey-layer-dispatch.md`
+- `agents/channels/031-hotkey-layer/messages/001-main-to-plan.md`
+
+### Summary
+Recommended and dispatched TICKET-052 (Hotkey layer) as the next product ticket. All dependencies (TICKET-012 historyStore, TICKET-050 row clipboard UI, TICKET-051 plain text clipboard) are complete. The dispatch scopes a centralized `useHotkeys` hook or `HotkeyProvider` to wire Ctrl+Z/Y (undo/redo), Ctrl+C/X/V (clipboard), Ctrl+A (select all), Delete, Enter, and Escape to existing store actions, with context-aware routing to avoid breaking existing cell editing behaviors.
+
+### Outcome
+Dispatched to Plan. Next: Plan creates implementation plan at `agents/artifacts/031-hotkey-layer-plan.md` and appends `002-plan-to-dev.md`.
+
+## Session 152 — 2026-05-25
+
+### Agent Type
+plan
+
+### Artifacts
+- `agents/artifacts/031-hotkey-layer-plan.md`
+- `agents/channels/031-hotkey-layer/messages/002-plan-to-dev.md`
+
+### Summary
+Created the implementation plan for TICKET-052 (Hotkey layer). The plan specifies a `useHotkeys` hook (not a provider — simpler, sufficient given Zustand stores) mounted in `AppShell`. It registers a single document-level keydown listener with focus-based context detection: shortcuts are suppressed when an editable element (input/textarea/contenteditable) is focused, letting existing cell handlers run. Covers Ctrl+Z/Y undo/redo, Ctrl+C/X/V row clipboard, Delete for row removal, and Escape for menu/inspector/selection dismissal. Ctrl+A is scoped to prevent-default only (no multi-select exists yet). Enter is not wired globally (cells and menus handle it). Three files: one new hook, one AppShell modification, one test file with 14+ test cases.
+
+### Outcome
+Dispatched to Dev. Next: Dev implements the plan and appends `003-dev-to-review.md`.
+
+## Session 153 — 2026-05-25
+
+### Agent Type
+dev
+
+### Artifacts
+- `agents/artifacts/031-hotkey-layer-complete.md`
+- `agents/channels/031-hotkey-layer/messages/003-dev-to-review.md`
+
+### Summary
+Implemented the centralized hotkey layer per the plan. Created `src/hooks/useHotkeys.ts` with a single `document`-level `keydown` listener that routes shortcuts to existing store actions. Modified `AppShell.tsx` to mount the hook. Wrote 20 unit tests in `src/tests/unit/useHotkeys.test.tsx` covering all shortcut families (undo/redo, clipboard, delete, escape, ctrl+a, and editing suppression). Tests use JSDOM + React 18 `createRoot` for realistic mounting. All verification passed:
+- `npx tsc -p tsconfig.test.json --noEmit` — clean
+- `npm run test` — 237/237 tests pass (31 suites)
+- `npm run lint` — zero warnings
+
+### Outcome
+Dev complete. Ready for Review.
+
+## Session 154 — 2026-05-25
+
+### Agent Type
+review
+
+### Artifacts
+- `agents/artifacts/031-hotkey-layer-review.md`
+- `agents/channels/031-hotkey-layer/messages/004-review-to-main.md`
+
+### Summary
+Reviewed the hotkey layer implementation against the plan. All acceptance criteria met, all verification commands pass (237/237 tests, zero lint warnings, zero type errors). Implementation correctly routes standard desktop shortcuts to existing store actions with focus-based context suppression. Documented deviations (`.tsx` test extension, no `vi.spyOn`, Ctrl+A deferral) are reasonable.
+
+### Outcome
+PASS. Review → Main message created. Ready for Main to close the dispatch.

@@ -21,7 +21,7 @@ Last updated: 2026-05-25
 | TICKET-050 Row clipboard UI (cut/copy/paste) | Complete | Closed via full workflow with re-review |
 | TICKET-064 Packaging assets and Windows build config | Complete | First real Phase 3 spool dispatch |
 | TICKET-051 Plain text clipboard for text cells | Complete | Closed after re-review loop |
-| TICKET-052 Hotkey layer | Not started | Next recommended product ticket |
+| TICKET-052 Hotkey layer | Complete | Closed via full workflow |
 | TICKET-053 Alert evaluation domain logic | Not started | |
 | TICKET-054 In-app alert scheduler | Not started | |
 | TICKET-055 Dock alert indicators | Not started | |
@@ -31,17 +31,18 @@ Last updated: 2026-05-25
 
 ## Last Sessions
 
-- **Session 150 — Hub-workflow closeout** (2026-05-25): Installed new Hub mode (`agents/prompts/hub.md`, `hub-protocol.md`, `hub.config.json`). Hub is a non-memory repo briefing assistant; does not replace Main or launch workers.
-- **Session 149 — Main close TICKET-051** (2026-05-25): Closed plain text clipboard dispatch after Review PASS. Route included Dev test-fix loop and Main protocol repair of invalid state token before final re-review.
-- **Session 148 — Review re-review** (2026-05-25): Second-pass re-review confirmed both required test fixes applied (removed test 8, added vacuity comment to test 1). Production code unchanged. 217/217 tests pass. PASS verdict.
-- **Session 147 — Main protocol repair** (2026-05-25): Fixed invalid `ready-for-re-review` state token in spool message 005 by editing `## State` to `ready-for-review`, enabling dispatch-auto retry.
-- **Session 146 — Main retry repair** (2026-05-25): Appended `006-main-to-review.md` with valid `State = ready-for-review` after Dev used invalid Phase 3 state token `ready-for-re-review`.
+- **Session 154 — Review PASS** (2026-05-25): Reviewed and passed TICKET-052 hotkey layer. 237/237 tests pass, zero lint warnings, zero type errors. All acceptance criteria met.
+- **Session 153 — Dev** (2026-05-25): Implemented centralized `useHotkeys` hook, mounted in `AppShell`, with 20 unit tests covering all shortcut families.
+- **Session 152 — Plan** (2026-05-25): Created implementation plan for TICKET-052 hotkey layer. Specified `useHotkeys` hook with focus-based context routing.
+- **Session 151 — Main dispatch** (2026-05-25): Dispatched TICKET-052 hotkey layer to Plan.
+- **Session 150 — Hub-workflow closeout** (2026-05-25): Installed new Hub mode. Hub is a non-memory repo briefing assistant; does not replace Main or launch workers.
+- **Session 149 — Main close TICKET-051** (2026-05-25): Closed plain text clipboard dispatch after Review PASS.
 
 ## Next Recommended
 
-1. **TICKET-052**: Hotkey layer — natural next product feature after clipboard work
-2. **TICKET-053**: Alert evaluation domain logic
-3. **TICKET-054**: In-app alert scheduler
+1. **TICKET-053**: Alert evaluation domain logic — natural next product ticket; begins the alerts epic
+2. **TICKET-054**: In-app alert scheduler
+3. **TICKET-055**: Dock alert indicators
 
 ## Blockers / Open Questions
 

@@ -3,8 +3,10 @@ import { MainPane } from "./MainPane.js";
 import { TopBar } from "./TopBar.js";
 import { InspectorShell } from "./InspectorShell.js";
 import { useUiStore } from "../../stores/uiStore.js";
+import { useHotkeys } from "../../hooks/useHotkeys.js";
 
 export function AppShell() {
+  useHotkeys();
   const inspectorOpen = useUiStore((state) => state.inspectorOpen);
 
   return (
