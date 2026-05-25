@@ -8,9 +8,9 @@ Every agent session ends with a structured close. This ensures documentation is 
 
 Every agent has a **BEFORE YOU END** checklist in its prompt template. The most critical output for Plan, Dev, and Review is creating the next numbered message file in the active dispatch channel spool.
 
-| Agent | Writes Artifact | Updates SESSIONS.md | Creates Next Channel Message | Chat Output | Update Other Docs | Commit & Push |
+| Agent | Writes Artifact | Session Log | Creates Next Channel Message | Chat Output | Update Other Docs | Commit & Push |
 |-------|----------------|---------------------|--------------------------|-------------|-------------------|---------------|
-| **Main** | Dispatch (if dispatching) | ✅ Required | ✅ Required | Short pickup instruction | Phase status | ✅ **Only Main** |
+| **Main** | Dispatch (if dispatching) | ✅ Consolidates PENDING → ARCHIVE + SUMMARY | ✅ Required | Short pickup instruction | Phase status | ✅ **Only Main** |
 | **Plan** | Plan artifact | ✅ Required | ✅ Required (`Plan → Dev` file) | Short pickup instruction | TECH_SPEC if needed | ❌ |
 | **Dev** | Complete artifact | ✅ Required | ✅ Required (`Dev → Review` file) | Short pickup instruction | Flag TECH_SPEC changes | ❌ |
 | **Review** | Review artifact | ✅ Required | ✅ Required (`Review → Main/Dev/Plan` file) | Short pickup instruction | — | ❌ |
@@ -50,9 +50,9 @@ Unacceptable reports:
 - "bash unavailable; commands not run" (translate to the actual shell available — PowerShell or zsh — and run them)
 - "tests passed" (no command name, no shell, no scope statement)
 
-## SESSIONS.md Format
+## SESSIONS_PENDING.md Format
 
-Every agent appends to `docs/SESSIONS.md` at close. The format:
+Plan, Dev, and Review append to `docs/SESSIONS_PENDING.md` at close. Main consolidates pending entries into `docs/SESSIONS_ARCHIVE.md` and updates the living summary at `docs/SESSIONS.md`. The format:
 
 ```markdown
 ## Session N — YYYY-MM-DD
@@ -90,9 +90,10 @@ Main is the only agent that does a **full close**:
    - If source, test, artifact, or user-facing documentation files changed after Review returned `State = review-pass`, do NOT close — create the next `Main → Review` message file with `State = ready-for-re-review` so Review can inspect the post-review changes
    - If the latest Review message is `needs-dev-fix`, `needs-plan-revision`, or `needs-main-fix`, do NOT close — route the work to the required fixer and ensure it returns to Review afterward
 
-2. **Update SESSIONS.md**:
-   - Add Main session entry summarizing the cycle
-   - Update phase status table (mark features complete, if applicable)
+2. **Process session log:**
+   - Read `docs/SESSIONS_PENDING.md`. Archive worker entries to `docs/SESSIONS_ARCHIVE.md`.
+   - Update the living summary at `docs/SESSIONS.md` (phase status, last sessions, next tickets).
+   - Append your own Main session entry to `docs/SESSIONS_PENDING.md` for the next consolidation cycle.
 
 3. **Commit**:
    ```bash
@@ -118,7 +119,7 @@ Main is the only agent that does a **full close**:
 These agents do a **partial close**:
 
 1. Write their artifact
-2. Update `docs/SESSIONS.md`
+2. Append to `docs/SESSIONS_PENDING.md`
 3. Create the next numbered message file in the active dispatch channel spool
 4. Output only a short pickup instruction in chat:
    ```text
@@ -136,8 +137,8 @@ If a session ends without proper close (error, timeout, user abort):
 
 - The agent's partial work is on disk (files, artifacts in progress)
 - The user starts Main and references the channel
-- Main checks `docs/SESSIONS.md`, the active dispatch channel, artifacts, and git status
-- If the channel is missing a message, Main reconstructs it and notes the repair in `docs/SESSIONS.md`
+- Main checks `docs/SESSIONS.md` (living summary), `docs/SESSIONS_PENDING.md`, the active dispatch channel, artifacts, and git status
+- If the channel is missing a message, Main reconstructs it and notes the repair in `docs/SESSIONS_PENDING.md`
 
 ## Returning to Main After Review
 
@@ -151,7 +152,7 @@ Main then:
 1. Reads the channel to confirm the latest message is addressed to Main with `State = review-pass`
 2. Reads the review to confirm PASS or narrowly justified PASS WITH NOTES with no required fixes
 3. Reads the complete artifact to understand what was built, if applicable
-4. Updates `docs/SESSIONS.md`
+4. Processes `docs/SESSIONS_PENDING.md` into `docs/SESSIONS_ARCHIVE.md` and updates `docs/SESSIONS.md` living summary
 5. Commits and pushes
 6. Provides the next `main` or `pickup` instruction
 

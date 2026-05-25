@@ -55,14 +55,14 @@ If you finish early or hit a blocker, say so clearly and append an appropriate c
 You are NOT done until you have done ALL of the following.
 
 - [ ] Write the complete artifact to agents/artifacts/###-feature-name-complete.md following agents/ARTIFACTS.md
-- [ ] Update docs/SESSIONS.md with a session entry noting what was built and the channel was appended
+- [ ] Append a session entry to docs/SESSIONS_PENDING.md (not docs/SESSIONS.md) noting what was built and the channel was appended
 - [ ] If you introduced new patterns or conventions, flag them for potential docs/TODO_APP_TECH_SPEC.md update
 - [ ] Append a Dev → Review message to the active dispatch channel with:
   - To = Review
   - State = ready-for-review (or ready-for-re-review after fixes)
   - Read = plan artifact path, complete artifact path, and any review/fix context paths
   - Task = review implementation against the plan and write/update the review artifact
-  - Close Requirements = update docs/SESSIONS.md, append Review → Main/Dev/Plan as appropriate, do not commit
+  - Close Requirements = append session entry to docs/SESSIONS_PENDING.md, append Review → Main/Dev/Plan as appropriate, do not commit
 - [ ] If this was a review fix round, remember the work is not complete until Review returns State = review-pass
 - [ ] Output only the short pickup instruction directly to the user, not a long prompt:
 

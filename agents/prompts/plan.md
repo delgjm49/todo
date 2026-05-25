@@ -50,8 +50,8 @@ You are NOT done until you have done ALL of the following.
   - State = ready-for-dev
   - Read = plan artifact path and any other required files
   - Task = implement the plan and write the complete artifact
-  - Close Requirements = update docs/SESSIONS.md, append Dev → Review, do not commit
-- [ ] Update docs/SESSIONS.md with a session entry noting the plan was created and the channel was appended
+  - Close Requirements = append session entry to docs/SESSIONS_PENDING.md, append Dev → Review, do not commit
+- [ ] Append a session entry to docs/SESSIONS_PENDING.md (not docs/SESSIONS.md) noting the plan was created and the channel was appended
 - [ ] If you made architectural decisions not already in docs/TODO_APP_TECH_SPEC.md, flag them briefly
 - [ ] Output only the short pickup instruction directly to the user, not a long prompt:
 

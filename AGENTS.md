@@ -29,7 +29,9 @@ A local-first desktop todo app focused on a polished, minimal interface and dura
 | [`docs/TODO_APP_UI_SPEC.md`](docs/TODO_APP_UI_SPEC.md) | UI spec — layout, states, interactions |
 | [`docs/TODO_APP_IMPLEMENTATION_BACKLOG.md`](docs/TODO_APP_IMPLEMENTATION_BACKLOG.md) | Ticket backlog (TICKET-XXX) and epic structure |
 | [`docs/TODO_APP_PLAN_REVIEW.md`](docs/TODO_APP_PLAN_REVIEW.md) | Plan review findings (read when refining scope) |
-| [`docs/SESSIONS.md`](docs/SESSIONS.md) | Session log — what's been done, what's next |
+| [`docs/SESSIONS.md`](docs/SESSIONS.md) | Living session summary — current phase, recent work, next tickets |
+| [`docs/SESSIONS_ARCHIVE.md`](docs/SESSIONS_ARCHIVE.md) | Full historical session entries (Main consolidates) |
+| [`docs/SESSIONS_PENDING.md`](docs/SESSIONS_PENDING.md) | Worker append buffer for new session entries |
 
 ## Agent Workflow
 
@@ -58,7 +60,7 @@ This project uses a **multi-agent workflow**: Hub for repo-aware briefing/triage
 
 **Pickup mode**: If the session starts with `pickup`, read this file first, then [`agents/workflows/dispatch-channel-protocol.md`](agents/workflows/dispatch-channel-protocol.md), then the named dispatch channel. If no channel path is given, use the most recently modified channel in `agents/channels/`. The protocol doc's Role Resolution Rules section determines your active role (it depends on the `[dispatch-auto]` tag). Then read the matching `agents/prompts/<role>.md` template before acting.
 
-**Session close**: Only Main commits and pushes. Other agents document and append the next dispatch-channel message. See [`agents/CLOSING.md`](agents/CLOSING.md).
+**Session close**: Main commits and pushes product work. Hub may commit and push meta work (docs, templates, workflow config — no product code) after explicit user approval. Other agents document and append the next dispatch-channel message. See [`agents/CLOSING.md`](agents/CLOSING.md).
 
 ## Project Conventions
 
@@ -81,7 +83,7 @@ When running required verification commands, use the **actual shell available in
 
 ## Current Phase
 
-Check [`docs/SESSIONS.md`](docs/SESSIONS.md) for the latest phase status and most recent session entries. **Workers (Plan / Dev / Review) do not need to read this file** — your dispatch artifact + channel have everything required for a well-scoped task. Main reads it to orient.
+Check [`docs/SESSIONS.md`](docs/SESSIONS.md) for the latest phase status and recent session entries. **Workers (Plan / Dev / Review) do not need to read this file** — your dispatch artifact + channel have everything required for a well-scoped task. Main reads it to orient. Workers append session entries to [`docs/SESSIONS_PENDING.md`](docs/SESSIONS_PENDING.md); Main consolidates pending entries into the archive and updates the living summary during closeout.
 
 The previous 3-agent checkpoint workflow (Epics 07–08, checkpoints 6–12) is archived under [`docs/ai_sessions/legacy/`](docs/ai_sessions/legacy/) for historical reference. Do not append new entries there.
 

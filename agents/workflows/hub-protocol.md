@@ -78,9 +78,13 @@ Small direct edits are acceptable only when the user clearly asks and the change
 
 ## Git Boundary
 
-Hub may inspect git status and summarize changed files. Hub must not commit or push.
+Hub may inspect git status and summarize changed files.
 
-If Hub changes files, end with:
+**For product work**: Hub must not commit or push. Route to Main.
+
+**For meta work** (docs, templates, workflow config — no product code): Hub may commit and push after explicit user approval. Use `meta:` prefix for meta-only commits, `docs:` for pure documentation changes. If the change set includes any product source code, tests, or feature artifacts, do not commit — route to Main.
+
+If Hub changes files and does not commit (waiting for Main or user decision), end with:
 
 - changed file paths
 - verification performed, if any

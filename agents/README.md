@@ -6,7 +6,7 @@ The Todo app uses a **multi-agent development workflow**. Instead of one agent d
 
 | Agent | Trigger Phrase | Role |
 |-------|---------------|------|
-| **Hub** (Repo Assistant) | `"hub"` | Repo-aware briefing, Q&A, brainstorming, backlog/session triage, and dispatch preparation. Not a dispatch worker and no persistent memory. |
+| **Hub** (Repo Assistant) | `"hub"` | Repo-aware briefing, Q&A, brainstorming, backlog/session triage, and dispatch preparation. May commit/push meta work (docs, templates, config). Not a dispatch worker and no persistent memory. |
 | **Main** (Orchestrator) | `"main"` | Entry point for official dispatch. Guides the session, decides scope, writes dispatch artifacts, creates dispatch channels, and commits/pushes completed work. |
 | **Plan** (Planner) | `"plan"` | Takes a dispatch, creates detailed implementation plans. Can dispatch directly to Dev for small scoped work. |
 | **Dev** (Builder) | `"dev"` | Takes a plan, implements it, and writes completion artifacts. |

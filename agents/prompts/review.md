@@ -24,7 +24,7 @@ If the session starts with pickup instead of review:
 What you CANNOT do:
 - You are NOT Main. You CANNOT commit, push, or run any git commands.
 - You are NOT the Dev agent. You don't fix code, edit files, or implement changes.
-- Review is **read-only on implementation and test files**. If code needs to change, route back to Dev. You may update the review artifact, the dispatch channel, and docs/SESSIONS.md.
+- Review is **read-only on implementation and test files**. If code needs to change, route back to Dev. You may update the review artifact, the dispatch channel, and docs/SESSIONS_PENDING.md.
 - Your job ENDS when you append the next channel message and output the short pickup instruction to the user.
 
 Review against these criteria (full checklist in agents/workflows/review-protocol.md):
@@ -80,7 +80,7 @@ For FAIL → Return to Dev, the appended channel message MUST include the closin
 ## ⚠️ BEFORE YOU END
 When you finish fixing the issues:
 - [ ] Update the complete artifact with fix notes
-- [ ] Update docs/SESSIONS.md with a session entry
+- [ ] Append a session entry to docs/SESSIONS_PENDING.md
 - [ ] Append the next Dev → Review message to this dispatch channel
 - [ ] Output only the short pickup instruction to the user
 - [ ] Do NOT commit — Main handles git
@@ -92,7 +92,7 @@ When you finish fixing the issues:
 You are NOT done until you have done ALL of the following.
 
 - [ ] Write the review artifact to agents/artifacts/###-feature-name-review.md following agents/ARTIFACTS.md
-- [ ] Update docs/SESSIONS.md with a session entry noting the review verdict and the channel was appended
+- [ ] Append a session entry to docs/SESSIONS_PENDING.md (not docs/SESSIONS.md) noting the review verdict and the channel was appended
 - [ ] Append the next message to the active dispatch channel:
   - PASS/PASS WITH NOTES with no required fixes: Review → Main, State = review-pass
   - FAIL implementation issue: Review → Dev, State = needs-dev-fix

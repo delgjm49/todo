@@ -10,7 +10,7 @@ Review **must not edit implementation or test files**. If code needs to change, 
 
 - the review artifact (`*-review.md`)
 - the dispatch channel
-- `docs/SESSIONS.md`
+- `docs/SESSIONS_PENDING.md`
 
 If Review fixes code inline and self-passes the checkpoint, the audit trail and Dev → Review feedback loop break. Always route fixes through Dev/Plan/Main and require re-review.
 
@@ -187,11 +187,11 @@ review-pass
 - agents/artifacts/###-feature-complete.md
 
 ## Task
-Close the feature. Confirm the PASS verdict, update docs/SESSIONS.md, commit, and push.
+Close the feature. Confirm the PASS verdict, process `docs/SESSIONS_PENDING.md` into archive and living summary, commit, and push.
 
 ## Close Requirements
 - Commit and push if the review is valid.
-- Update docs/SESSIONS.md.
+- Process `docs/SESSIONS_PENDING.md` into archive and update `docs/SESSIONS.md` living summary.
 - Provide the next main/pickup instruction.
 ```
 
@@ -222,7 +222,7 @@ Address each issue listed in the review. Update the complete artifact with fix n
 ## ⚠️ BEFORE YOU END
 When you finish fixing the issues:
 - [ ] Update the complete artifact with fix notes
-- [ ] Update docs/SESSIONS.md with a session entry
+- [ ] Append a session entry to `docs/SESSIONS_PENDING.md`
 - [ ] Create the next Dev → Review message file in this dispatch channel
 - [ ] Output only the short pickup instruction to the user
 - [ ] Do NOT commit — Main handles git
@@ -252,7 +252,7 @@ Address each required Main-owned issue listed in the review. When fixed, create 
 
 ## Close Requirements
 - Apply the listed fixes.
-- Update docs/SESSIONS.md.
+- Process `docs/SESSIONS_PENDING.md` into archive and update `docs/SESSIONS.md` living summary.
 - Create the next Main → Review message file with State = ready-for-re-review.
 - Do not mark the dispatch closed until Review returns State = review-pass.
 ```
@@ -281,7 +281,7 @@ Re-review the required fixes. If all issues are resolved, create the next Review
 
 ## Close Requirements
 - Write or update the review artifact with re-review findings.
-- Update docs/SESSIONS.md.
+- Append a session entry to `docs/SESSIONS_PENDING.md`.
 - Create the next numbered message file in this dispatch channel.
 - Do not commit; Main handles git.
 ```
@@ -310,7 +310,7 @@ Revise the plan to address the design issues identified in the review. Create th
 
 ## Close Requirements
 - Update the plan artifact.
-- Update docs/SESSIONS.md.
+- Append a session entry to `docs/SESSIONS_PENDING.md`.
 - Create the next numbered message file in this dispatch channel.
 - Do not commit; Main handles git.
 ```

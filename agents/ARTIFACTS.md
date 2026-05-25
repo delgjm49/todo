@@ -201,7 +201,7 @@ Create the implementation plan for this dispatch. Write the plan to `agents/arti
 
 ## Close Requirements
 - Create exactly one next message file in this channel's `messages/` directory.
-- Update `docs/SESSIONS.md`.
+- Append a session entry to `docs/SESSIONS_PENDING.md`.
 - Do not commit; Main handles git.
 ```
 
@@ -230,4 +230,4 @@ agents/channels/001-block-editor-polish/
 - Active artifacts live in `agents/artifacts/`
 - Active dispatch channels live in `agents/channels/`
 - After a feature passes review, artifacts and channels can optionally be archived
-- The `docs/SESSIONS.md` log should reference both artifact numbers and the channel for traceability
+- The `docs/SESSIONS.md` living summary (updated by Main from `docs/SESSIONS_PENDING.md`) should reference both artifact numbers and the channel for traceability
