@@ -3070,3 +3070,51 @@ PASS. Review artifact written. Channel message `004-review-to-main.md` appended.
 **Summary:** Reviewed TICKET-063. All 5 plan steps addressed, all 8 acceptance criteria met. SaveStatusIndicator handles all 6 states correctly. Dirty/save coherence audit is thorough. 319 tests pass, lint clean. No issues found.
 
 **Outcome:** PASS. Handed off to Main for close.
+
+---
+
+## Session 179 — Main dispatch — 2026-05-25
+
+**Artifacts:**
+- `agents/artifacts/065-manual-qa-release-blockers-dispatch.md`
+- `agents/channels/065-manual-qa-release-blockers/messages/001-main-to-plan.md`
+
+**Summary:** Dispatched TICKET-065 (Manual QA pass and release blocker fixes) to Plan. Final P1 ticket before MVP Core complete. Scope: systematic QA checklist, critical defect fixes, error handling audit, accessibility audit, test/lint verification.
+
+**Outcome:** Dispatched. Awaiting Plan → Dev → Review chain completion.
+
+---
+
+## Session 180 — Plan — 2026-05-25
+
+**Artifacts:**
+- `agents/artifacts/065-manual-qa-release-blockers-plan.md`
+- `agents/channels/065-manual-qa-release-blockers/messages/002-plan-to-dev.md`
+
+**Summary:** Created QA plan for TICKET-065. 6-step structured process: verification baseline, code-level audit (dead code, error handling, type safety), 11 feature area checklists, accessibility spot check, defect fixes, final verification. Project health: lint clean, 319 tests pass, zero TS errors.
+
+**Outcome:** Plan complete. Dispatched to Dev.
+
+---
+
+## Session 181 — Dev — 2026-05-25
+
+**Artifacts:**
+- `agents/artifacts/065-manual-qa-release-blockers-complete.md`
+- `agents/channels/065-manual-qa-release-blockers/messages/003-dev-to-review.md`
+
+**Summary:** Executed QA plan. All 7 steps completed: baseline (tsc/lint/tests clean), code audit, 11 feature checklists (all pass), accessibility spot check, defect classification. No critical/high defects found. Two medium polish items documented (drag handle, focus-visible). No files modified.
+
+**Outcome:** QA complete. Dispatched to Review.
+
+---
+
+## Session 182 — Review PASS — 2026-05-25
+
+**Artifacts:**
+- `agents/artifacts/065-manual-qa-release-blockers-review.md`
+- `agents/channels/065-manual-qa-release-blockers/messages/004-review-to-main.md`
+
+**Summary:** Reviewed TICKET-065 QA completion. Independently verified tsc, lint, tests all pass. Spot-checked audit claims — all confirmed. Two medium UX polish items appropriately deferred to post-MVP.
+
+**Outcome:** PASS. MVP Core P1 scope complete. Handed off to Main for close.

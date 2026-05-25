@@ -28,21 +28,29 @@ Last updated: 2026-05-25
 | TICKET-056 Alert navigation and highlight | Complete | Closed via full workflow — alerts epic complete |
 | TICKET-057 Theme mode switching | Complete | Closed via full workflow with re-review |
 | TICKET-063 Autosave dirty-state UX | Complete | Closed via full workflow — no issues found |
+| TICKET-065 Manual QA and release blockers | Complete | Closed via full workflow — audit-only, no code changes, no critical defects found |
 | Phase 3 spool channels | Complete | Validated end-to-end |
 | Windows subprocess dispatch-auto | Complete | Validated on Windows 11 |
 
 ## Last Sessions
 
-- **Session 178 — Review PASS** (2026-05-25): Reviewed and passed TICKET-063 autosave dirty-state UX. 319 tests pass, lint clean. No issues found. All 6 indicator states + retry affordance correct.
-- **Session 177 — Dev** (2026-05-25): Implemented `SaveStatusIndicator` component with 6 visual states, integrated into TopBar. Added 12 tests (7 indicator + 5 coherence). Coherence audit confirmed all 30+ mutation paths correctly dirty+autosave.
-- **Session 176 — Plan** (2026-05-25): Created plan for TICKET-063: save status indicator, coherence audit, undo/redo verification.
-- **Session 175 — Main dispatch** (2026-05-25): Dispatched TICKET-063 to Plan.
+- **Session 182 — Review PASS** (2026-05-25): Reviewed and passed TICKET-065 manual QA pass. Independently verified tsc, lint, tests all clean. No critical/high/medium defects found. MVP Core P1 scope complete.
+- **Session 181 — Dev** (2026-05-25): Executed QA plan: baseline, code audit, 11 feature checklists, accessibility spot check. No critical/high defects. Two medium polish items deferred.
+- **Session 180 — Plan** (2026-05-25): Created QA plan for TICKET-065: 6-step structured process, 11 feature area checklists.
+- **Session 179 — Main dispatch** (2026-05-25): Dispatched TICKET-065 to Plan.
 
 ## Next Recommended
 
-1. **TICKET-065**: Manual QA pass and release blocker fixes — final P1 before MVP Core is complete
+**MVP Core P1 is complete.** Remaining for Full Planned v1 (MVP Extended):
 
-**Alerts epic (053–056): complete. Theme mode (057): complete. Autosave UX (063): complete.**
+1. **TICKET-058**: Editor default settings UI (default font, size, colors, borders) — P2
+2. **TICKET-059**: Workspace default settings UI (default background, text color, accent) — P2
+
+**Completed:**
+- Alerts epic (053–056): complete
+- Theme mode (057): complete
+- Autosave UX (063): complete
+- Manual QA (065): complete — no critical defects found
 
 ## Blockers / Open Questions
 
