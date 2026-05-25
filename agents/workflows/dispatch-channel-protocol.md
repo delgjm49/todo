@@ -91,6 +91,8 @@ Allowed `State` values:
 - `stalled`
 - `error`
 
+Use exactly these tokens in new messages. In particular, every Dev → Review handoff uses `ready-for-review`, including a second/subsequent handoff after Review requested fixes. Do **not** use legacy variants such as `ready-for-re-review`.
+
 Routing is determined by `## To`. A channel is terminal for dispatch-auto when the latest message is addressed to `Main`.
 
 ## Pickup Rules
@@ -110,7 +112,8 @@ Orchestrator pickup starts with `[dispatch-auto]` and includes the latest file a
 3. Confirm that file's `## To` matches the expected role.
 4. Perform the task.
 5. Create exactly one new message file with one of the allowed filenames named in the pickup prompt.
-6. Never edit existing message files.
+6. Use only the allowed `## State` tokens above (`ready-for-review` for any Dev → Review handoff, including re-review).
+7. Never edit existing message files.
 
 ## Agent Responsibilities
 
@@ -134,7 +137,7 @@ Orchestrator pickup starts with `[dispatch-auto]` and includes the latest file a
 - Reads the pickup-specified latest message file.
 - Implements or fixes the requested work.
 - Creates/updates the complete artifact.
-- Creates `NNN-dev-to-review.md` for normal progress.
+- Creates `NNN-dev-to-review.md` for normal progress, using `State = ready-for-review` even when returning after a Review-requested fix.
 - May create `NNN-dev-to-main.md` with `State = needs-main-fix`, `stalled`, or `error` if it cannot proceed safely.
 - Updates `docs/SESSIONS.md`.
 - Does not commit.
@@ -173,3 +176,5 @@ Main → Plan → Dev → Review → Dev → Review → Main
 ## Recovery
 
 If an agent creates the wrong file, forgets to create a file, or modifies an existing message file, stop the chain and ask Main/user for repair. Gaps in numbering require manual repair; there is no automatic recovery mode in Phase 3 v1.
+
+If a historical message used the legacy `ready-for-re-review` state, preserve append-only history: do not edit that file. Main may append a valid repair message to the intended next role using `State = ready-for-review`. Current dispatch-auto builds tolerate that legacy token only so existing append-only channels remain parseable; new messages must not use it.
