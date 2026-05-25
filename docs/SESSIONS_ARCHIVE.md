@@ -2902,3 +2902,63 @@ Reviewed TICKET-055 (dock alert indicators). Inspected `AlertBadge` component in
 
 ### Outcome
 PASS. Review → Main channel message created. Next: Main closes the dispatch, commits, and pushes.
+
+## Session 166 — 2026-05-25
+
+### Agent Type
+main
+
+### Artifacts
+- `agents/artifacts/035-alert-navigation-highlight-dispatch.md`
+- `agents/channels/035-alert-navigation-highlight/messages/001-main-to-plan.md`
+
+### Summary
+Closed TICKET-055 (dock alert indicators) after Review PASS, archiving sessions 163–165 and updating the living summary. Then dispatched TICKET-056 (alert navigation and highlight) as the next product ticket — the final piece of the alerts epic. This ticket makes alerts actionable: when a user selects a workspace with alerts, the app navigates to the target row, scrolls it into view, and applies a brief flash highlight.
+
+### Outcome
+TICKET-055 closed and committed. TICKET-056 dispatched to Plan. Next: Plan creates implementation plan at `agents/artifacts/035-alert-navigation-highlight-plan.md` and appends `002-plan-to-dev.md`.
+
+## Session 167 — 2026-05-25
+
+### Agent Type
+plan
+
+### Artifacts
+- `agents/artifacts/035-alert-navigation-highlight-plan.md`
+- `agents/channels/035-alert-navigation-highlight/messages/002-plan-to-dev.md`
+
+### Summary
+Created the implementation plan for TICKET-056 (alert navigation and highlight). The plan centers on a new `useAlertNavigation` hook that watches `activeWorkspaceId` changes, validates alert targets, sets UI selection, scrolls DOM elements into view via two-phase smooth scrolling, and triggers a 2.5s amber flash animation on the target row. Session deduplication uses a module-level `Set`. Flash state is managed via a new `alertFlashRowId` field in uiStore, consumed by RowView. The plan covers 7 implementation steps across 7 files (2 new, 5 modifications).
+
+### Outcome
+Plan artifact written. Channel message `002-plan-to-dev.md` appended. Next: Dev implements the plan.
+
+## Session 168 — 2026-05-25
+
+### Agent Type
+dev
+
+### Artifacts
+- `agents/artifacts/035-alert-navigation-highlight-complete.md`
+- `agents/channels/035-alert-navigation-highlight/messages/003-dev-to-review.md`
+
+### Summary
+Implemented TICKET-056 (alert navigation and highlight). Added `warning` color CSS variable to `globals.css` and Tailwind config. Added `alertFlash` keyframe animation (amber box-shadow pulse, 2.5s) to Tailwind config. Added `alertFlashRowId` transient state + `setAlertFlashRowId` setter to `uiStore`. Applied conditional `animate-alertFlash` class in `RowView`. Created `useAlertNavigation` hook with workspace change watching, alert target validation, UI selection, two-phase smooth scroll (block → row), flash animation trigger with timeout-based clear, session dedup via module-level Set, and missing-target summary clearing. Mounted the hook in `AppShell`. Wrote 17 unit tests covering navigation to row/cell selection, scroll behavior, flash application/removal, session deduplication, missing target clearance, count-only summary edge case, and store interactions.
+
+### Outcome
+All 303 tests pass (0 failures). Lint passes. Implementation complete artifact written. Channel message `003-dev-to-review.md` appended. Next: Review reads the plan and complete artifacts, then writes the review artifact and appends Review → Main or Review → Dev as appropriate.
+
+## Session 169 — 2026-05-25
+
+### Agent Type
+review
+
+### Artifacts
+- `agents/artifacts/035-alert-navigation-highlight-review.md`
+- `agents/channels/035-alert-navigation-highlight/messages/004-review-to-main.md`
+
+### Summary
+Reviewed TICKET-056 (alert navigation and highlight) implementation against the plan. All 7 implementation steps followed exactly, all acceptance criteria met. Verified lint passes clean and all 303 tests pass (including 17 new alertNavigation tests). No issues found — code is correct, complete, and follows project conventions.
+
+### Outcome
+PASS. Review artifact written. Channel message `004-review-to-main.md` appended. Next: Main closes the feature, commits, and pushes.

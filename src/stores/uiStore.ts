@@ -20,6 +20,7 @@ export interface UiStoreState {
   draggingRowId: RowId | null;
   dropTargetRowId: RowId | null;
   selection: Selection;
+  alertFlashRowId: RowId | null;
   showMainScreen: () => void;
   showSettingsScreen: () => void;
   toggleInspector: () => void;
@@ -44,6 +45,7 @@ export interface UiStoreState {
   selectRow: (workspaceId: WorkspaceId, blockId: BlockId, rowId: RowId) => void;
   selectCell: (workspaceId: WorkspaceId, blockId: BlockId, rowId: RowId, columnId: ColumnId) => void;
   clearSelection: () => void;
+  setAlertFlashRowId: (rowId: RowId | null) => void;
 }
 
 export const useUiStore = create<UiStoreState>()((set) => ({
@@ -63,6 +65,7 @@ export const useUiStore = create<UiStoreState>()((set) => ({
   draggingRowId: null,
   dropTargetRowId: null,
   selection: { kind: "none" },
+  alertFlashRowId: null,
   showMainScreen: () => set({ screen: "main" }),
   showSettingsScreen: () =>
     set({
@@ -109,4 +112,5 @@ export const useUiStore = create<UiStoreState>()((set) => ({
   selectRow: (workspaceId, blockId, rowId) => set({ selection: { kind: "row", workspaceId, blockId, rowId } }),
   selectCell: (workspaceId, blockId, rowId, columnId) => set({ selection: { kind: "cell", workspaceId, blockId, rowId, columnId } }),
   clearSelection: () => set({ selection: { kind: "none" } }),
+  setAlertFlashRowId: (rowId) => set({ alertFlashRowId: rowId }),
 }));

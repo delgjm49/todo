@@ -5,10 +5,12 @@ import { InspectorShell } from "./InspectorShell.js";
 import { useUiStore } from "../../stores/uiStore.js";
 import { useHotkeys } from "../../hooks/useHotkeys.js";
 import { useAlertScheduler } from "../../hooks/useAlertScheduler.js";
+import { useAlertNavigation } from "../../hooks/useAlertNavigation.js";
 
 export function AppShell() {
   useHotkeys();
   useAlertScheduler();
+  useAlertNavigation();
   const inspectorOpen = useUiStore((state) => state.inspectorOpen);
 
   return (

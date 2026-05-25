@@ -25,24 +25,26 @@ Last updated: 2026-05-25
 | TICKET-053 Alert evaluation domain logic | Complete | Closed via full workflow |
 | TICKET-054 In-app alert scheduler | Complete | Closed via full workflow |
 | TICKET-055 Dock alert indicators | Complete | Closed via Main → Dev → Review (direct to Dev, S-sized) |
-| TICKET-056 Alert navigation and highlight | Not started | |
+| TICKET-056 Alert navigation and highlight | Complete | Closed via full workflow — alerts epic complete |
 | Phase 3 spool channels | Complete | Validated end-to-end |
 | Windows subprocess dispatch-auto | Complete | Validated on Windows 11 |
 
 ## Last Sessions
 
-- **Session 165 — Review PASS** (2026-05-25): Reviewed and passed TICKET-055 dock alert indicators. 286/286 tests pass, zero lint warnings, zero type errors. No issues found.
+- **Session 169 — Review PASS** (2026-05-25): Reviewed and passed TICKET-056 alert navigation and highlight. 303/303 tests pass, zero lint warnings, zero type errors. No issues found.
+- **Session 168 — Dev** (2026-05-25): Implemented `useAlertNavigation` hook with two-phase scroll, flash animation, session dedup, 17 unit tests.
+- **Session 167 — Plan** (2026-05-25): Created implementation plan for TICKET-056 alert navigation and highlight.
+- **Session 166 — Main dispatch** (2026-05-25): Closed TICKET-055 and dispatched TICKET-056 to Plan.
+- **Session 165 — Review PASS** (2026-05-25): Reviewed and passed TICKET-055 dock alert indicators. 286/286 tests pass.
 - **Session 164 — Dev** (2026-05-25): Implemented polished `AlertBadge` in `WorkspaceCard.tsx` with dot indicator, overflow cap, note subtext, accessibility. 12 tests.
-- **Session 163 — Main dispatch** (2026-05-25): Closed TICKET-054 and dispatched TICKET-055 directly to Dev.
-- **Session 162 — Review PASS** (2026-05-25): Reviewed and passed TICKET-054 in-app alert scheduler. 274/274 tests pass.
-- **Session 161 — Dev** (2026-05-25): Implemented `useAlertScheduler` hook, `updateWorkspaceAlertSummary` store action, edit-triggered re-evaluation, 11 unit tests.
-- **Session 160 — Plan** (2026-05-25): Created implementation plan for TICKET-054 in-app alert scheduler.
 
 ## Next Recommended
 
-1. **TICKET-056**: Alert navigation and highlight — complete the alerts epic; navigate to alert target, scroll into view, flash highlight
-2. **TICKET-057**: Theme mode switching
-3. **TICKET-063**: Autosave debounce and dirty-state UX
+1. **TICKET-057**: Theme mode switching — last remaining P1; light/dark theme + saved preference
+2. **TICKET-063**: Autosave debounce and dirty-state UX
+3. **TICKET-065**: Manual QA pass and release blocker fixes
+
+**Alerts epic (053–056): complete.**
 
 ## Blockers / Open Questions
 
