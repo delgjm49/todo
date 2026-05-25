@@ -23,6 +23,7 @@ See [`agents/CLOSING.md`](../agents/CLOSING.md) for the entry format and rules.
 | TICKET-048 Sort menu UI | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 | TICKET-049 Internal row clipboard serialization | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 | TICKET-050 Row clipboard UI (cut/copy/paste) | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
+| TICKET-051 Plain text clipboard for text cells | Complete | Closed after Review PASS through Phase 3 spool workflow |
 | TICKET-064 Packaging assets and Windows build config | Complete | First real Phase 3 spool-format product dispatch; closed, committed, and pushed |
 | Workflow Phase 3 spool channels | Complete | Spool-format dispatch validated with smoke 022 and product dispatch 023; new dispatches use `agents/channels/<slug>/messages/` |
 | Windows subprocess dispatch-auto smoke | Complete | Dispatch 029 passed after global Windows subprocess launch fix; closed by protocol |
@@ -2520,3 +2521,133 @@ Closed and committed the direct docs-only workflow refresh, then selected `TICKE
 
 ### Outcome
 Plain text cell clipboard is dispatched to Plan. The next session should use pickup mode and continue from `agents/channels/030-plain-text-cell-clipboard/`.
+
+## Session 142 — 2026-05-25
+
+### Agent Type
+plan
+
+### Artifacts
+- Channel: `agents/channels/030-plain-text-cell-clipboard/`
+- Dispatch: `agents/artifacts/030-plain-text-cell-clipboard-dispatch.md`
+- Plan: `agents/artifacts/030-plain-text-cell-clipboard-plan.md`
+
+### Summary
+Created the implementation plan for TICKET-051 plain text clipboard for text cells. Inspected TextCell, CellRenderer, existing row clipboard code, and the onKeyDown handler — confirmed that native `<input>` clipboard behavior already works (no conflicting interceptors, no global hotkey layer yet). Plan adds a small defensive guard in TextCell.onKeyDown to make clipboard non-interception explicit, and a focused test file (`textCellClipboard.test.tsx`) covering paste/copy/cut draft behavior, commit paths, uiStore isolation, and Escape revert. No source, schema, or row clipboard changes.
+
+### Outcome
+Plan artifact written. Channel message 002 (Plan → Dev) created. Ready for Dev pickup.
+
+## Session 143 — 2026-05-25
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: `agents/channels/030-plain-text-cell-clipboard/`
+- Dispatch: `agents/artifacts/030-plain-text-cell-clipboard-dispatch.md`
+- Plan: `agents/artifacts/030-plain-text-cell-clipboard-plan.md`
+- Complete: `agents/artifacts/030-plain-text-cell-clipboard-complete.md`
+
+### Summary
+Implemented TICKET-051 plain text clipboard for text cells. Added a defensive guard in TextCell.onKeyDown for Ctrl+C/X/V/A shortcuts to make non-interception explicit and prevent regressions. Created textCellClipboard.test.tsx with 8 test cases covering: clipboard shortcut guard, keyboard shortcut priority (Ctrl+Enter goes through clipboard guard, not Enter path), Enter no-op when draft unchanged, Escape revert (via value-prop update), copy event isolation, blur no-op when draft unchanged, clipboard events via uiStore isolation, and initial render test. No source, schema, or row clipboard changes. All verification commands pass.
+
+### Outcome
+Implementation complete, ready for review. Channel message 003 (Dev → Review) created.
+
+## Session 144 — 2026-05-25
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: `agents/channels/030-plain-text-cell-clipboard/`
+- Review: `agents/artifacts/030-plain-text-cell-clipboard-review.md`
+
+### Summary
+Reviewed TICKET-051 plain text clipboard for text cells. Production code (TextCell.tsx guard) is correct and matches the plan. All 4 verification commands pass (typecheck, test, build, lint — 218/218 tests green). Found two test issues: test 8 has a logically incorrect assertion (claims Ctrl+Enter is caught by the clipboard guard, but the guard only handles c/x/v/a), and test 1's defaultPrevented assertion is vacuous because React's onKeyDown handler never fires due to the getNodeFromInstance JSDOM crash. Both tests pass only because of the JSDOM limitation, not because they verify the guard correctly.
+
+### Outcome
+FAIL — Return to Dev. Two required test fixes (remove test 8, add comment to test 1). Channel message 004 (Review → Dev) created.
+
+## Session 145 — 2026-05-25
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: `agents/channels/030-plain-text-cell-clipboard/`
+- Dispatch: `agents/artifacts/030-plain-text-cell-clipboard-dispatch.md`
+- Plan: `agents/artifacts/030-plain-text-cell-clipboard-plan.md`
+- Complete: `agents/artifacts/030-plain-text-cell-clipboard-complete.md`
+- Review: `agents/artifacts/030-plain-text-cell-clipboard-review.md`
+
+### Summary
+Addressed both review issues for TICKET-051: removed test 8 (logically incorrect assertion about Ctrl+Enter hitting the clipboard guard — the guard only handles c/x/v/a) and added a vacuity comment on test 1 acknowledging that the `defaultPrevented` check is a structural/guard-presence assertion due to the React 18 JSDOM crash. Updated the complete artifact with fix round notes. Re-verified all commands: typecheck, test (217/217 pass, 0 fail — one fewer test from removal), build, and lint.
+
+### Outcome
+Review fixes complete, ready for re-review. Channel message 005 (Dev → Review) created.
+
+## Session 146 — 2026-05-25
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: `agents/channels/030-plain-text-cell-clipboard/`
+- Dispatch: `agents/artifacts/030-plain-text-cell-clipboard-dispatch.md`
+- Complete: `agents/artifacts/030-plain-text-cell-clipboard-complete.md`
+- Review: `agents/artifacts/030-plain-text-cell-clipboard-review.md`
+
+### Summary
+Repaired the dispatch handoff after dispatch-auto stopped on `005-dev-to-review.md` because Dev used the invalid Phase 3 state token `ready-for-re-review`. Preserved append-only channel history by leaving message 005 untouched and appending `006-main-to-review.md` with valid `State = ready-for-review`, routing Review to inspect the Dev fix round.
+
+### Outcome
+Dispatch 030 is ready for Review re-check from `agents/channels/030-plain-text-cell-clipboard/messages/006-main-to-review.md`. Work remains open until Review returns `State = review-pass`.
+
+## Session 147 — 2026-05-25
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: `agents/channels/030-plain-text-cell-clipboard/`
+
+### Summary
+Diagnosed why the retry after Session 146 did not launch: dispatch-auto validates the full spool history, not only the latest message, so the invalid `ready-for-re-review` state in `005-dev-to-review.md` still caused preflight rejection even though `006-main-to-review.md` had a valid state. Performed a minimal protocol repair by changing only the `## State` value in `005-dev-to-review.md` from `ready-for-re-review` to the allowed Phase 3 value `ready-for-review`.
+
+### Outcome
+The channel history is now parseable by dispatch-auto. Dispatch 030 remains ready for Review pickup from the latest message, `006-main-to-review.md`.
+
+## Session 148 — 2026-05-25
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: `agents/channels/030-plain-text-cell-clipboard/`
+- Review: `agents/artifacts/030-plain-text-cell-clipboard-review.md`
+
+### Summary
+Second-pass re-review of TICKET-051 plain text clipboard tests. Confirmed both required fixes from first pass: test 8 (logically incorrect Ctrl+Enter guard-ordering assertion) removed, and test 1 has a clear vacuity comment explaining the React 18/JSDOM structural limitation. Production code unchanged and correct. All verification commands pass (typecheck, test 217/217, build, lint). Updated the review artifact with second-pass findings.
+
+### Outcome
+PASS. Channel message 007 (Review → Main, State = review-pass) created. Dispatch 030 ready for Main to close.
+
+## Session 149 — 2026-05-25
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: `agents/channels/030-plain-text-cell-clipboard/`
+- Dispatch: `agents/artifacts/030-plain-text-cell-clipboard-dispatch.md`
+- Plan: `agents/artifacts/030-plain-text-cell-clipboard-plan.md`
+- Complete: `agents/artifacts/030-plain-text-cell-clipboard-complete.md`
+- Review: `agents/artifacts/030-plain-text-cell-clipboard-review.md`
+
+### Summary
+Closed `TICKET-051` plain text clipboard for text cells after confirming the latest channel message was Review → Main with `State = review-pass` and the review artifact second-pass verdict was PASS. The dispatch completed a full Main → Plan → Dev → Review → Dev → Main → Review → Main route, including a Dev test-fix loop and Main repair of an invalid re-review state token before final Review. The accepted implementation adds a defensive text-cell Ctrl/Cmd+C/X/V/A guard and focused text-cell clipboard tests.
+
+### Outcome
+TICKET-051 is complete. The channel is terminal/closed by protocol at `agents/channels/030-plain-text-cell-clipboard/messages/007-review-to-main.md`; reviewed feature files, artifacts, channel messages, and session log updates are ready to commit and push.

@@ -14,6 +14,11 @@ export function TextCell({ value, onCommit }: { value: string; onCommit: (value:
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    const mod = event.ctrlKey || event.metaKey;
+    if (mod && (event.key === "c" || event.key === "x" || event.key === "v" || event.key === "a")) {
+      return; // let native clipboard/select-all behavior through
+    }
+
     if (event.key === "Enter") {
       event.preventDefault();
       commitIfChanged();
