@@ -27,6 +27,7 @@ Last updated: 2026-05-25
 | TICKET-055 Dock alert indicators | Complete | Closed via Main → Dev → Review (direct to Dev, S-sized) |
 | TICKET-056 Alert navigation and highlight | Complete | Closed via full workflow — alerts epic complete |
 | TICKET-057 Theme mode switching | Complete | Closed via full workflow with re-review |
+| TICKET-058 Editor default settings UI | Complete | Closed via full workflow — 17 tests, no issues found |
 | TICKET-063 Autosave dirty-state UX | Complete | Closed via full workflow — no issues found |
 | TICKET-065 Manual QA and release blockers | Complete | Closed via full workflow — audit-only, no code changes, no critical defects found |
 | Phase 3 spool channels | Complete | Validated end-to-end |
@@ -34,21 +35,21 @@ Last updated: 2026-05-25
 
 ## Last Sessions
 
-- **Session 182 — Review PASS** (2026-05-25): Reviewed and passed TICKET-065 manual QA pass. Independently verified tsc, lint, tests all clean. No critical/high/medium defects found. MVP Core P1 scope complete.
-- **Session 181 — Dev** (2026-05-25): Executed QA plan: baseline, code audit, 11 feature checklists, accessibility spot check. No critical/high defects. Two medium polish items deferred.
-- **Session 180 — Plan** (2026-05-25): Created QA plan for TICKET-065: 6-step structured process, 11 feature area checklists.
-- **Session 179 — Main dispatch** (2026-05-25): Dispatched TICKET-065 to Plan.
+- **Session 186 — Review PASS** (2026-05-25): Reviewed and passed TICKET-058 editor default settings UI. All 6 fields interactive with validation + swatches. 335 tests pass, lint clean. No issues found.
+- **Session 185 — Dev** (2026-05-25): Implemented 6 interactive AppDefaults controls with validation, color swatches, blur persistence. 17 tests. Removed duplicate read-only entries.
+- **Session 184 — Plan** (2026-05-25): Created plan for TICKET-058: 6 interactive controls, validation, test coverage.
+- **Session 183 — Main dispatch** (2026-05-25): Dispatched TICKET-058 to Plan.
 
 ## Next Recommended
 
 **MVP Core P1 is complete.** Remaining for Full Planned v1 (MVP Extended):
 
-1. **TICKET-058**: Editor default settings UI (default font, size, colors, borders) — P2
-2. **TICKET-059**: Workspace default settings UI (default background, text color, accent) — P2
+1. **TICKET-059**: Workspace default settings UI (default background, text color, accent) — P2
 
 **Completed:**
 - Alerts epic (053–056): complete
 - Theme mode (057): complete
+- Editor defaults (058): complete
 - Autosave UX (063): complete
 - Manual QA (065): complete — no critical defects found
 
