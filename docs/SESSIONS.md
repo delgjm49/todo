@@ -27,23 +27,22 @@ Last updated: 2026-05-25
 | TICKET-055 Dock alert indicators | Complete | Closed via Main → Dev → Review (direct to Dev, S-sized) |
 | TICKET-056 Alert navigation and highlight | Complete | Closed via full workflow — alerts epic complete |
 | TICKET-057 Theme mode switching | Complete | Closed via full workflow with re-review |
+| TICKET-063 Autosave dirty-state UX | Complete | Closed via full workflow — no issues found |
 | Phase 3 spool channels | Complete | Validated end-to-end |
 | Windows subprocess dispatch-auto | Complete | Validated on Windows 11 |
 
 ## Last Sessions
 
-- **Session 174 — Review PASS** (2026-05-25): Re-reviewed and passed TICKET-057 theme mode switching after Dev fix round. 307/307 tests pass, lint clean. Both initial issues resolved.
-- **Session 173 — Dev fix round** (2026-05-25): Fixed review issues: replaced test-only `ThemeApplier` with real `useTheme` hook in tests; corrected artifact test count.
-- **Session 172 — Review** (2026-05-25): Found test coverage gap (test-only component instead of real hook) and artifact count error. Returned to Dev.
-- **Session 171 — Dev** (2026-05-25): Implemented TICKET-057 theme mode switching: CSS variables, `useTheme` hook, `updateSettings` action, SettingsPage toggle, App.tsx integration, 4 tests.
-- **Session 170 — Main dispatch** (2026-05-25): Dispatched TICKET-057 to Plan.
+- **Session 178 — Review PASS** (2026-05-25): Reviewed and passed TICKET-063 autosave dirty-state UX. 319 tests pass, lint clean. No issues found. All 6 indicator states + retry affordance correct.
+- **Session 177 — Dev** (2026-05-25): Implemented `SaveStatusIndicator` component with 6 visual states, integrated into TopBar. Added 12 tests (7 indicator + 5 coherence). Coherence audit confirmed all 30+ mutation paths correctly dirty+autosave.
+- **Session 176 — Plan** (2026-05-25): Created plan for TICKET-063: save status indicator, coherence audit, undo/redo verification.
+- **Session 175 — Main dispatch** (2026-05-25): Dispatched TICKET-063 to Plan.
 
 ## Next Recommended
 
-1. **TICKET-063**: Autosave debounce and dirty-state UX
-2. **TICKET-065**: Manual QA pass and release blocker fixes
+1. **TICKET-065**: Manual QA pass and release blocker fixes — final P1 before MVP Core is complete
 
-**Alerts epic (053–056): complete. Theme mode (057): complete.**
+**Alerts epic (053–056): complete. Theme mode (057): complete. Autosave UX (063): complete.**
 
 ## Blockers / Open Questions
 

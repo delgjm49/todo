@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { BlockTemplateMenu } from "../block/BlockTemplateMenu.js";
 import { useDocumentStore } from "../../stores/documentStore.js";
 import { useUiStore } from "../../stores/uiStore.js";
+import { SaveStatusIndicator } from "./SaveStatusIndicator.js";
 
 export function TopBar() {
   const activeWorkspaceId = useDocumentStore((state) => state.activeWorkspaceId);
@@ -9,8 +10,6 @@ export function TopBar() {
   const undo = useDocumentStore((state) => state.undo);
   const redo = useDocumentStore((state) => state.redo);
   const createBlockFromTemplate = useDocumentStore((state) => state.createBlockFromTemplate);
-  const saveStatus = useDocumentStore((state) => state.saveStatus);
-  const dirty = useDocumentStore((state) => state.dirty);
   const canUndo = useDocumentStore((state) => state.canUndo);
   const canRedo = useDocumentStore((state) => state.canRedo);
   const showSettingsScreen = useUiStore((state) => state.showSettingsScreen);
@@ -74,13 +73,7 @@ export function TopBar() {
         />
         <ToolbarButton label={inspectorOpen ? "Inspector On" : "Inspector Off"} onClick={() => toggleInspector()} />
         <ToolbarButton label="Settings" onClick={() => showSettingsScreen()} />
-        <span
-          className={`rounded-full border px-3 py-1 text-xs font-medium ${
-            dirty ? "border-accent/50 bg-accent/10 text-text" : "border-border bg-panelMuted text-textMuted"
-          }`}
-        >
-          {dirty ? "Unsaved changes" : saveStatus}
-        </span>
+        <SaveStatusIndicator />
       </div>
     </header>
   );
