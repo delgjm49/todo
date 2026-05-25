@@ -25,13 +25,13 @@ Session start: "pickup agents/channels/...."  → see Pickup section below
 Session start: "pickup"                       → see Pickup section below
 ```
 
-Preferred flow: after Main creates a dispatch channel, continue each later session with:
+Preferred flow: after Main creates a Phase 3 spool-format dispatch channel, continue each later session with:
 
 ```text
-pickup agents/channels/###-feature-channel.md
+pickup agents/channels/###-feature-slug/
 ```
 
-The pickup agent reads `AGENTS.md`, then the dispatch-channel protocol, then the channel. It finds the latest message and inherits the role from that message's `To` field. If no channel path is supplied, it uses the most recently modified channel in `agents/channels/`.
+The pickup agent reads `AGENTS.md`, then the dispatch-channel protocol, then the channel. For spool channels, it reads the latest numbered file in `messages/` and inherits the role from that message's `## To` field. If no channel path is supplied, it uses the most recently modified channel in `agents/channels/`. Legacy `*-channel.md` files are historical/audit artifacts only.
 
 ## Artifacts and Dispatch Channels
 
@@ -46,9 +46,9 @@ Artifacts describe work state. They live in `agents/artifacts/`.
 
 Dispatch channels carry handoff messages. They live in `agents/channels/`.
 
-| Channel | Created By | Appended By | Purpose |
+| Channel | Created By | Next Messages Created By | Purpose |
 |---------|------------|-------------|---------|
-| **Channel** (`*-channel.md`) | Main | Main, Plan, Dev, Review | Append-only message chain for one dispatch; replaces long chat prompts |
+| **Channel spool** (`agents/channels/<slug>/messages/*.md`) | Main | Main, Plan, Dev, Review | Append-only message-per-file chain for one dispatch; replaces long chat prompts |
 
 See [`workflows/dispatch-channel-protocol.md`](workflows/dispatch-channel-protocol.md).
 
@@ -59,29 +59,29 @@ Main Orchestrator
   │
   │  User says "main"
   │  Main helps prioritize work, writes dispatch artifact + dispatch channel
-  │  Main appends: Main → Plan
+  │  Main creates: `001-main-to-plan.md`
   │
   ▼
 Planning Agent
   │
-  │  User starts new session with: pickup agents/channels/###-feature-channel.md
+  │  User starts new session with: pickup agents/channels/###-feature-slug/
   │  Plan reads latest channel message, creates detailed implementation plan
-  │  Plan appends: Plan → Dev
+  │  Plan creates: next `plan-to-dev` message file
   │
   ▼
 Dev Agent
   │
   │  User starts new session with the same pickup command
   │  Dev reads latest channel message, implements the plan, writes complete artifact
-  │  Dev appends: Dev → Review
+  │  Dev creates: next `dev-to-review` message file
   │
   ▼
 Review Agent
   │
   │  User starts new session with the same pickup command
   │  Review checks work, writes review artifact
-  │  If PASS → appends Review → Main with State = review-pass
-  │  If required fixes → appends Review → Dev, Plan, or Main
+  │  If PASS → creates next `review-to-main` message file with State = review-pass
+  │  If required fixes → creates next message file to Dev, Plan, or Main
   │  Fixer routes back to Review after fixes
   │
   └──→ Back to Main only after Review confirms State = review-pass
@@ -96,13 +96,17 @@ agents/artifacts/
   ├── 001-feature-slug-complete.md     # Dev completion for feature #1
   └── 001-feature-slug-review.md       # Review for feature #1
 agents/channels/
-  └── 001-feature-slug-channel.md      # Handoff message chain for feature #1
+  └── 001-feature-slug/                 # Handoff spool for feature #1
+      └── messages/
+          ├── 001-main-to-plan.md
+          ├── 002-plan-to-dev.md
+          └── 003-dev-to-review.md
 ```
 
 ## Quick Reference
 
 - **Starting work**: Start with `main`; Main creates a dispatch artifact and dispatch channel
-- **Continuing work**: Start with `pickup agents/channels/###-feature-channel.md`
+- **Continuing work**: Start with `pickup agents/channels/###-feature-slug/`
 - **Manual fallback**: Use [`prompts/plan.md`](prompts/plan.md), [`prompts/dev.md`](prompts/dev.md), or [`prompts/review.md`](prompts/review.md) with explicit artifact paths
 - **Dispatch channels**: See [`workflows/dispatch-channel-protocol.md`](workflows/dispatch-channel-protocol.md)
 - **Full flow walkthrough**: See [`workflows/standard-flow.md`](workflows/standard-flow.md)

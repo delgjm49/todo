@@ -18,11 +18,14 @@ See [`agents/CLOSING.md`](../agents/CLOSING.md) for the entry format and rules.
 | TICKET-044 Formatting persistence | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 | TICKET-013 Store selectors/action helpers | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 | TICKET-045 Checkbox automation behavior | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
-| TICKET-046 Type-specific inspector settings | Complete | Closed after Review PASS; commit/push pending user approval |
+| TICKET-046 Type-specific inspector settings | Complete | Closed and committed through Main → Plan → Dev → Review workflow |
 | TICKET-047 Block row sorting domain logic | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 | TICKET-048 Sort menu UI | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 | TICKET-049 Internal row clipboard serialization | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
 | TICKET-050 Row clipboard UI (cut/copy/paste) | Complete | Closed and committed through new Main → Plan → Dev → Review workflow |
+| TICKET-064 Packaging assets and Windows build config | Complete | First real Phase 3 spool-format product dispatch; closed, committed, and pushed |
+| Workflow Phase 3 spool channels | Complete | Spool-format dispatch validated with smoke 022 and product dispatch 023; new dispatches use `agents/channels/<slug>/messages/` |
+| Windows subprocess dispatch-auto smoke | Complete | Dispatch 029 passed after global Windows subprocess launch fix; closed by protocol |
 
 ---
 
@@ -2486,3 +2489,19 @@ Closed Dispatch 029 (Windows Subprocess Smoke) after the patched subprocess laun
 
 ### Outcome
 Dispatch 029 is terminal/closed by protocol at `agents/channels/029-windows-subprocess-smoke/messages/004-review-to-main.md`. The smoke validates that the Windows subprocess dispatch-auto chain can complete `Main → Plan → Dev → Review → Main` after the global launch fix.
+
+## Session 140 — 2026-05-25
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: none
+- Dispatch: none
+- Docs: `agents/README.md`, `agents/ARTIFACTS.md`, `agents/CLOSING.md`, `agents/channels/README.md`, `agents/workflows/standard-flow.md`, `agents/workflows/review-protocol.md`, `agents/prompts/plan.md`, `agents/prompts/dev.md`, `agents/prompts/review.md`, `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `docs/SESSIONS.md`
+
+### Summary
+Refreshed workflow documentation directly at the user's request instead of creating a dispatch. Updated active docs and prompt examples to describe Phase 3 spool-format dispatch channels (`agents/channels/<slug>/messages/`) as the current default, while preserving legacy `*-channel.md` references only as historical/audit context. Refreshed the phase status table to reflect committed `TICKET-046`, completed `TICKET-064`, Phase 3 spool validation, and the Windows subprocess smoke result.
+
+### Outcome
+Docs-only chore completed locally. No product code was changed, no dispatch was created, and no commit/push was performed pending explicit user approval.

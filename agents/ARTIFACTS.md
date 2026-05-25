@@ -165,37 +165,42 @@ Note: PASS WITH NOTES is only for genuinely optional, intentionally deferred sug
 
 ## Dispatch Channels
 
-A dispatch channel is an append-only message log for a single dispatch.
+A dispatch channel is an append-only message-per-file spool for a single dispatch.
 
 **Created by**: Main
-**Appended by**: Main, Plan, Dev, Review
-**Consumed by**: Any agent via `pickup agents/channels/###-feature-channel.md`
+**Next messages created by**: Main, Plan, Dev, Review
+**Consumed by**: Any agent via `pickup agents/channels/###-feature-slug/`
+
+```text
+agents/channels/###-feature-slug/
+  messages/
+    001-main-to-plan.md
+    002-plan-to-dev.md
+    003-dev-to-review.md
+```
+
+Example message file (`messages/001-main-to-plan.md`):
 
 ```markdown
-# Dispatch Channel: [Feature Name]
+# Message 001 — Main → Plan — YYYY-MM-DD
 
-## Summary
-- Dispatch: agents/artifacts/###-feature-dispatch.md
-- Current status: ready-for-plan / ready-for-dev / ready-for-review / ready-for-re-review / needs-dev-fix / needs-plan-revision / needs-main-fix / review-pass / closed
-- Created by: Main
-- Created: YYYY-MM-DD
+## From
+Main
 
-## Message 1 — Main → Plan — YYYY-MM-DD
-
-### To
+## To
 Plan
 
-### State
+## State
 ready-for-plan
 
-### Read
+## Read
 - agents/artifacts/###-feature-dispatch.md
 
-### Task
+## Task
 Create the implementation plan for this dispatch. Write the plan to `agents/artifacts/###-feature-plan.md`.
 
-### Close Requirements
-- Append the next message to this channel for Dev.
+## Close Requirements
+- Create exactly one next message file in this channel's `messages/` directory.
 - Update `docs/SESSIONS.md`.
 - Do not commit; Main handles git.
 ```
@@ -206,7 +211,7 @@ See [`workflows/dispatch-channel-protocol.md`](workflows/dispatch-channel-protoc
 
 ```
 agents/artifacts/###-feature-slug-{dispatch|plan|complete|review}.md
-agents/channels/###-feature-slug-channel.md
+agents/channels/###-feature-slug/
 ```
 
 - `###` = sequential feature number (001, 002, ...)
@@ -217,7 +222,7 @@ Example:
 
 ```text
 agents/artifacts/001-block-editor-polish-dispatch.md
-agents/channels/001-block-editor-polish-channel.md
+agents/channels/001-block-editor-polish/
 ```
 
 ## Storage & Cleanup

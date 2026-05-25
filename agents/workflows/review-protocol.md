@@ -68,7 +68,7 @@ React/jsdom controlled-input tests are high-risk in this repo:
 ### PASS
 All criteria met. No issues found. Feature is complete.
 
-**Next action**: Review appends `Review → Main` to the dispatch channel with `State = review-pass`. User continues with `pickup agents/channels/###-feature-channel.md` so Main can close, commit, and push.
+**Next action**: Review creates the next `Review → Main` message file to the dispatch channel with `State = review-pass`. User continues with `pickup agents/channels/###-feature-slug/` so Main can close, commit, and push.
 
 ### PASS WITH NOTES
 All core criteria met. Only genuinely optional, intentionally deferred suggestions are provided. No one is required to change files before the work can be closed.
@@ -121,7 +121,7 @@ Examples:
    - Fix: Add an error state with a retry button, following the pattern in src/components/ErrorBoundary.tsx
 ```
 
-**Next action**: Review appends `Review → Dev` to the dispatch channel with `State = needs-dev-fix`. Dev reads the review, fixes the listed issues, updates the complete artifact with fix notes, appends `Dev → Review`, then re-review follows.
+**Next action**: Review creates the next `Review → Dev` message file in the dispatch channel with `State = needs-dev-fix`. Dev reads the review, fixes the listed issues, updates the complete artifact with fix notes, creates the next `Dev → Review` message file, then re-review follows.
 
 ### FAIL — Return to Plan
 The issue is in the design, not the implementation. The plan needs adjustment.
@@ -132,7 +132,7 @@ Examples:
 - Plan's component architecture won't scale
 - Requirements were misunderstood
 
-**Next action**: Review appends `Review → Plan` to the dispatch channel with `State = needs-plan-revision`. Plan revises, appends `Plan → Dev`, Dev implements the revision, appends `Dev → Review`, then re-review follows.
+**Next action**: Review creates the next `Review → Plan` message file in the dispatch channel with `State = needs-plan-revision`. Plan revises and creates the next `Plan → Dev` message file; Dev implements the revision and creates the next `Dev → Review` message file; re-review follows.
 
 ### FAIL — Return to Main
 The issue requires Main-owned action rather than Dev or Plan work.
@@ -143,7 +143,7 @@ Examples:
 - The feature should be re-scoped, paused, or closed differently
 - Git/commit/release coordination needs correction
 
-**Next action**: Review appends `Review → Main` to the dispatch channel with `State = needs-main-fix`. Main applies the required fixes, appends `Main → Review` with `State = ready-for-re-review`, then re-review follows. Main must not mark the dispatch closed until Review later returns `review-pass`.
+**Next action**: Review creates the next `Review → Main` message file in the dispatch channel with `State = needs-main-fix`. Main applies the required fixes and creates the next `Main → Review` message file with `State = ready-for-re-review`; re-review follows. Main must not mark the dispatch closed until Review later returns `review-pass`.
 
 ---
 
@@ -157,7 +157,7 @@ When Dev, Plan, or Main returns after a FAIL verdict:
 2. Review checks only the fixes unless the scope of changes is large.
 3. Review writes a new review artifact or updates the existing one with a re-review section.
 4. If fixes resolve the issues → PASS or narrowly justified PASS WITH NOTES with `State = review-pass`.
-5. If not → FAIL again with specifics and append another Review → Dev, Review → Plan, or Review → Main channel message.
+5. If not → FAIL again with specifics and create another Review → Dev, Review → Plan, or Review → Main message file.
 
 Main may only close the dispatch after this all-clear review.
 
@@ -165,28 +165,31 @@ Main may only close the dispatch after this all-clear review.
 
 ## Dispatch Channel Requirements
 
-Review must append the next-agent message to the active dispatch channel. It should not put long prompts in chat.
+Review must create the next numbered next-agent message file in the active dispatch channel spool. It should not put long prompts in chat.
 
 ### PASS / PASS WITH NOTES Channel Message
 
 ```markdown
-## Message N — Review → Main — YYYY-MM-DD
+# Message NNN — Review → Main — YYYY-MM-DD
 
-### To
+## From
+Review
+
+## To
 Main
 
-### State
+## State
 review-pass
 
-### Read
-- agents/channels/###-feature-channel.md
+## Read
+- agents/channels/###-feature-slug/
 - agents/artifacts/###-feature-review.md
 - agents/artifacts/###-feature-complete.md
 
-### Task
+## Task
 Close the feature. Confirm the PASS verdict, update docs/SESSIONS.md, commit, and push.
 
-### Close Requirements
+## Close Requirements
 - Commit and push if the review is valid.
 - Update docs/SESSIONS.md.
 - Provide the next main/pickup instruction.
@@ -195,29 +198,32 @@ Close the feature. Confirm the PASS verdict, update docs/SESSIONS.md, commit, an
 ### FAIL → Dev Channel Message
 
 ```markdown
-## Message N — Review → Dev — YYYY-MM-DD
+# Message NNN — Review → Dev — YYYY-MM-DD
 
-### To
+## From
+Review
+
+## To
 Dev
 
-### State
+## State
 needs-dev-fix
 
-### Read
+## Read
 - agents/artifacts/###-feature-plan.md
 - agents/artifacts/###-feature-complete.md
 - agents/artifacts/###-feature-review.md
 
-### Task
+## Task
 Address each issue listed in the review. Update the complete artifact with fix notes.
 
-### Close Requirements
+## Close Requirements
 ---
 ## ⚠️ BEFORE YOU END
 When you finish fixing the issues:
 - [ ] Update the complete artifact with fix notes
 - [ ] Update docs/SESSIONS.md with a session entry
-- [ ] Append the next Dev → Review message to this dispatch channel
+- [ ] Create the next Dev → Review message file in this dispatch channel
 - [ ] Output only the short pickup instruction to the user
 - [ ] Do NOT commit — Main handles git
 ```
@@ -225,78 +231,87 @@ When you finish fixing the issues:
 ### FAIL → Main Channel Message
 
 ```markdown
-## Message N — Review → Main — YYYY-MM-DD
+# Message NNN — Review → Main — YYYY-MM-DD
 
-### To
+## From
+Review
+
+## To
 Main
 
-### State
+## State
 needs-main-fix
 
-### Read
-- agents/channels/###-feature-channel.md
+## Read
+- agents/channels/###-feature-slug/
 - agents/artifacts/###-feature-review.md
 - [any files Main must fix]
 
-### Task
-Address each required Main-owned issue listed in the review. When fixed, append a Main → Review message for re-review. Do not close the dispatch yet.
+## Task
+Address each required Main-owned issue listed in the review. When fixed, create a Main → Review message file for re-review. Do not close the dispatch yet.
 
-### Close Requirements
+## Close Requirements
 - Apply the listed fixes.
 - Update docs/SESSIONS.md.
-- Append Main → Review with State = ready-for-re-review.
+- Create the next Main → Review message file with State = ready-for-re-review.
 - Do not mark the dispatch closed until Review returns State = review-pass.
 ```
 
 ### Main → Review Re-Review Channel Message
 
 ```markdown
-## Message N — Main → Review — YYYY-MM-DD
+# Message NNN — Main → Review — YYYY-MM-DD
 
-### To
+## From
+Main
+
+## To
 Review
 
-### State
+## State
 ready-for-re-review
 
-### Read
-- agents/channels/###-feature-channel.md
+## Read
+- agents/channels/###-feature-slug/
 - agents/artifacts/###-feature-review.md
 - [fixed files]
 
-### Task
-Re-review the required fixes. If all issues are resolved, append Review → Main with State = review-pass. If issues remain, append the appropriate Review → Dev/Plan/Main fix message.
+## Task
+Re-review the required fixes. If all issues are resolved, create the next Review → Main message file with State = review-pass. If issues remain, create the appropriate Review → Dev/Plan/Main fix message file.
 
-### Close Requirements
+## Close Requirements
 - Write or update the review artifact with re-review findings.
 - Update docs/SESSIONS.md.
-- Append the next message to this dispatch channel.
+- Create the next numbered message file in this dispatch channel.
 - Do not commit; Main handles git.
 ```
 
 ### FAIL → Plan Channel Message
 
 ```markdown
-## Message N — Review → Plan — YYYY-MM-DD
+# Message NNN — Review → Plan — YYYY-MM-DD
 
-### To
+## From
+Review
+
+## To
 Plan
 
-### State
+## State
 needs-plan-revision
 
-### Read
+## Read
 - agents/artifacts/###-feature-dispatch.md
 - agents/artifacts/###-feature-plan.md
 - agents/artifacts/###-feature-review.md
 
-### Task
-Revise the plan to address the design issues identified in the review. Append the next Plan → Dev message when done.
+## Task
+Revise the plan to address the design issues identified in the review. Create the next Plan → Dev message file when done.
 
-### Close Requirements
+## Close Requirements
 - Update the plan artifact.
 - Update docs/SESSIONS.md.
-- Append the next message to this dispatch channel.
+- Create the next numbered message file in this dispatch channel.
 - Do not commit; Main handles git.
 ```
 
@@ -304,7 +319,7 @@ Revise the plan to address the design issues identified in the review. Append th
 
 ## Multiple Reviewer Option
 
-For critical features, two independent review sessions can be run by appending explicit review messages to the channel:
+For critical features, two independent review sessions can be run by creating explicit review message files in the channel:
 
 1. **Reviewer A**: Focuses on code correctness and data integrity
 2. **Reviewer B**: Focuses on UI/UX and conventions

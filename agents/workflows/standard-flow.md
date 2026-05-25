@@ -11,31 +11,31 @@ A step-by-step walkthrough of how a feature moves through the agent pipeline usi
 **What happens**:
 1. Main reads `AGENTS.md`, checks `docs/SESSIONS.md`, and helps choose the next task.
 2. Main writes a dispatch artifact to `agents/artifacts/###-feature-dispatch.md`.
-3. Main creates a dispatch channel at `agents/channels/###-feature-channel.md`.
-4. Main appends `Message 1 — Main → Plan` with the dispatch path and planning task.
+3. Main creates a Phase 3 dispatch channel spool at `agents/channels/###-feature-slug/`.
+4. Main creates `messages/001-main-to-plan.md` with the dispatch path and planning task.
 5. Main outputs a short pickup instruction.
 
 **User action**: Start a new session with:
 
 ```text
-pickup agents/channels/###-feature-channel.md
+pickup agents/channels/###-feature-slug/
 ```
 
 ---
 
 ## Step 2: Planning
 
-**User starts session with**: `pickup agents/channels/###-feature-channel.md`
+**User starts session with**: `pickup agents/channels/###-feature-slug/`
 
 **What happens**:
-1. Agent reads the channel and sees the latest message is addressed to Plan.
+1. Agent reads the channel spool and sees the latest message file is addressed to Plan.
 2. Plan reads the dispatch artifact listed in the channel.
 3. Plan reads relevant TODO_APP_TECH_SPEC.md, TODO_APP_UI_SPEC.md, IMPLEMENTATION_BACKLOG.md, and existing code.
 4. Plan creates `###-feature-plan.md`.
-5. Plan appends `Message 2 — Plan → Dev` to the same channel.
+5. Plan creates `messages/002-plan-to-dev.md` in the same channel.
 6. Plan updates `docs/SESSIONS.md` and outputs the short pickup instruction.
 
-**If the dispatch is unclear**: Plan appends a message back to Main with the question.
+**If the dispatch is unclear**: Plan creates a message file back to Main with the question.
 
 **User action**: Start a new session with the same pickup command.
 
@@ -43,18 +43,18 @@ pickup agents/channels/###-feature-channel.md
 
 ## Step 3: Development
 
-**User starts session with**: `pickup agents/channels/###-feature-channel.md`
+**User starts session with**: `pickup agents/channels/###-feature-slug/`
 
 **What happens**:
-1. Agent reads the channel and sees the latest message is addressed to Dev.
+1. Agent reads the channel spool and sees the latest message file is addressed to Dev.
 2. Dev reads the plan artifact listed in the channel.
 3. Dev implements each step in order.
 4. Dev verifies the work, reporting each required command using the verification reporting rule in `agents/CLOSING.md`.
 5. Dev writes `###-feature-complete.md`.
-6. Dev appends `Message 3 — Dev → Review` to the same channel.
+6. Dev creates `messages/003-dev-to-review.md` in the same channel.
 7. Dev updates `docs/SESSIONS.md` and outputs the short pickup instruction.
 
-**If the plan has issues**: Dev notes deviations in the complete artifact and may append a channel message back to Plan or Main for clarification.
+**If the plan has issues**: Dev notes deviations in the complete artifact and may create a channel message file back to Plan or Main for clarification.
 
 **User action**: Start a new session with the same pickup command.
 
@@ -62,44 +62,44 @@ pickup agents/channels/###-feature-channel.md
 
 ## Step 4: Review
 
-**User starts session with**: `pickup agents/channels/###-feature-channel.md`
+**User starts session with**: `pickup agents/channels/###-feature-slug/`
 
 **What happens**:
-1. Agent reads the channel and sees the latest message is addressed to Review.
+1. Agent reads the channel spool and sees the latest message file is addressed to Review.
 2. Review reads the plan and complete artifacts listed in the channel.
 3. Review inspects the actual code changes.
 4. Review reruns required verification commands and reports each using the verification reporting rule.
 5. Review writes `###-feature-review.md` with findings and verdict.
-6. Review appends the next channel message.
+6. Review creates the next numbered channel message file.
 7. Review updates `docs/SESSIONS.md` and outputs the short pickup instruction.
 
 **Possible outcomes**:
 
 ### PASS → Main Close
-- Review appends `Review → Main` with `State = review-pass`.
+- Review creates the next `Review → Main` message file with `State = review-pass`.
 - Main can mark the feature done, commit, and push.
 
 ### PASS WITH NOTES → Main Close
-- Review appends `Review → Main` with `State = review-pass`.
+- Review creates the next `Review → Main` message file with `State = review-pass`.
 - Notes must be genuinely optional, intentionally deferred future improvements only.
 - Review should require fixes for actionable low-severity items when they are reasonable within the current dispatch.
 - If any file must change before completion, this is not PASS WITH NOTES.
 - If any source/test/artifact/user-facing docs change after review-pass and before Main closes, Main routes back to Review for re-review.
 
 ### FAIL — Return to Dev → Fix Needed
-- Review appends `Review → Dev` with `State = needs-dev-fix`.
-- Dev fixes the listed issues, updates the complete artifact, appends `Dev → Review`, and re-review follows.
-- The work is not done until Review later appends `State = review-pass`.
+- Review creates the next `Review → Dev` message file with `State = needs-dev-fix`.
+- Dev fixes the listed issues, updates the complete artifact, creates the next `Dev → Review` message file, and re-review follows.
+- The work is not done until Review later creates a message file with `State = review-pass`.
 
 ### FAIL — Return to Plan → Design Issue
-- Review appends `Review → Plan` with `State = needs-plan-revision`.
-- Plan revises the plan, appends `Plan → Dev`, Dev implements, appends `Dev → Review`, and re-review follows.
-- The work is not done until Review later appends `State = review-pass`.
+- Review creates the next `Review → Plan` message file with `State = needs-plan-revision`.
+- Plan revises the plan and creates the next `Plan → Dev` message file; Dev implements and creates the next `Dev → Review` message file; re-review follows.
+- The work is not done until Review later creates a message file with `State = review-pass`.
 
 ### FAIL — Return to Main → Main-Owned Fix Needed
-- Review appends `Review → Main` with `State = needs-main-fix`.
-- Main applies the fixes, appends `Main → Review` with `State = ready-for-re-review`, and re-review follows.
-- Main must not close the dispatch until Review later appends `State = review-pass`.
+- Review creates the next `Review → Main` message file with `State = needs-main-fix`.
+- Main applies the fixes and creates the next `Main → Review` message file with `State = ready-for-re-review`; re-review follows.
+- Main must not close the dispatch until Review later creates a message file with `State = review-pass`.
 
 **User action**: Continue with the same pickup command. The latest channel message determines which role runs next.
 
@@ -135,7 +135,7 @@ Main should repair or recreate the dispatch channel afterward so future handoffs
 ## Variations
 
 ### Fast Track: Main → Dev
-For very small, well-understood tasks, Main can append `Main → Dev` as the first channel message. The dispatch must be detailed enough to act as the implementation instruction.
+For very small, well-understood tasks, Main can create `001-main-to-dev.md` as the first channel message. The dispatch must be detailed enough to act as the implementation instruction.
 
 ### Double Review
 For critical features, the channel can include two review messages or route to different review scopes:
@@ -161,4 +161,4 @@ Session 6 (Review) → confirms fixes or loops again
 Session 7 (Main)   → only after review-pass, reads channel + review and closes feature
 ```
 
-The user no longer has to copy long prompts between sessions. They reuse the same pickup command for the dispatch.
+The user no longer has to copy long prompts between sessions. They reuse the same pickup command for the dispatch; the latest numbered message file determines the next role.

@@ -1,6 +1,6 @@
 # Dev Agent Prompt
 
-Use `pickup agents/channels/###-feature-channel.md` to activate the Dev agent when the latest channel message is addressed to Dev. Manual fallback: start with `dev` and provide the plan artifact path.
+Use `pickup agents/channels/###-feature-slug/` to activate the Dev agent when the latest channel message is addressed to Dev. Manual fallback: start with `dev` and provide the plan artifact path.
 
 ---
 
@@ -66,7 +66,7 @@ You are NOT done until you have done ALL of the following.
 - [ ] If this was a review fix round, remember the work is not complete until Review returns State = review-pass
 - [ ] Output only the short pickup instruction directly to the user, not a long prompt:
 
-  pickup agents/channels/###-feature-channel.md
+  pickup agents/channels/###-feature-slug/
 
 - [ ] Remind the user: Do not commit — Main handles all git operations.
 ```

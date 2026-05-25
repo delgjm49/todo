@@ -1,6 +1,6 @@
 # Planning Agent Prompt
 
-Use `pickup agents/channels/###-feature-channel.md` to activate the Planning agent when the latest channel message is addressed to Plan. Manual fallback: start with `plan` and provide the dispatch artifact path.
+Use `pickup agents/channels/###-feature-slug/` to activate the Planning agent when the latest channel message is addressed to Plan. Manual fallback: start with `plan` and provide the dispatch artifact path.
 
 ---
 
@@ -55,7 +55,7 @@ You are NOT done until you have done ALL of the following.
 - [ ] If you made architectural decisions not already in docs/TODO_APP_TECH_SPEC.md, flag them briefly
 - [ ] Output only the short pickup instruction directly to the user, not a long prompt:
 
-  pickup agents/channels/###-feature-channel.md
+  pickup agents/channels/###-feature-slug/
 
 - [ ] Remind the user: Do not commit — Main handles all git operations.
 ```

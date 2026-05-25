@@ -1,6 +1,6 @@
 # Review Agent Prompt
 
-Use `pickup agents/channels/###-feature-channel.md` to activate the Review agent when the latest channel message is addressed to Review. Manual fallback: start with `review` and provide the plan + complete artifact paths.
+Use `pickup agents/channels/###-feature-slug/` to activate the Review agent when the latest channel message is addressed to Review. Manual fallback: start with `review` and provide the plan + complete artifact paths.
 
 ---
 
@@ -101,7 +101,7 @@ You are NOT done until you have done ALL of the following.
 - [ ] If routing required fixes to Dev, Plan, or Main, make clear that the fixer must append a message back to Review and the work is not done until Review returns State = review-pass
 - [ ] Output only the short pickup instruction directly to the user, not a long prompt:
 
-  pickup agents/channels/###-feature-channel.md
+  pickup agents/channels/###-feature-slug/
 
 - [ ] Remind the user: Do not commit — Main handles all git operations.
 ```

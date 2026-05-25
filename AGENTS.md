@@ -42,7 +42,7 @@ This project uses a **multi-agent workflow**: Main → Plan → Dev → Review, 
 - Review protocol: [`agents/workflows/review-protocol.md`](agents/workflows/review-protocol.md)
 - Closing protocol: [`agents/CLOSING.md`](agents/CLOSING.md)
 
-**Session start**: The first line of your message determines your role. Say `main`, `plan`, `dev`, `review`, `pickup agents/channels/###-feature-channel.md`, or bare `pickup`.
+**Session start**: The first line of your message determines your role. Say `main`, `plan`, `dev`, `review`, `pickup agents/channels/###-feature-slug/`, or bare `pickup`. New dispatches use Phase 3 spool directories under `agents/channels/<slug>/messages/`; legacy `*-channel.md` files are historical only.
 
 **Mandatory first read for every session**: After reading this file, you MUST read your role's prompt template **before doing any work** (orient, write artifacts, append messages, run commands). The role-specific rules — including guardrails like "discuss scope before dispatching" and "never commit without explicit user approval" — live only in those files. Skipping the prompt template will cause you to violate rules you didn't know existed.
 

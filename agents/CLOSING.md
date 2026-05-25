@@ -6,18 +6,18 @@ Every agent session ends with a structured close. This ensures documentation is 
 
 ## Agent Close Responsibilities
 
-Every agent has a **BEFORE YOU END** checklist in its prompt template. The most critical output for Plan, Dev, and Review is appending the next message to the active dispatch channel.
+Every agent has a **BEFORE YOU END** checklist in its prompt template. The most critical output for Plan, Dev, and Review is creating the next numbered message file in the active dispatch channel spool.
 
-| Agent | Writes Artifact | Updates SESSIONS.md | Appends Dispatch Channel | Chat Output | Update Other Docs | Commit & Push |
+| Agent | Writes Artifact | Updates SESSIONS.md | Creates Next Channel Message | Chat Output | Update Other Docs | Commit & Push |
 |-------|----------------|---------------------|--------------------------|-------------|-------------------|---------------|
 | **Main** | Dispatch (if dispatching) | ✅ Required | ✅ Required | Short pickup instruction | Phase status | ✅ **Only Main** |
-| **Plan** | Plan artifact | ✅ Required | ✅ Required (`Plan → Dev`) | Short pickup instruction | TECH_SPEC if needed | ❌ |
-| **Dev** | Complete artifact | ✅ Required | ✅ Required (`Dev → Review`) | Short pickup instruction | Flag TECH_SPEC changes | ❌ |
-| **Review** | Review artifact | ✅ Required | ✅ Required (`Review → Main/Dev/Plan`) | Short pickup instruction | — | ❌ |
+| **Plan** | Plan artifact | ✅ Required | ✅ Required (`Plan → Dev` file) | Short pickup instruction | TECH_SPEC if needed | ❌ |
+| **Dev** | Complete artifact | ✅ Required | ✅ Required (`Dev → Review` file) | Short pickup instruction | Flag TECH_SPEC changes | ❌ |
+| **Review** | Review artifact | ✅ Required | ✅ Required (`Review → Main/Dev/Plan` file) | Short pickup instruction | — | ❌ |
 
 ## Why Dispatch Channels Replace Long Chat Prompts
 
-- **Less copying**: The user starts the next session with `pickup agents/channels/###-feature-channel.md`.
+- **Less copying**: The user starts the next session with `pickup agents/channels/###-feature-slug/`.
 - **No buried prompts**: The next-agent message is in a known file, not hidden in an artifact or prose summary.
 - **Audit trail**: Main can inspect one channel to see the full chain: Main → Plan → Dev → Review → ...
 - **Lower token waste**: Full next-agent instructions live on disk, not in chat.
@@ -61,7 +61,7 @@ Every agent appends to `docs/SESSIONS.md` at close. The format:
 [main / plan / dev / review]
 
 ### Artifacts
-- Channel: agents/channels/###-feature-channel.md
+- Channel: agents/channels/###-feature-slug/
 - Dispatch: agents/artifacts/###-feature-dispatch.md
 - (or) Plan: agents/artifacts/###-feature-plan.md
 - (or) Complete: agents/artifacts/###-feature-complete.md
@@ -72,9 +72,9 @@ Every agent appends to `docs/SESSIONS.md` at close. The format:
 
 ### Outcome
 [For Main: what was dispatched or closed]
-[For Plan: plan ready for dev; channel appended]
-[For Dev: implementation complete, ready for review; channel appended]
-[For Review: PASS / FAIL; channel appended to Main/Dev/Plan]
+[For Plan: plan ready for dev; next channel message created]
+[For Dev: implementation complete, ready for review; next channel message created]
+[For Review: PASS / FAIL; next channel message created to Main/Dev/Plan]
 ```
 
 ## Main Close (Full Close)
@@ -87,7 +87,7 @@ Main is the only agent that does a **full close**:
    - Confirm the latest Review message has `State = review-pass`
    - Confirm the review verdict is PASS or narrowly justified PASS WITH NOTES with no required fixes
    - Confirm any PASS WITH NOTES items have explicit deferral reasons and are not clear/trivial/helpful in-scope fixes that should have been required
-   - If source, test, artifact, or user-facing documentation files changed after Review returned `State = review-pass`, do NOT close — append `Main → Review` with `State = ready-for-re-review` so Review can inspect the post-review changes
+   - If source, test, artifact, or user-facing documentation files changed after Review returned `State = review-pass`, do NOT close — create the next `Main → Review` message file with `State = ready-for-re-review` so Review can inspect the post-review changes
    - If the latest Review message is `needs-dev-fix`, `needs-plan-revision`, or `needs-main-fix`, do NOT close — route the work to the required fixer and ensure it returns to Review afterward
 
 2. **Update SESSIONS.md**:
@@ -109,7 +109,7 @@ Main is the only agent that does a **full close**:
 5. **Provide next pickup instruction**:
    - If dispatching more work, create/update the channel and tell the user:
      ```text
-     pickup agents/channels/###-feature-channel.md
+     pickup agents/channels/###-feature-slug/
      ```
    - If no next work is queued, tell the user to start with `main`.
 
@@ -119,13 +119,13 @@ These agents do a **partial close**:
 
 1. Write their artifact
 2. Update `docs/SESSIONS.md`
-3. Append the next message to the active dispatch channel
+3. Create the next numbered message file in the active dispatch channel spool
 4. Output only a short pickup instruction in chat:
    ```text
-   Next message is ready in agents/channels/###-feature-channel.md.
+   Next message is ready in agents/channels/###-feature-slug/.
    Start the next session with:
 
-   pickup agents/channels/###-feature-channel.md
+   pickup agents/channels/###-feature-slug/
 
    Do not commit — Main handles git operations.
    ```
@@ -141,10 +141,10 @@ If a session ends without proper close (error, timeout, user abort):
 
 ## Returning to Main After Review
 
-When Review returns PASS or narrowly justified PASS WITH NOTES with no required fixes, it appends `Review → Main` with `State = review-pass` to the dispatch channel. The user starts Main with:
+When Review returns PASS or narrowly justified PASS WITH NOTES with no required fixes, it creates the next `Review → Main` message file with `State = review-pass` in the dispatch channel. The user starts Main with:
 
 ```text
-pickup agents/channels/###-feature-channel.md
+pickup agents/channels/###-feature-slug/
 ```
 
 Main then:
@@ -155,7 +155,7 @@ Main then:
 5. Commits and pushes
 6. Provides the next `main` or `pickup` instruction
 
-If Review returns `needs-main-fix`, Main applies the fix and appends `Main → Review` with `State = ready-for-re-review` instead of closing. The work is not finalized until Review returns `State = review-pass`.
+If Review returns `needs-main-fix`, Main applies the fix and creates the next `Main → Review` message file with `State = ready-for-re-review` instead of closing. The work is not finalized until Review returns `State = review-pass`.
 
 ## Returning to Main Mid-Cycle
 
@@ -164,7 +164,7 @@ If the user needs to stop mid-cycle:
 ```text
 main
 
-I'm mid-cycle on [feature]. Channel: agents/channels/###-feature-channel.md.
+I'm mid-cycle on [feature]. Channel: agents/channels/###-feature-slug/.
 Please commit the current state as WIP and help me resume later.
 ```
 
