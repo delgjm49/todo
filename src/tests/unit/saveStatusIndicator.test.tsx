@@ -159,9 +159,9 @@ describe("SaveStatusIndicator", () => {
     useDocumentStore.setState({
       saveStatus: "error",
       dirty: false,
-      retrySave: async () => {
+      retrySave: () => {
         retryCalled = true;
-        return true;
+        return Promise.resolve(true);
       },
     });
 
@@ -173,6 +173,9 @@ describe("SaveStatusIndicator", () => {
     await act(async () => {
       button.click();
     });
+
+    // Flush any microtasks before asserting
+    await act(async () => {});
 
     assert.equal(retryCalled, true);
   });

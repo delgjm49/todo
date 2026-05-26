@@ -3308,3 +3308,39 @@ PASS. Review artifact written. Channel message `004-review-to-main.md` appended.
 **Summary:** Reviewed TICKET-061 implementation against the plan. All 8 plan steps and acceptance criteria met. Reran `npm run lint` (clean), full `npm run test` (442 tests, 440 pass, 2 pre-existing fail), and integration-only tests in isolation (30/30 pass across 3 runs). Confirmed the 2 failures predate this dispatch by clean-rebuilding from `git stash -u` pre-dispatch state. No production code modifications.
 
 **Outcome:** PASS. Handed off to Main for close.
+
+---
+
+## Session 199 — Main Dispatch — 2026-05-26
+
+**Artifacts:**
+- `agents/artifacts/066-unit-test-ci-fixes-dispatch.md`
+- `agents/channels/066-unit-test-ci-fixes/messages/001-main-to-dev.md`
+
+**Summary:** Dispatched a focused Main → Dev → Review task to fix the two unit-test failures blocking `Tauri Windows CI` before the Rust/Tauri build step. Scope was limited to `saveStatusIndicator.test.tsx` and `textCellClipboard.test.tsx`, emphasizing React `act(...)`/JSDOM timing fixes and test-only changes.
+
+**Outcome:** Dispatched to Dev.
+
+---
+
+## Session 200 — Dev Complete — 2026-05-26
+
+**Artifacts:**
+- `agents/artifacts/066-unit-test-ci-fixes-dev.md`
+- `agents/channels/066-unit-test-ci-fixes/messages/002-dev-to-review.md`
+
+**Summary:** Fixed `textCellClipboard.test.tsx` by making `renderTextCell` async with `await act()`, wrapping event dispatches in `act()`, and adding narrowly scoped JSDOM error suppression for React 18's `getTargetInstForInputEventPolyfill` crash when dispatching native `KeyboardEvent` on controlled inputs. Fixed `saveStatusIndicator.test.tsx` by making the `retrySave` mock return `Promise.resolve(true)` directly and adding an explicit microtask flush after click. Both target files pass cleanly with no `act()` warnings or uncaught errors. No product source code was modified.
+
+**Outcome:** Dev complete. Dispatched to Review.
+
+---
+
+## Session 201 — Review PASS — 2026-05-26
+
+**Artifacts:**
+- `agents/artifacts/066-unit-test-ci-fixes-review.md`
+- `agents/channels/066-unit-test-ci-fixes/messages/003-review-to-main.md`
+
+**Summary:** Reviewed and passed the unit-test CI fixes. Re-ran `npm run test:build`, both target test files individually, full `scripts/run-tests.mjs`, and `npm run lint`. Confirmed target tests pass in isolation with zero `act(...)` warnings and zero uncaught errors. Full suite passes 442/442; remaining warnings/errors are in unrelated, pre-existing harnesses and out of scope. Confirmed only the two target unit test files changed under `src/`.
+
+**Outcome:** PASS. Handed off to Main for close.
