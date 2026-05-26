@@ -90,8 +90,26 @@ Allowed `State` values:
 - `review-pass`
 - `stalled`
 - `error`
+- `closed` *(Main close message only)*
 
 Use exactly these tokens in new messages. In particular, every Dev → Review handoff uses `ready-for-review`, including a second/subsequent handoff after Review requested fixes. Do **not** use legacy variants such as `ready-for-re-review`.
+
+**Close message format.** After `review-pass`, Main closes the dispatch with a final message using `To: Main` and `State: closed`:
+
+```markdown
+# Message NNN — Main → Main — YYYY-MM-DD
+
+## From
+Main
+
+## To
+Main
+
+## State
+closed
+```
+
+Legacy `To: (none — channel closing)` is tolerated for existing channels but deprecated; new close messages must use `To: Main`.
 
 Routing is determined by `## To`. A channel is terminal for dispatch-auto when the latest message is addressed to `Main`.
 
