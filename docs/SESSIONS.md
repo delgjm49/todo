@@ -29,6 +29,7 @@ Last updated: 2026-05-25
 | TICKET-057 Theme mode switching | Complete | Closed via full workflow with re-review |
 | TICKET-058 Editor default settings UI | Complete | Closed via full workflow — 17 tests, no issues found |
 | TICKET-059 Workspace default settings UI | Complete | Closed via full workflow — 13 tests, no issues found, one Plan retry due to pane failure |
+| TICKET-060 Expand unit coverage for domain helpers | Complete | Closed via full workflow — 53 new pure-function tests, one Plan retry due to account quota timeout |
 | TICKET-063 Autosave dirty-state UX | Complete | Closed via full workflow — no issues found |
 | TICKET-065 Manual QA and release blockers | Complete | Closed via full workflow — audit-only, no code changes, no critical defects found |
 | Phase 3 spool channels | Complete | Validated end-to-end |
@@ -36,17 +37,16 @@ Last updated: 2026-05-25
 
 ## Last Sessions
 
-- **Session 190 — Review PASS** (2026-05-25): Reviewed and passed TICKET-059 workspace default settings UI. All acceptance criteria met. 348 tests pass, TS clean, lint clean. No issues found.
-- **Session 189 — Dev** (2026-05-25): Implemented TICKET-059: extended AppDefaults with 3 workspace style fields, added validation coercion, wired createWorkspace to settings defaults, interactive controls with conditional accent. 13 tests.
-- **Session 188 — Plan** (2026-05-25): Created plan for TICKET-059 after initial Plan pane failure and repair retry.
-- **Session 187 — Main dispatch** (2026-05-25): Dispatched TICKET-059 to Plan.
+- **Session 194 — Review PASS** (2026-05-25): Reviewed and passed TICKET-060 expand unit coverage. 410 tests pass, lint clean. ~53 new pure-function tests across 7 files. No issues found.
+- **Session 193 — Dev** (2026-05-25): Implemented 53 new pure-function tests: 2 new files + 5 extended. Coverage gaps in formattingToCellStyle, selectedFormattingTarget, alerts, sorting, column helpers, block templates, clipboard.
+- **Session 192 — Plan** (2026-05-25): Created plan after initial Plan timeout (account quota). ~60 test cases across 2 new files + 5 modified.
+- **Session 191 — Main dispatch** (2026-05-25): Dispatched TICKET-060 to Plan.
 
 ## Next Recommended
 
-**Full Planned v1 (MVP Core + Extended) is now complete** per the user's scoped list (TICKET-057 through TICKET-065, including 058 and 059).
+**Full Planned v1 (MVP Core + Extended) plus TICKET-060 are now complete.**
 
-Remaining in the broader backlog (not explicitly scoped by the user for this session):
-- **TICKET-060**: Expand unit coverage for domain helpers — P1, Size L
+Remaining in the broader backlog:
 - **TICKET-061**: Add integration tests for critical editing flows — P1, Size L
 - **TICKET-062**: Add Playwright smoke flow — P2, Size M
 
@@ -55,6 +55,7 @@ Remaining in the broader backlog (not explicitly scoped by the user for this ses
 - Theme mode (057): complete
 - Editor defaults (058): complete
 - Workspace defaults (059): complete
+- Unit coverage expansion (060): complete — 53 new pure-function tests
 - Autosave UX (063): complete
 - Manual QA (065): complete — no critical defects found
 

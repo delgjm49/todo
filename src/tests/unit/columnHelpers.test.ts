@@ -192,3 +192,82 @@ describe("column helpers", () => {
     assert.equal(updated[1].type, "text");
   });
 });
+
+describe("column helpers — createColumn defaults and changeColumnType conversions", () => {
+  test("createColumn date has label Date, alertsEnabled false, width 220", () => {
+    const c = createColumn("date", { id: "col_due", order: 0 });
+    assert.equal(c.label, "Date");
+    assert.equal("alertsEnabled" in c.settings && c.settings.alertsEnabled, false);
+    assert.equal(c.width, 220);
+  });
+
+  test("createColumn time has label Time, alertsEnabled false, width 220", () => {
+    const c = createColumn("time", { id: "col_when", order: 0 });
+    assert.equal(c.label, "Time");
+    assert.equal("alertsEnabled" in c.settings && c.settings.alertsEnabled, false);
+    assert.equal(c.width, 220);
+  });
+
+  test("createColumn numbered has empty label, width 44, empty settings", () => {
+    const c = createColumn("numbered", { id: "col_num", order: 0 });
+    assert.equal(c.label, "");
+    assert.equal(c.width, 44);
+    assert.deepEqual(c.settings, {});
+  });
+
+  test("changeColumnType text to date with boolean true yields null value", () => {
+    const columns = [createColumn("text", { id: "col_1", order: 0 })];
+    const rows = [{ id: "row_1", order: 0, format: {}, cells: { col_1: { value: true, format: {} } } }];
+
+    const result = changeColumnType(columns, rows, "col_1", "date");
+    assert.equal(result.rows[0].cells.col_1.value, null);
+  });
+
+  test("changeColumnType checkbox to text converts boolean to string", () => {
+    const columns = [createColumn("checkbox", { id: "col_1", order: 0 })];
+    const rowsTrue = [{ id: "row_1", order: 0, format: {}, cells: { col_1: { value: true, format: {} } } }];
+    const rowsFalse = [{ id: "row_1", order: 0, format: {}, cells: { col_1: { value: false, format: {} } } }];
+
+    const resultTrue = changeColumnType(columns, rowsTrue, "col_1", "text");
+    assert.equal(resultTrue.rows[0].cells.col_1.value, "true");
+
+    const resultFalse = changeColumnType(columns, rowsFalse, "col_1", "text");
+    assert.equal(resultFalse.rows[0].cells.col_1.value, "false");
+  });
+
+  test("changeColumnType text to checkbox coerces truthy and falsy", () => {
+    const columns = [createColumn("text", { id: "col_1", order: 0 })];
+    const rowsHello = [{ id: "row_1", order: 0, format: {}, cells: { col_1: { value: "hello", format: {} } } }];
+    const rowsEmpty = [{ id: "row_1", order: 0, format: {}, cells: { col_1: { value: "", format: {} } } }];
+    const rowsFalseStr = [{ id: "row_1", order: 0, format: {}, cells: { col_1: { value: "false", format: {} } } }];
+
+    const hello = changeColumnType(columns, rowsHello, "col_1", "checkbox");
+    assert.equal(hello.rows[0].cells.col_1.value, true);
+
+    const empty = changeColumnType(columns, rowsEmpty, "col_1", "checkbox");
+    assert.equal(empty.rows[0].cells.col_1.value, false);
+
+    const falseStr = changeColumnType(columns, rowsFalseStr, "col_1", "checkbox");
+    assert.equal(falseStr.rows[0].cells.col_1.value, true); // Boolean("false") is true
+  });
+
+  test("changeColumnType dropdown to text preserves string and null", () => {
+    const columns = [createColumn("dropdown", { id: "col_1", order: 0 })];
+    const rowsVal = [{ id: "row_1", order: 0, format: {}, cells: { col_1: { value: "Done", format: {} } } }];
+    const rowsNull = [{ id: "row_1", order: 0, format: {}, cells: { col_1: { value: null, format: {} } } }];
+
+    const withValue = changeColumnType(columns, rowsVal, "col_1", "text");
+    assert.equal(withValue.rows[0].cells.col_1.value, "Done");
+
+    const withNull = changeColumnType(columns, rowsNull, "col_1", "text");
+    assert.equal(withNull.rows[0].cells.col_1.value, ""); // null becomes empty string
+  });
+
+  test("changeColumnType text to bullet produces null value", () => {
+    const columns = [createColumn("text", { id: "col_1", order: 0 })];
+    const rows = [{ id: "row_1", order: 0, format: {}, cells: { col_1: { value: "anything", format: {} } } }];
+
+    const result = changeColumnType(columns, rows, "col_1", "bullet");
+    assert.equal(result.rows[0].cells.col_1.value, null);
+  });
+});

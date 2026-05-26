@@ -280,3 +280,265 @@ describe("internal row clipboard helpers", () => {
     });
   });
 });
+
+describe("row clipboard — additional edge cases", () => {
+  test("edges canonical order — non-canonical input yields canonical order", () => {
+    const raw = JSON.stringify({
+      marker: INTERNAL_ROW_CLIPBOARD_MARKER,
+      version: INTERNAL_ROW_CLIPBOARD_VERSION,
+      source: {
+        blockId: "block_source",
+        blockType: "basic_checklist",
+        columns: [{ id: "task", type: "text", order: 0 }],
+      },
+      rows: [
+        {
+          sourceRowId: "row_1",
+          order: 0,
+          format: {},
+          cells: {
+            task: { value: "hello", format: { edges: ["left", "top"] } },
+          },
+        },
+      ],
+    });
+
+    const result = assertDeserializeSuccess(deserializeRowsFromClipboardJson(raw));
+    const row = result.payload.rows[0];
+    assert.ok(row);
+    const cell = row.cells.task;
+    assert.ok(cell);
+    assert.ok(cell.format);
+    assert.deepEqual(cell.format.edges, ["top", "left"]);
+  });
+
+  test("fontSize bounds — zero, negative, NaN dropped; positive kept", () => {
+    const raw = JSON.stringify({
+      marker: INTERNAL_ROW_CLIPBOARD_MARKER,
+      version: INTERNAL_ROW_CLIPBOARD_VERSION,
+      source: {
+        blockId: "block_source",
+        blockType: "basic_checklist",
+        columns: [{ id: "task", type: "text", order: 0 }],
+      },
+      rows: [
+        {
+          sourceRowId: "row_1",
+          order: 0,
+          format: { fontSize: 0, bold: true },
+          cells: {},
+        },
+        {
+          sourceRowId: "row_2",
+          order: 1,
+          format: { fontSize: -3 },
+          cells: {},
+        },
+        {
+          sourceRowId: "row_3",
+          order: 2,
+          format: { fontSize: NaN },
+          cells: {},
+        },
+        {
+          sourceRowId: "row_4",
+          order: 3,
+          format: { fontSize: 14.5 },
+          cells: {},
+        },
+      ],
+    });
+
+    const result = assertDeserializeSuccess(deserializeRowsFromClipboardJson(raw));
+    // fontSize 0 dropped (not > 0), bold kept
+    assert.equal(result.payload.rows[0]?.format.fontSize, undefined);
+    assert.equal(result.payload.rows[0]?.format.bold, true);
+    // fontSize -3 dropped
+    assert.equal(result.payload.rows[1]?.format.fontSize, undefined);
+    // fontSize NaN dropped
+    assert.equal(result.payload.rows[2]?.format.fontSize, undefined);
+    // fontSize 14.5 kept
+    assert.equal(result.payload.rows[3]?.format.fontSize, 14.5);
+  });
+
+  test("borderWidth bounds — negative dropped, zero and positive kept", () => {
+    const raw = JSON.stringify({
+      marker: INTERNAL_ROW_CLIPBOARD_MARKER,
+      version: INTERNAL_ROW_CLIPBOARD_VERSION,
+      source: {
+        blockId: "block_source",
+        blockType: "basic_checklist",
+        columns: [{ id: "task", type: "text", order: 0 }],
+      },
+      rows: [
+        {
+          sourceRowId: "row_1",
+          order: 0,
+          format: { borderWidth: -1 },
+          cells: {},
+        },
+        {
+          sourceRowId: "row_2",
+          order: 1,
+          format: { borderWidth: 0 },
+          cells: {},
+        },
+        {
+          sourceRowId: "row_3",
+          order: 2,
+          format: { borderWidth: 2.5 },
+          cells: {},
+        },
+      ],
+    });
+
+    const result = assertDeserializeSuccess(deserializeRowsFromClipboardJson(raw));
+    assert.equal(result.payload.rows[0]?.format.borderWidth, undefined);
+    assert.equal(result.payload.rows[1]?.format.borderWidth, 0);
+    assert.equal(result.payload.rows[2]?.format.borderWidth, 2.5);
+  });
+
+  test("duplicate source column ids — returns invalid-payload", () => {
+    const raw = JSON.stringify({
+      marker: INTERNAL_ROW_CLIPBOARD_MARKER,
+      version: INTERNAL_ROW_CLIPBOARD_VERSION,
+      source: {
+        blockId: "block_source",
+        blockType: "basic_checklist",
+        columns: [
+          { id: "task", type: "text", order: 0 },
+          { id: "task", type: "text", order: 1 },
+        ],
+      },
+      rows: [],
+    });
+
+    const result = deserializeRowsFromClipboardJson(raw);
+    assert.deepEqual(result, { ok: false, reason: "invalid-payload" });
+  });
+
+  test("non-finite column order — returns invalid-payload", () => {
+    const rawNaN = JSON.stringify({
+      marker: INTERNAL_ROW_CLIPBOARD_MARKER,
+      version: INTERNAL_ROW_CLIPBOARD_VERSION,
+      source: {
+        blockId: "block_source",
+        blockType: "basic_checklist",
+        columns: [{ id: "task", type: "text", order: NaN }],
+      },
+      rows: [],
+    });
+    const rawInf = JSON.stringify({
+      marker: INTERNAL_ROW_CLIPBOARD_MARKER,
+      version: INTERNAL_ROW_CLIPBOARD_VERSION,
+      source: {
+        blockId: "block_source",
+        blockType: "basic_checklist",
+        columns: [{ id: "task", type: "text", order: Infinity }],
+      },
+      rows: [],
+    });
+
+    assert.deepEqual(deserializeRowsFromClipboardJson(rawNaN), { ok: false, reason: "invalid-payload" });
+    assert.deepEqual(deserializeRowsFromClipboardJson(rawInf), { ok: false, reason: "invalid-payload" });
+  });
+
+  test("row cells null — returns invalid-payload", () => {
+    const raw = JSON.stringify({
+      marker: INTERNAL_ROW_CLIPBOARD_MARKER,
+      version: INTERNAL_ROW_CLIPBOARD_VERSION,
+      source: {
+        blockId: "block_source",
+        blockType: "basic_checklist",
+        columns: [{ id: "task", type: "text", order: 0 }],
+      },
+      rows: [
+        {
+          sourceRowId: "row_1",
+          order: 0,
+          format: {},
+          cells: null,
+        },
+      ],
+    });
+
+    const result = deserializeRowsFromClipboardJson(raw);
+    assert.deepEqual(result, { ok: false, reason: "invalid-payload" });
+  });
+
+  test("map id-mismatch falls back to by-shape strategy", () => {
+    const payload: InternalRowClipboardPayload = {
+      marker: INTERNAL_ROW_CLIPBOARD_MARKER,
+      version: INTERNAL_ROW_CLIPBOARD_VERSION,
+      source: {
+        blockId: "block_source",
+        blockType: "basic_checklist",
+        columns: [
+          { id: "src_done", type: "checkbox", order: 0 },
+          { id: "src_task", type: "text", order: 1 },
+        ],
+      },
+      rows: [
+        {
+          sourceRowId: "row_1",
+          order: 0,
+          format: {},
+          cells: {
+            src_done: { value: true, format: {} },
+            src_task: { value: "hello", format: {} },
+          },
+        },
+      ],
+    };
+
+    // Target has same types in same order but different column ids
+    const target = block({
+      id: "target_shape",
+      columns: [column("checkbox", "tgt_done", 0), column("text", "tgt_task", 1)],
+      rows: [],
+    });
+
+    const result = assertMapSuccess(
+      mapClipboardRowsToBlock(payload, target, { generateRowId: () => "row_new_shape" })
+    );
+
+    assert.equal(result.strategy, "by-shape");
+    assert.deepEqual(result.rows[0]?.cells.tgt_done, { value: true, format: {} });
+    assert.deepEqual(result.rows[0]?.cells.tgt_task, { value: "hello", format: {} });
+  });
+
+  test("map by-column-id rejects when types differ (same id, different type)", () => {
+    const payload: InternalRowClipboardPayload = {
+      marker: INTERNAL_ROW_CLIPBOARD_MARKER,
+      version: INTERNAL_ROW_CLIPBOARD_VERSION,
+      source: {
+        blockId: "block_source",
+        blockType: "basic_checklist",
+        columns: [
+          { id: "x", type: "text", order: 0 },
+        ],
+      },
+      rows: [
+        {
+          sourceRowId: "row_1",
+          order: 0,
+          format: {},
+          cells: {
+            x: { value: "hello", format: {} },
+          },
+        },
+      ],
+    };
+
+    // Target has same id but different type
+    const target = block({
+      id: "target_incompatible",
+      columns: [column("date", "x", 0)],
+      rows: [],
+    });
+
+    // by-column-id fails (types differ); shape lengths match but types differ → incompatible-target
+    const result = mapClipboardRowsToBlock(payload, target, { generateRowId: () => "row_new" });
+    assert.deepEqual(result, { ok: false, reason: "incompatible-target", rows: [] });
+  });
+});

@@ -395,3 +395,118 @@ describe("evaluateRow — calendar-validity edge cases", () => {
     assert.equal(result.hasAlert, false);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Calendar edge cases and time boundaries
+// ---------------------------------------------------------------------------
+
+describe("evaluateRow — calendar and time boundaries", () => {
+  test("leap-year valid date (2024-02-29) triggers alert", () => {
+    const dateCol = column({ id: "due", type: "date" });
+    const now = new Date(2024, 2, 1, 9, 0, 0, 0); // 2024-03-01 09:00
+    const r = row("r1", 0, { due: "2024-02-29" });
+
+    const result = evaluateRow(r, [dateCol], now);
+    assert.equal(result.hasAlert, true);
+  });
+
+  test("non-leap-year Feb 29 is invalid and does not trigger alert", () => {
+    const dateCol = column({ id: "due", type: "date" });
+    const now = new Date(2025, 2, 1, 9, 0, 0, 0);
+    const r = row("r1", 0, { due: "2025-02-29" });
+
+    const result = evaluateRow(r, [dateCol], now);
+    assert.equal(result.hasAlert, false);
+  });
+
+  test("month 13 is invalid and does not trigger alert", () => {
+    const dateCol = column({ id: "due", type: "date" });
+    const now = new Date(2025, 5, 15, 10, 0, 0, 0);
+    const r = row("r1", 0, { due: "2025-13-01" });
+
+    const result = evaluateRow(r, [dateCol], now);
+    assert.equal(result.hasAlert, false);
+  });
+
+  test("month 00 is invalid and does not trigger alert", () => {
+    const dateCol = column({ id: "due", type: "date" });
+    const now = new Date(2025, 5, 15, 10, 0, 0, 0);
+    const r = row("r1", 0, { due: "2025-00-15" });
+
+    const result = evaluateRow(r, [dateCol], now);
+    assert.equal(result.hasAlert, false);
+  });
+
+  test("day 00 is invalid and does not trigger alert", () => {
+    const dateCol = column({ id: "due", type: "date" });
+    const now = new Date(2025, 5, 15, 10, 0, 0, 0);
+    const r = row("r1", 0, { due: "2025-06-00" });
+
+    const result = evaluateRow(r, [dateCol], now);
+    assert.equal(result.hasAlert, false);
+  });
+
+  test("time 23:59:59 at exactly the same time triggers alert (boundary)", () => {
+    const timeCol = column({ id: "when", type: "time" });
+    const now = new Date(2025, 5, 15, 23, 59, 59, 0); // 23:59:59
+    const r = row("r1", 0, { when: "23:59:59" });
+
+    const result = evaluateRow(r, [timeCol], now);
+    assert.equal(result.hasAlert, true);
+  });
+
+  test("time 00:00 with now at 00:01 same local day triggers alert", () => {
+    const timeCol = column({ id: "when", type: "time" });
+    const now = new Date(2025, 5, 15, 0, 1, 0, 0); // 00:01
+    const r = row("r1", 0, { when: "00:00" });
+
+    const result = evaluateRow(r, [timeCol], now);
+    assert.equal(result.hasAlert, true);
+  });
+
+  test("mixed date and time alerts in one row — returns earliest dueAt", () => {
+    const dateCol = column({ id: "due", type: "date" });
+    const timeCol = column({ id: "when", type: "time" });
+    // date: 2025-01-01 09:00 UTC, time: today 14:30 (both past due)
+    const now = new Date(2025, 0, 5, 15, 0, 0, 0); // 2025-01-05 15:00
+    const r = row("r1", 0, { due: "2025-01-01", when: "14:30" });
+
+    const result = evaluateRow(r, [dateCol, timeCol], now);
+    assert.equal(result.hasAlert, true);
+    // The date column (Jan 1 09:00) is earlier than time (today 14:30)
+    assert.equal(result.columnId, "due");
+  });
+});
+
+describe("evaluateWorkspace — tie-breaking and block ordering", () => {
+  test("two rows with exactly equal dueAt — first row encountered wins as primary", () => {
+    const dateCol = column({ id: "due", type: "date" });
+    const rows = [
+      row("r1", 0, { due: "2025-01-01" }),
+      row("r2", 1, { due: "2025-01-01" }),
+    ];
+    const doc = workspaceDocument([block("b1", [dateCol], rows)]);
+    const now = new Date(2025, 0, 5, 10, 0, 0, 0);
+
+    const result = evaluateWorkspace(doc, now);
+    assert.equal(result.count, 2);
+    assert.equal(result.blockId, "b1");
+    assert.equal(result.rowId, "r1"); // first row wins
+  });
+
+  test("primary alert lives in the second block", () => {
+    const dateCol = column({ id: "due", type: "date" });
+    const blocks = [
+      block("b1", [dateCol], [row("r2", 0, { due: "2025-01-05" })]), // less overdue
+      block("b2", [dateCol], [row("r1", 0, { due: "2025-01-01" })]), // more overdue
+    ];
+    const doc = workspaceDocument(blocks);
+    const now = new Date(2025, 0, 5, 10, 0, 0, 0);
+
+    const result = evaluateWorkspace(doc, now);
+    assert.equal(result.count, 2);
+    assert.equal(result.blockId, "b2"); // second block has the primary alert
+    assert.equal(result.rowId, "r1");
+    assert.equal(result.columnId, "due");
+  });
+});

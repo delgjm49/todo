@@ -3214,3 +3214,51 @@ PASS. Review artifact written. Channel message `004-review-to-main.md` appended.
 **Summary:** Reviewed TICKET-059. All acceptance criteria met. AppDefaults extended, validation coerces, workspace creation reads defaults, SettingsPage interactive with conditional accent. 13 tests pass, TS clean, lint clean. No issues found.
 
 **Outcome:** PASS. Handed off to Main for close.
+
+---
+
+## Session 191 — Main dispatch — 2026-05-25
+
+**Artifacts:**
+- `agents/artifacts/060-expand-unit-coverage-dispatch.md`
+- `agents/channels/060-expand-unit-coverage/messages/001-main-to-plan.md`
+
+**Summary:** Dispatched TICKET-060 (Expand unit coverage for domain helpers) to Plan. Scope: audit existing 348+ tests, identify coverage gaps in high-risk pure logic, add focused unit tests.
+
+**Outcome:** Dispatched. Plan timed out after 30 minutes (Claude account quota exhaustion). Repair message 002-main-to-plan.md sent for retry with updated account config.
+
+---
+
+## Session 192 — Plan — 2026-05-25
+
+**Artifacts:**
+- `agents/artifacts/060-expand-unit-coverage-plan.md`
+- `agents/channels/060-expand-unit-coverage/messages/003-plan-to-dev.md`
+
+**Summary:** Created plan for TICKET-060. Identified 2 untested modules (formattingToCellStyle, selectedFormattingTarget) and edge-case gaps in alerts, sorting, column helpers, block templates, clipboard. ~60 new test cases across 2 new files + 5 modified files.
+
+**Outcome:** Plan complete. Dispatched to Dev.
+
+---
+
+## Session 193 — Dev — 2026-05-25
+
+**Artifacts:**
+- `agents/artifacts/060-expand-unit-coverage-complete.md`
+- `agents/channels/060-expand-unit-coverage/messages/004-dev-to-review.md`
+
+**Summary:** Implemented 53 new pure-function tests: 2 new files (formattingToCellStyle, selectedFormattingTarget) + 5 extended files (alertEvaluation, blockRowSorting, columnHelpers, blockTemplates, rowClipboard). All pass. No domain code modified.
+
+**Outcome:** Dev complete. Dispatched to Review.
+
+---
+
+## Session 194 — Review PASS — 2026-05-25
+
+**Artifacts:**
+- `agents/artifacts/060-expand-unit-coverage-review.md`
+- `agents/channels/060-expand-unit-coverage/messages/005-review-to-main.md`
+
+**Summary:** Reviewed TICKET-060. All acceptance criteria met. Spot-checked assertions against source modules — all correct. 3 deviations reasonable and documented. 410 pass, lint clean. Only pre-existing time-sensitive flake in alertScheduler.test.ts.
+
+**Outcome:** PASS. Handed off to Main for close.

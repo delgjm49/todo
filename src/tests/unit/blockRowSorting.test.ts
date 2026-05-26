@@ -252,3 +252,71 @@ describe("block row sorting helpers", () => {
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// Intl.Collator and edge case coverage
+// ---------------------------------------------------------------------------
+
+describe("block row sorting — collation and edge cases", () => {
+  test("Intl.Collator numeric ordering sorts text numbers naturally", () => {
+    const textColumn = column({ id: "text", type: "text" });
+    const rows = [
+      row("r_2", 0, { text: "2" }),
+      row("r_10", 1, { text: "10" }),
+      row("r_1", 2, { text: "1" }),
+    ];
+
+    const sorted = sortRowsByColumn(rows, [textColumn], sort("text", "asc"));
+    assert.deepEqual(ids(sorted), ["r_1", "r_2", "r_10"]);
+  });
+
+  test("case-insensitive ordering places lowercase after uppercase", () => {
+    const textColumn = column({ id: "text", type: "text" });
+    const rows = [
+      row("r_b", 0, { text: "b" }),
+      row("r_A", 1, { text: "A" }),
+      row("r_C", 2, { text: "C" }),
+    ];
+
+    const sorted = sortRowsByColumn(rows, [textColumn], sort("text", "asc"));
+    assert.deepEqual(ids(sorted), ["r_A", "r_b", "r_C"]);
+  });
+
+  test("diacritic-insensitive equality preserves display order", () => {
+    const textColumn = column({ id: "text", type: "text" });
+    const rows = [
+      row("r_cafe_accent", 0, { text: "café" }),
+      row("r_cafe_plain", 1, { text: "cafe" }),
+    ];
+
+    const sorted = sortRowsByColumn(rows, [textColumn], sort("text", "asc"));
+    // Both compare equal; display order (by row.order) is preserved
+    assert.deepEqual(ids(sorted), ["r_cafe_accent", "r_cafe_plain"]);
+    assert.deepEqual(
+      sorted.map((entry) => entry.order),
+      [0, 1]
+    );
+  });
+
+  test("sortRowsByColumn with empty rows returns empty array", () => {
+    const textColumn = column({ id: "text", type: "text" });
+
+    const sorted = sortRowsByColumn([], [textColumn], sort("text", "asc"));
+    assert.deepEqual(sorted, []);
+  });
+
+  test("sortRowsByColumn with non-sortable column (numbered) returns display order reindexed", () => {
+    const numberedColumn = column({ id: "numbered", type: "numbered" });
+    const rows = [
+      row("r_b", 10, { numbered: null }),
+      row("r_a", 5, { numbered: null }),
+    ];
+
+    const sorted = sortRowsByColumn(rows, [numberedColumn], sort("numbered", "asc"));
+    assert.deepEqual(ids(sorted), ["r_a", "r_b"]);
+    assert.deepEqual(
+      sorted.map((entry) => entry.order),
+      [0, 1]
+    );
+  });
+});
