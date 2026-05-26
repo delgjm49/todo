@@ -1,6 +1,6 @@
 # Sessions — Living Summary
 
-Last updated: 2026-05-25
+Last updated: 2026-05-26
 
 ## Phase Status
 
@@ -34,23 +34,24 @@ Last updated: 2026-05-25
 | TICKET-063 Autosave dirty-state UX | Complete | Closed via full workflow — no issues found |
 | TICKET-065 Manual QA and release blockers | Complete | Closed via full workflow — audit-only, no code changes, no critical defects found |
 | Unit test CI fixes | Complete | Closed via Main → Dev → Review — fixed two Windows CI-blocking JS unit tests |
+| Test warning cleanup | Complete | Closed via Main → Dev → Review with re-review — reduced full-suite React/JSDOM warning noise |
 | Phase 3 spool channels | Complete | Validated end-to-end |
 | Windows subprocess dispatch-auto | Complete | Validated on Windows 11 |
 
 ## Last Sessions
 
+- **Session 206 — Review PASS** (2026-05-26): Re-reviewed and passed test warning cleanup. Full JS suite passes 442/442; lint clean; prior SaveStatusIndicator full-suite failure and useAlertNavigation cleanup issue fixed.
+- **Session 205 — Dev Re-fix** (2026-05-26): Fixed pending autosave timer contamination in `saveStatusIndicator.test.tsx` and corrected `useAlertNavigation` cleanup to separately cancel rAF and timeout handles.
+- **Session 204 — Review** (2026-05-26): Returned test warning cleanup to Dev for full-suite SaveStatusIndicator failure and timer cleanup correctness issue.
+- **Session 203 — Dev** (2026-05-26): Reduced React/JSDOM warning noise from roughly ~382 to ~33 via test harness cleanup and `useAlertNavigation` teardown cleanup. Full suite passed in Dev.
+- **Session 202 — Main dispatch** (2026-05-26): Dispatched focused warning cleanup task for remaining full-suite React/JSDOM warning noise after CI-blocking tests were fixed.
 - **Session 201 — Review PASS** (2026-05-26): Reviewed and passed unit-test CI fixes. Target test files pass standalone with zero `act(...)` warnings/uncaught errors; full JS suite passes 442/442; lint clean. Remaining warnings are unrelated pre-existing harness issues.
 - **Session 200 — Dev** (2026-05-26): Fixed `saveStatusIndicator.test.tsx` retry flushing and `textCellClipboard.test.tsx` JSDOM/React controlled-input keyboard dispatch timing. Test-only changes; no product source modifications.
 - **Session 199 — Main dispatch** (2026-05-26): Dispatched focused Main → Dev → Review task for two Windows CI-blocking unit-test failures.
-- **Session 198 — Review PASS** (2026-05-25): Reviewed and passed TICKET-061 integration tests. 30/30 new integration tests pass, lint clean, no production code changes. 2 pre-existing unit-test failures confirmed unrelated.
-- **Session 197 — Dev** (2026-05-25): Implemented 6 integration test files + shared helper under `src/tests/integration/`. 30 new tests. Test build and lint clean.
-- **Session 196 — Plan** (2026-05-25): Planned 6 integration test files + helper module. Real save→reload round-trips via `createMemoryStorageBackend()`. Flagged dispatch "Vitest" wording deviation.
-- **Session 195 — Main dispatch** (2026-05-25): Dispatched TICKET-061 to Plan.
-- **Session 194 — Review PASS** (2026-05-25): Reviewed and passed TICKET-060 expand unit coverage. 410 tests pass, lint clean. ~53 new pure-function tests across 7 files. No issues found.
 
 ## Next Recommended
 
-**Full Planned v1 (MVP Core + Extended) plus TICKET-060 and TICKET-061 are now complete. The two known JS unit-test failures blocking Windows CI have been fixed.**
+**Full Planned v1 (MVP Core + Extended) plus TICKET-060 and TICKET-061 are now complete. The two known JS unit-test failures blocking Windows CI have been fixed, and full-suite React/JSDOM warning noise has been substantially reduced.**
 
 Remaining in the broader backlog:
 - **TICKET-062**: Add Playwright smoke flow — P2, Size M

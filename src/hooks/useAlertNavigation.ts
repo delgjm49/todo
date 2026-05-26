@@ -80,16 +80,19 @@ export function useAlertNavigation(): void {
     // Mark as flashed (synchronously, before any async operations)
     flashedAlertKeys.add(key);
 
-    // Wait one frame for React to render the workspace/selection change,
-    // then scroll and flash
-    requestAnimationFrame(() => {
+    // Collect pending timer handles so the cleanup below can cancel each
+    // with the matching API. requestAnimationFrame returns a numeric ID
+    // (browser) or a Timeout object (JSDOM polyfill). setTimeout returns
+    // a numeric ID (browser) or a Timeout object (Node.js + JSDOM).
+    // We track them separately so we always call cancelAnimationFrame for
+    // rAF handles and clearTimeout for timeout handles.
+    const rafHandle: ReturnType<typeof requestAnimationFrame> = requestAnimationFrame(() => {
       const blockEl = document.querySelector(`[data-testid="block-card-${blockId}"]`);
       if (blockEl) {
         blockEl.scrollIntoView({ behavior: "smooth", block: "start" });
       }
 
-      // Slight delay to let the block scroll settle, then scroll to row
-      setTimeout(() => {
+      const scrollTimeoutHandle: ReturnType<typeof setTimeout> = setTimeout(() => {
         const rowEl = document.querySelector(`[data-testid="row-${rowId}"]`);
         if (rowEl) {
           rowEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -98,11 +101,24 @@ export function useAlertNavigation(): void {
         // Trigger flash animation
         useUiStore.getState().setAlertFlashRowId(rowId);
 
-        // Clear flash after animation completes (slightly longer than 2.5s)
-        setTimeout(() => {
+        // Clear flash after animation completes
+        const flashTimeoutHandle: ReturnType<typeof setTimeout> = setTimeout(() => {
           useUiStore.getState().setAlertFlashRowId(null);
         }, 2600);
+
+        timeoutHandles.push(flashTimeoutHandle);
       }, 300);
+
+      timeoutHandles.push(scrollTimeoutHandle);
     });
+
+    const timeoutHandles: Array<ReturnType<typeof setTimeout>> = [];
+
+    return () => {
+      cancelAnimationFrame(rafHandle);
+      for (const handle of timeoutHandles) {
+        clearTimeout(handle);
+      }
+    };
   }, [activeWorkspaceId]);
 }

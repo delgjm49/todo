@@ -91,12 +91,21 @@ beforeEach(() => {
 });
 
 afterEach(async () => {
+  // Flush pending timers (rAF polyfilled to setTimeout 0) while the
+  // React tree is still active, so callbacks fire inside act().
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+
   await act(async () => {
     root?.unmount();
   });
   root = null;
-  useDocumentStore.setState(initialDocumentState);
-  useUiStore.setState(initialUiState);
+
+  await act(async () => {
+    useDocumentStore.setState(initialDocumentState);
+    useUiStore.setState(initialUiState);
+  });
 });
 
 describe("context menu dismissal", () => {

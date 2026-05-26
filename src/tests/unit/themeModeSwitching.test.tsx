@@ -84,7 +84,14 @@ afterEach(async () => {
   root = null;
   // Reset document classes
   document.documentElement.className = "";
-  useDocumentStore.setState(initialDocumentState);
+
+  // Flush microtasks so pending store subscribers settle before reset.
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  // Reset store inside act() to absorb any leaked React state updates.
+  await act(async () => {
+    useDocumentStore.setState(initialDocumentState);
+  });
 });
 
 describe("theme mode switching", () => {

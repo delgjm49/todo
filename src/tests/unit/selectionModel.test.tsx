@@ -70,12 +70,22 @@ beforeEach(() => {
 });
 
 afterEach(async () => {
+  // Flush pending timers (rAF polyfilled to setTimeout 0) and any
+  // nested timeouts while the React tree is still active, so that
+  // their callbacks fire inside act() and don't leak across tests.
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+
   await act(async () => {
     root?.unmount();
   });
   root = null;
-  useDocumentStore.setState(initialDocumentState);
-  useUiStore.setState(initialUiState);
+
+  await act(async () => {
+    useDocumentStore.setState(initialDocumentState);
+    useUiStore.setState(initialUiState);
+  });
 });
 
 describe("selection model ui", () => {

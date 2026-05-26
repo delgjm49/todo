@@ -3344,3 +3344,63 @@ PASS. Review artifact written. Channel message `004-review-to-main.md` appended.
 **Summary:** Reviewed and passed the unit-test CI fixes. Re-ran `npm run test:build`, both target test files individually, full `scripts/run-tests.mjs`, and `npm run lint`. Confirmed target tests pass in isolation with zero `act(...)` warnings and zero uncaught errors. Full suite passes 442/442; remaining warnings/errors are in unrelated, pre-existing harnesses and out of scope. Confirmed only the two target unit test files changed under `src/`.
 
 **Outcome:** PASS. Handed off to Main for close.
+
+---
+
+## Session 202 — Main Dispatch — 2026-05-26
+
+**Artifacts:**
+- `agents/artifacts/067-test-warning-cleanup-dispatch.md`
+- `agents/channels/067-test-warning-cleanup/messages/001-main-to-dev.md`
+
+**Summary:** Dispatched a focused Main → Dev → Review task to eliminate or narrowly document the remaining full-suite React/JSDOM `act(...)` warnings and uncaught errors noted by dispatch 066 Review.
+
+**Outcome:** Dispatched to Dev.
+
+---
+
+## Session 203 — Dev Complete — 2026-05-26
+
+**Artifacts:**
+- `agents/artifacts/067-test-warning-cleanup-dev.md`
+- `agents/channels/067-test-warning-cleanup/messages/002-dev-to-review.md`
+
+**Summary:** Eliminated most pre-existing React `act()` warnings across test files with microtask flushing, `act()`-wrapped store resets, and async `act()` renders. Added `useAlertNavigation` teardown cleanup for leaked rAF/setTimeout callbacks. Documented remaining warning/error deferrals. Full suite passed in Dev.
+
+**Outcome:** Dev complete. Dispatched to Review.
+
+---
+
+## Session 204 — Review — 2026-05-26
+
+**Artifacts:**
+- `agents/artifacts/067-test-warning-cleanup-review.md`
+- `agents/channels/067-test-warning-cleanup/messages/003-review-to-dev.md`
+
+**Summary:** Reviewed dispatch 067 and returned fixes. `npm run test:build` and lint passed, but full JS suite failed 441/442 due to a `SaveStatusIndicator` partial-save rendering failure in the shared full-suite run. Also flagged `useAlertNavigation` cleanup for routing timeout handles to `cancelAnimationFrame` instead of `clearTimeout`.
+
+**Outcome:** FAIL. Returned to Dev for fixes.
+
+---
+
+## Session 205 — Dev Re-fix — 2026-05-26
+
+**Artifacts:**
+- `agents/artifacts/067-test-warning-cleanup-dev.md` (updated)
+- `agents/channels/067-test-warning-cleanup/messages/004-dev-to-review.md`
+
+**Summary:** Fixed the full-suite `SaveStatusIndicator` failure by clearing pending autosave timers in `beforeEach` via `beginDocumentTransaction("formatting")` and removing a polluted module-snapshot reset. Corrected `useAlertNavigation` cleanup to track rAF and timeout handles separately and cancel each with the matching API. Full suite passed 442/442 in Dev; lint clean.
+
+**Outcome:** Dev fixes complete. Dispatched to Review.
+
+---
+
+## Session 206 — Review PASS — 2026-05-26
+
+**Artifacts:**
+- `agents/artifacts/067-test-warning-cleanup-review.md`
+- `agents/channels/067-test-warning-cleanup/messages/005-review-to-main.md`
+
+**Summary:** Re-reviewed dispatch 067 after Dev fixes. Confirmed `npm run test:build`, full JS suite (442/442), and `npm run lint` all pass. Confirmed the prior `SaveStatusIndicator` full-suite failure and `useAlertNavigation` cleanup issue are fixed. Remaining warning/error output is documented as accepted deferrals with no broad/global suppression added.
+
+**Outcome:** PASS. Handed off to Main for close.

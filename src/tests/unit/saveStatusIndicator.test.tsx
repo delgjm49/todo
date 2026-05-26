@@ -6,8 +6,6 @@ import { createRoot, type Root } from "react-dom/client";
 import { SaveStatusIndicator } from "../../components/layout/SaveStatusIndicator.js";
 import { useDocumentStore } from "../../stores/documentStore.js";
 
-const initialDocumentState = useDocumentStore.getState();
-
 let dom: JSDOM;
 let root: Root | null = null;
 
@@ -57,6 +55,14 @@ beforeEach(() => {
     { url: "http://localhost/" }
   );
   installDomGlobals(dom.window as unknown as Window & typeof globalThis);
+
+  // Clear any pending autosave timer that earlier test files may have set.
+  // The timer calls saveAll which sets saveStatus="error" when settings is
+  // null, overwriting this test's state during the full shared-module run.
+  // beginDocumentTransaction internally calls clearAutosaveTimer() before
+  // checking for a valid snapshot.  Since settings is null in this test, the
+  // call returns early after clearing the timer, with no further side effects.
+  useDocumentStore.getState().beginDocumentTransaction("formatting");
 });
 
 afterEach(async () => {
@@ -64,7 +70,9 @@ afterEach(async () => {
     root?.unmount();
   });
   root = null;
-  useDocumentStore.setState(initialDocumentState);
+
+  // Flush microtasks so pending effects settle.
+  await new Promise((resolve) => setTimeout(resolve, 0));
 });
 
 async function renderIndicator() {

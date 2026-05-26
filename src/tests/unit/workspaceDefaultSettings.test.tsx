@@ -95,7 +95,7 @@ function getCheckboxByLabel(labelText: string): HTMLInputElement | null {
 }
 
 describe("workspace default settings", () => {
-  test("each workspace default field renders with the current store value", () => {
+  test("each workspace default field renders with the current store value", async () => {
     useDocumentStore.setState({
       settings: { ...DEFAULT_SETTINGS },
     });
@@ -103,7 +103,7 @@ describe("workspace default settings", () => {
     const container = document.getElementById("root");
     assert.ok(container);
     root = createRoot(container);
-    act(() => {
+    await act(async () => {
       root?.render(<SettingsPage />);
     });
 
@@ -397,7 +397,7 @@ describe("workspace default settings", () => {
     assert.equal(state.settings?.defaults.workspaceAccentColor, "#60A5FA");
   });
 
-  test("color swatch divs render next to hex inputs", () => {
+  test("color swatch divs render next to hex inputs", async () => {
     useDocumentStore.setState({
       settings: { ...DEFAULT_SETTINGS },
     });
@@ -405,7 +405,7 @@ describe("workspace default settings", () => {
     const container = document.getElementById("root");
     assert.ok(container);
     root = createRoot(container);
-    act(() => {
+    await act(async () => {
       root?.render(<SettingsPage />);
     });
 

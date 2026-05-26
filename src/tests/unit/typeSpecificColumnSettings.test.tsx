@@ -173,8 +173,18 @@ afterEach(async () => {
     root?.unmount();
   });
   root = null;
-  useDocumentStore.setState(initialDocumentState);
-  useUiStore.setState(initialUiState);
+
+  // Flush one microtask so any pending store subscribers from the
+  // unmounted tree settle before we reset the store state.
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  // Reset stores inside act() to absorb any React state updates that
+  // leaked beyond the unmount (e.g. from store subscriptions or
+  // effect-triggered re-renders not fully flushed by unmount).
+  await act(async () => {
+    useDocumentStore.setState(initialDocumentState);
+    useUiStore.setState(initialUiState);
+  });
 });
 
 describe("TypeSpecificColumnSettings", () => {
