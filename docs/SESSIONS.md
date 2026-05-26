@@ -30,6 +30,7 @@ Last updated: 2026-05-25
 | TICKET-058 Editor default settings UI | Complete | Closed via full workflow — 17 tests, no issues found |
 | TICKET-059 Workspace default settings UI | Complete | Closed via full workflow — 13 tests, no issues found, one Plan retry due to pane failure |
 | TICKET-060 Expand unit coverage for domain helpers | Complete | Closed via full workflow — 53 new pure-function tests, one Plan retry due to account quota timeout |
+| TICKET-061 Integration tests for critical editing flows | Complete | Closed via full workflow — 30 integration tests, 2 pre-existing unit-test failures unrelated |
 | TICKET-063 Autosave dirty-state UX | Complete | Closed via full workflow — no issues found |
 | TICKET-065 Manual QA and release blockers | Complete | Closed via full workflow — audit-only, no code changes, no critical defects found |
 | Phase 3 spool channels | Complete | Validated end-to-end |
@@ -37,6 +38,10 @@ Last updated: 2026-05-25
 
 ## Last Sessions
 
+- **Session 198 — Review PASS** (2026-05-25): Reviewed and passed TICKET-061 integration tests. 30/30 new integration tests pass, lint clean, no production code changes. 2 pre-existing unit-test failures confirmed unrelated.
+- **Session 197 — Dev** (2026-05-25): Implemented 6 integration test files + shared helper under `src/tests/integration/`. 30 new tests. Test build and lint clean.
+- **Session 196 — Plan** (2026-05-25): Planned 6 integration test files + helper module. Real save→reload round-trips via `createMemoryStorageBackend()`. Flagged dispatch "Vitest" wording deviation.
+- **Session 195 — Main dispatch** (2026-05-25): Dispatched TICKET-061 to Plan.
 - **Session 194 — Review PASS** (2026-05-25): Reviewed and passed TICKET-060 expand unit coverage. 410 tests pass, lint clean. ~53 new pure-function tests across 7 files. No issues found.
 - **Session 193 — Dev** (2026-05-25): Implemented 53 new pure-function tests: 2 new files + 5 extended. Coverage gaps in formattingToCellStyle, selectedFormattingTarget, alerts, sorting, column helpers, block templates, clipboard.
 - **Session 192 — Plan** (2026-05-25): Created plan after initial Plan timeout (account quota). ~60 test cases across 2 new files + 5 modified.
@@ -44,10 +49,9 @@ Last updated: 2026-05-25
 
 ## Next Recommended
 
-**Full Planned v1 (MVP Core + Extended) plus TICKET-060 are now complete.**
+**Full Planned v1 (MVP Core + Extended) plus TICKET-060 and TICKET-061 are now complete.**
 
 Remaining in the broader backlog:
-- **TICKET-061**: Add integration tests for critical editing flows — P1, Size L
 - **TICKET-062**: Add Playwright smoke flow — P2, Size M
 
 **Completed:**

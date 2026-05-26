@@ -3262,3 +3262,49 @@ PASS. Review artifact written. Channel message `004-review-to-main.md` appended.
 **Summary:** Reviewed TICKET-060. All acceptance criteria met. Spot-checked assertions against source modules — all correct. 3 deviations reasonable and documented. 410 pass, lint clean. Only pre-existing time-sensitive flake in alertScheduler.test.ts.
 
 **Outcome:** PASS. Handed off to Main for close.
+
+## Session 195 — Main dispatch — 2026-05-25
+
+**Artifacts:**
+- `agents/artifacts/061-integration-tests-dispatch.md`
+- `agents/channels/061-integration-tests/messages/001-main-to-plan.md`
+
+**Summary:** Dispatched TICKET-061 (Add integration tests for critical editing flows) to Plan. P1, Size L. Scope covers workspace CRUD, block CRUD, row editing, save/load, undo/redo. All dependencies complete.
+
+**Outcome:** Dispatched. Waiting for Plan artifact.
+
+---
+
+## Session 196 — Plan — 2026-05-25
+
+**Artifacts:**
+- `agents/artifacts/061-integration-tests-plan.md`
+- `agents/channels/061-integration-tests/messages/002-plan-to-dev.md`
+
+**Summary:** Planned six new integration test files (workspace lifecycle, block lifecycle, row/cell editing, save/load round-trip, undo/redo, alert integration) plus a small shared helper module under a new `src/tests/integration/` directory. Plan focuses on real save→reload round-trips through `createMemoryStorageBackend()` + `createStorageService()` to fill the gap between existing per-flow unit tests and the not-yet-written Playwright E2E. Flagged one deviation: dispatch says "Vitest" but the project uses Node's built-in `node:test` runner.
+
+**Outcome:** Plan complete. Dispatched to Dev.
+
+---
+
+## Session 197 — Dev — 2026-05-25
+
+**Artifacts:**
+- `agents/artifacts/061-integration-tests-complete.md`
+- `agents/channels/061-integration-tests/messages/003-dev-to-review.md`
+
+**Summary:** Implemented all six integration test files and shared helper module under `src/tests/integration/`. All 30 new test cases pass. Test build (`npm run test:build`) and lint (`npm run lint`) both clean. Two pre-existing unit-test failures remain unchanged.
+
+**Outcome:** Implementation complete. Ready for review.
+
+---
+
+## Session 198 — Review PASS — 2026-05-25
+
+**Artifacts:**
+- `agents/artifacts/061-integration-tests-review.md`
+- `agents/channels/061-integration-tests/messages/004-review-to-main.md`
+
+**Summary:** Reviewed TICKET-061 implementation against the plan. All 8 plan steps and acceptance criteria met. Reran `npm run lint` (clean), full `npm run test` (442 tests, 440 pass, 2 pre-existing fail), and integration-only tests in isolation (30/30 pass across 3 runs). Confirmed the 2 failures predate this dispatch by clean-rebuilding from `git stash -u` pre-dispatch state. No production code modifications.
+
+**Outcome:** PASS. Handed off to Main for close.
