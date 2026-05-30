@@ -3658,3 +3658,34 @@ Closed dispatch 072 after Review PASS. Consolidated Sessions 225–227, marked t
 
 ### Outcome
 The Windows release gate is green: Playwright Chromium install, e2e smoke, typecheck, unit tests, lint, frontend build, Tauri build, and Windows artifact upload all ran and passed. No source, test, or workflow changes were required in this dispatch.
+
+---
+
+## Session 229 — Main Dispatch
+
+**Artifacts:** `agents/artifacts/073-post-mvp-backlog-planning-dispatch.md`; `agents/channels/073-post-mvp-backlog-planning/messages/001-main-to-plan.md`
+
+### Summary
+Dispatched a post-MVP backlog planning recommendation after final v1 release-readiness validation. The task asks Plan to compare search, archive/completed views, import/export, and richer date/time pickers, then recommend one first post-MVP implementation slice for Main/user discussion.
+
+### Outcome
+Created Phase 3 spool channel `agents/channels/073-post-mvp-backlog-planning/` and routed to Plan. This is planning-only; Plan should return to Main with a recommendation artifact rather than sending implementation work to Dev.
+
+## Session 230 — Plan
+
+**Artifacts:** `agents/artifacts/073-post-mvp-backlog-planning-plan.md`; `agents/channels/073-post-mvp-backlog-planning/messages/002-plan-to-main.md`
+
+### Summary
+Created the post-MVP backlog planning recommendation. Compared search, archive/completed views, import/export, and richer date/time pickers across user value, complexity, data/model impact, test impact, and release risk.
+
+### Outcome
+Recommended Search MVP as the first post-MVP feature slice because it is high-value, read-only, and fits the current eager in-memory document architecture without storage changes. Routed the planning-only dispatch back to Main for user scope discussion and future implementation dispatching.
+## Session 231 — Main Close
+
+**Artifacts:** `agents/artifacts/073-post-mvp-backlog-planning-dispatch.md`; `agents/artifacts/073-post-mvp-backlog-planning-plan.md`; `agents/channels/073-post-mvp-backlog-planning/messages/003-main-to-main.md`
+
+### Summary
+Closed dispatch 073 after Plan returned the post-MVP backlog recommendation to Main. Consolidated Sessions 229–230, marked the planning-only channel closed, and prepared the artifacts for commit and push. Plan compared search, archive/completed views, import/export, and richer date/time pickers.
+
+### Outcome
+Plan recommends Search MVP as the first post-MVP feature slice because it is high-value, read-only/additive, fits the eager in-memory document architecture, and requires no storage migration. Main should discuss/dispatch the Search MVP implementation next if the user agrees.
