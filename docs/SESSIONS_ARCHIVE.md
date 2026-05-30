@@ -3569,3 +3569,44 @@ Closed dispatch 070 after Review PASS. Consolidated Sessions 217–219, marked t
 
 ### Outcome
 Playwright e2e CI provisioning is complete. Local verification passed for `npm run test:e2e`, `npm run test:build`, and `npm run lint`; Review validated the workflow YAML and noted that the first GitHub Actions run after push is the authoritative check for `windows-latest` Chromium download and Vite startup.
+
+---
+
+## Session 221 — Main Dispatch
+
+**Artifacts:** `agents/artifacts/071-windows-ci-result-triage-dispatch.md`; `agents/channels/071-windows-ci-result-triage/messages/001-main-to-dev.md`
+
+### Summary
+Dispatched Windows CI result triage for the run triggered by commit `7cb50d9` after adding Playwright e2e to CI. The task asks Dev to inspect the authoritative GitHub Actions result, document a green run with evidence, or diagnose and fix any red run using the failed Actions log as source of truth.
+
+### Outcome
+Created Phase 3 spool channel `agents/channels/071-windows-ci-result-triage/` and routed directly to Dev because the scope is focused CI triage. Review should confirm the CI evidence or any narrow fix before Main closes.
+
+## Session 222 — Dev
+
+**Artifacts:** `agents/artifacts/071-windows-ci-result-triage-complete.md`; `agents/channels/071-windows-ci-result-triage/messages/002-dev-to-review.md`
+
+### Summary
+Inspected the authoritative Windows CI run for commit `7cb50d9` (`26690052965`) and found it failed in the required `E2E smoke tests` step. The failed Actions log showed `playwright test` timed out waiting 120000ms for `config.webServer`, so Dev made the narrow fix of starting Vite with `--host 127.0.0.1` in `playwright.config.js`.
+
+### Outcome
+Local verification after the fix passed for `npm run test:e2e`, `npm run test:build`, and `npm run lint`. Routed to Review with `State = ready-for-review`; Main should not commit until Review passes.
+
+## Session 223 — Review
+
+**Artifacts:** `agents/artifacts/071-windows-ci-result-triage-review.md`; `agents/channels/071-windows-ci-result-triage/messages/003-review-to-main.md`
+
+### Summary
+Independently confirmed Windows CI run `26690052965` (head SHA matches `7cb50d9`) failed in the required `E2E smoke tests` step with `Timed out waiting 120000ms from config.webServer`. Verified Dev's diagnosis — a `localhost`→`::1` vs probed `127.0.0.1` loopback mismatch — and that the one-line `--host 127.0.0.1` fix in `playwright.config.js` is correct, minimal, and preserves every CI gate. Re-ran `npm run test:e2e` (1 passed) and `npm run lint` (clean) locally.
+
+### Outcome
+PASS. Created `003-review-to-main.md` with `State = review-pass`. The next authoritative Windows CI run after Main pushes is the final green confirmation; no further Dev work required.
+## Session 224 — Main Close
+
+**Artifacts:** `agents/artifacts/071-windows-ci-result-triage-dispatch.md`; `agents/artifacts/071-windows-ci-result-triage-complete.md`; `agents/artifacts/071-windows-ci-result-triage-review.md`; `agents/channels/071-windows-ci-result-triage/messages/004-main-to-main.md`
+
+### Summary
+Closed dispatch 071 after Review PASS. Consolidated Sessions 221–223, marked the channel closed, and prepared the reviewed Playwright `webServer` fix for commit and push. The failed Windows CI run `26690052965` was diagnosed as a loopback mismatch: Vite bound to `localhost` while Playwright probed `127.0.0.1:1420`; `playwright.config.js` now starts Vite with `--host 127.0.0.1`.
+
+### Outcome
+Windows CI result triage is complete. Local `npm run test:e2e`, `npm run test:build`, and `npm run lint` passed after the fix; the next pushed Windows CI run is the authoritative confirmation that the e2e smoke and downstream Tauri build gates pass on `windows-latest`.
