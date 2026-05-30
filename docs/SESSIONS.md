@@ -41,23 +41,24 @@ Last updated: 2026-05-30
 | Windows CI result triage | Complete | Dispatch 071 fixes Playwright/Vite Windows loopback binding after e2e CI timeout; next pushed CI run is authoritative |
 | Windows CI final green confirmation | Complete | Dispatch 072 confirmed run `26690266772` green across e2e, JS gates, frontend build, Tauri build, and MSI artifact upload |
 | Post-MVP backlog planning | Complete | Dispatch 073 recommends Search MVP as the first post-MVP feature slice |
+| Search MVP | Complete | Dispatch 074 adds read-only top-bar search with grouped results and navigation/highlight; test-hardening follow-up optional |
 | Phase 3 spool channels | Complete | Validated end-to-end |
 | Windows subprocess dispatch-auto | Complete | Validated on Windows 11 |
 
 ## Last Sessions
 
+- **Session 236 — Main close** (2026-05-30): Closed dispatch 074 after Review PASS plus independent audit, consolidated Sessions 232–235, marked the channel closed, and prepared Search MVP for commit/push.
+- **Session 235 — Review PASS** (2026-05-30): Re-reviewed Search MVP after Dev added the non-DOM navigation invariant test. `npm run lint`, `npm run build`, and `npm run test` passed (449/449, 63 suites).
+- **Session 234 — Review** (2026-05-30): Returned Search MVP to Dev for an executing read-only/no-autosave invariant test after the dedicated DOM SearchPanel test was deferred.
+- **Session 233 — Plan** (2026-05-30): Planned Search MVP implementation with pure in-memory search, top-bar panel, contextual results, and transient navigation/highlight.
+- **Session 232 — Main dispatch** (2026-05-30): Dispatched Search MVP as the first post-MVP implementation slice.
 - **Session 231 — Main close** (2026-05-30): Closed dispatch 073 after Plan returned the post-MVP backlog recommendation, consolidated Sessions 229–230, marked the channel closed, and prepared the planning artifacts for commit/push.
 - **Session 230 — Plan** (2026-05-30): Compared search, archive/completed views, import/export, and richer date/time pickers; recommended Search MVP as the first post-MVP slice.
 - **Session 229 — Main dispatch** (2026-05-30): Dispatched post-MVP backlog planning after v1 and release-readiness validation completed.
-- **Session 228 — Main close** (2026-05-30): Closed dispatch 072 after Review PASS, consolidated Sessions 225–227, marked the channel closed, and prepared the final Windows CI green-confirmation artifacts for commit/push.
-- **Session 227 — Review PASS** (2026-05-30): Independently confirmed Windows CI run `26690266772` for commit `9d709f6` is green with all release gates passing and no code changes required.
-- **Session 226 — Dev** (2026-05-30): Watched run `26690266772` to completion and documented the successful e2e smoke, JS gates, frontend build, Tauri build, and Windows artifact upload.
-- **Session 225 — Main dispatch** (2026-05-30): Dispatched final Windows CI green confirmation for the run triggered by the Playwright IPv4 fix.
-- **Session 224 — Main close** (2026-05-30): Closed dispatch 071 after Review PASS, consolidated Sessions 221–223, marked the channel closed, and prepared the Playwright `webServer` Windows loopback fix for commit/push.
 
 ## Next Recommended
 
-**Recommended next work: Search MVP implementation.** Plan recommends a read-only, additive first post-MVP slice: top-bar search panel; case-insensitive search across workspace titles, block titles, and text/date/time/dropdown cell values; grouped results; result selection navigates to the workspace and highlights the target. No storage migration or persisted search history in the first slice.
+**Recommended next work: Search test hardening (small follow-up).** Independent audit found no blocking Search MVP issues, but suggested optional hardening: add explicit unit coverage for checkbox/bullet/numbered exclusion cases, add multi-block/multi-row deterministic ordering coverage, and review/tighten `useSearchNavigation` requestAnimationFrame/fallback timer cleanup if worthwhile. Do not build a full DOM SearchPanel/jsdom harness unless explicitly choosing a broader UI test infrastructure task.
 
 Remaining in the broader v1 backlog:
 - None.
@@ -74,6 +75,7 @@ Remaining in the broader v1 backlog:
 - Windows CI result triage: complete — Playwright webServer binds Vite to `127.0.0.1`
 - Windows CI final green confirmation: complete — e2e, JS gates, frontend build, Tauri build, and Windows artifact upload passed
 - Post-MVP backlog planning: complete — Search MVP recommended first
+- Search MVP: complete — read-only top-bar search with navigation/highlight
 - Autosave UX (063): complete
 - Manual QA (065): complete — no critical defects found
 

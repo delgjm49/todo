@@ -144,3 +144,13 @@ describe("ui store", () => {
     assert.deepEqual(useUiStore.getState().selection, { kind: "none" });
   });
 });
+
+describe("search flash state", () => {
+  test("search flash row id can be set and cleared", () => {
+    useUiStore.setState({ searchFlashRowId: null });
+    useUiStore.getState().setSearchFlashRowId("row_search");
+    assert.equal(useUiStore.getState().searchFlashRowId, "row_search");
+    useUiStore.getState().setSearchFlashRowId(null);
+    assert.equal(useUiStore.getState().searchFlashRowId, null);
+  });
+});

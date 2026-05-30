@@ -3,6 +3,7 @@ import { BlockTemplateMenu } from "../block/BlockTemplateMenu.js";
 import { useDocumentStore } from "../../stores/documentStore.js";
 import { useUiStore } from "../../stores/uiStore.js";
 import { SaveStatusIndicator } from "./SaveStatusIndicator.js";
+import { SearchPanel } from "../search/SearchPanel.js";
 
 export function TopBar() {
   const activeWorkspaceId = useDocumentStore((state) => state.activeWorkspaceId);
@@ -17,10 +18,12 @@ export function TopBar() {
   const toggleInspector = useUiStore((state) => state.toggleInspector);
   const activeWorkspace = workspaceIndex.find((entry) => entry.id === activeWorkspaceId) ?? workspaceIndex[0] ?? null;
   const [blockMenuOpen, setBlockMenuOpen] = useState(false);
+  const [searchPanelOpen, setSearchPanelOpen] = useState(false);
   const blockMenuRef = useRef<HTMLDivElement | null>(null);
+  const searchPanelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (!blockMenuOpen) {
+    if (!blockMenuOpen && !searchPanelOpen) {
       return undefined;
     }
 
@@ -28,13 +31,17 @@ export function TopBar() {
       if (blockMenuRef.current && event.target instanceof Node && blockMenuRef.current.contains(event.target)) {
         return;
       }
+      if (searchPanelRef.current && event.target instanceof Node && searchPanelRef.current.contains(event.target)) {
+        return;
+      }
 
       setBlockMenuOpen(false);
+      setSearchPanelOpen(false);
     };
 
     window.addEventListener("pointerdown", handlePointerDown);
     return () => window.removeEventListener("pointerdown", handlePointerDown);
-  }, [blockMenuOpen]);
+  }, [blockMenuOpen, searchPanelOpen]);
 
   return (
     <header className="sticky top-0 z-30 flex h-[56px] items-center justify-between gap-4 border-b border-border bg-panel/92 px-5 backdrop-blur">
@@ -44,8 +51,28 @@ export function TopBar() {
       </div>
 
       <div className="flex items-center gap-2">
+        <div className="relative" ref={searchPanelRef}>
+          <ToolbarButton
+            label="Search"
+            onClick={() => {
+              setSearchPanelOpen((state) => !state);
+              setBlockMenuOpen(false);
+            }}
+          />
+          {searchPanelOpen ? (
+            <div className="absolute right-0 top-[calc(100%+0.5rem)] z-50">
+              <SearchPanel onClose={() => setSearchPanelOpen(false)} />
+            </div>
+          ) : null}
+        </div>
         <div className="relative">
-          <ToolbarButton label="+ Block" onClick={() => setBlockMenuOpen((state) => !state)} />
+          <ToolbarButton
+            label="+ Block"
+            onClick={() => {
+              setBlockMenuOpen((state) => !state);
+              setSearchPanelOpen(false);
+            }}
+          />
           {blockMenuOpen ? (
             <div className="absolute left-0 top-[calc(100%+0.5rem)] z-40" ref={blockMenuRef}>
               <BlockTemplateMenu

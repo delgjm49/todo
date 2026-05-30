@@ -24,6 +24,7 @@ export function RowView({ block, workspaceId }: { block: Block; workspaceId: str
   const setRowDragState = useUiStore((state) => state.setRowDragState);
   const resetRowInteractionState = useUiStore((state) => state.resetRowInteractionState);
   const alertFlashRowId = useUiStore((state) => state.alertFlashRowId);
+  const searchFlashRowId = useUiStore((state) => state.searchFlashRowId);
   const selection = useUiStore((state) => state.selection);
   const selectRow = useUiStore((state) => state.selectRow);
   const selectCell = useUiStore((state) => state.selectCell);
@@ -54,7 +55,7 @@ export function RowView({ block, workspaceId }: { block: Block; workspaceId: str
           <div
             className={`px-3 py-2.5 transition ${dragging ? "opacity-50" : ""} ${dropTarget ? "bg-accent/10" : ""} ${
               isRowSelected(row.id) ? "bg-accent/5" : ""
-            } ${alertFlashRowId === row.id ? "animate-alertFlash" : ""}`}
+            } ${alertFlashRowId === row.id || searchFlashRowId === row.id ? "animate-alertFlash" : ""}`}
             data-completed={completed ? "true" : undefined}
             data-testid={`row-${row.id}`}
             draggable
