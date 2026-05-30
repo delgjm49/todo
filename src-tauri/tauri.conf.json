@@ -28,6 +28,6 @@
     "targets": ["msi"],
     "publisher": "Todo App",
     "copyright": "Copyright (c) 2026. All rights reserved.",
-    "icon": ["icons/icon.png"]
+    "icon": ["icons/icon.png", "icons/icon.ico"]
   }
 }

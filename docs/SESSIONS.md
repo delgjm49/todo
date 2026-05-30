@@ -35,13 +35,13 @@ Last updated: 2026-05-30
 | TICKET-065 Manual QA and release blockers | Complete | Closed via full workflow — audit-only, no code changes, no critical defects found |
 | Unit test CI fixes | Complete | Closed via Main → Dev → Review — initial local fixes for two Windows CI-blocking JS unit tests |
 | Test warning cleanup | Complete | Closed via Main → Dev → Review with re-review — reduced full-suite React/JSDOM warning noise |
-| Windows CI Tauri unit fixes | Review passed; pending CI confirmation | Dispatch 068 removes the text-cell clipboard React/JSDOM suppressor/native keyboard dispatch path and verifies alertScheduler; Main must confirm Tauri Windows CI green after push |
+| Windows CI Tauri unit fixes | Complete | Dispatch 068 removes the text-cell clipboard React/JSDOM suppressor/native keyboard dispatch path, verifies alertScheduler, and includes the existing `.ico` in the Tauri bundle icon list so the Windows CI bundle step can complete |
 | Phase 3 spool channels | Complete | Validated end-to-end |
 | Windows subprocess dispatch-auto | Complete | Validated on Windows 11 |
 
 ## Last Sessions
 
-- **Session 210 — Main close** (2026-05-30): Closed dispatch 068 after Review PASS, consolidated Sessions 207–209, marked the channel closed, and prepared commit/push plus canonical Tauri Windows CI verification.
+- **Session 210 — Main close** (2026-05-30): Closed dispatch 068 after Review PASS, consolidated Sessions 207–209, marked the channel closed, pushed the reviewed unit-test fix, and addressed the follow-on Windows bundle failure by including the existing `.ico` icon in Tauri config.
 - **Session 209 — Review PASS** (2026-05-30): Reviewed and passed Windows CI Tauri unit fixes. Confirmed no text-cell clipboard global error suppressor/native controlled-input `KeyboardEvent` dispatch remains; targeted tests, full JS suite (442/442), and lint passed locally.
 - **Session 208 — Dev** (2026-05-30): Removed the text-cell clipboard global error suppressor by extracting React key handling into `text-cell-key-down.ts` and testing it directly. Verified `alertScheduler.test.ts` passes locally; no alert scheduler product behavior changes.
 - **Session 207 — Main dispatch** (2026-05-30): Dispatched focused Windows CI follow-up for the two failures left red after dispatches 066/067, with Tauri Windows CI green as the authoritative acceptance gate.
@@ -52,7 +52,7 @@ Last updated: 2026-05-30
 
 ## Next Recommended
 
-**Full Planned v1 (MVP Core + Extended) plus TICKET-060 and TICKET-061 are now complete. Dispatch 068 has Review PASS for the remaining Tauri Windows CI unit-test blockers; Main must verify the canonical Windows CI workflow is green after push before considering the loop fully closed.**
+**Full Planned v1 (MVP Core + Extended) plus TICKET-060 and TICKET-061 are now complete. Dispatch 068 has Review PASS for the remaining Tauri Windows CI unit-test blockers and includes the follow-on Tauri icon config fix needed for the Windows bundle step.**
 
 Remaining in the broader backlog:
 - **TICKET-062**: Add Playwright smoke flow — P2, Size M
@@ -68,7 +68,7 @@ Remaining in the broader backlog:
 
 ## Blockers / Open Questions
 
-- Pending Main closeout verification: canonical Tauri Windows CI must be green on the pushed dispatch 068 commit.
+None.
 
 ## Full Archive
 

@@ -11,7 +11,7 @@ Temporary worker append buffer. Main consolidates entries into `docs/SESSIONS_AR
 **Artifacts:** `agents/artifacts/068-windows-ci-tauri-unit-fixes-dispatch.md`; `agents/artifacts/068-windows-ci-tauri-unit-fixes-dev.md`; `agents/artifacts/068-windows-ci-tauri-unit-fixes-review.md`; `agents/channels/068-windows-ci-tauri-unit-fixes/messages/004-main-to-main.md`
 
 ### Summary
-Closed dispatch 068 after Review PASS. Consolidated Sessions 207–209, marked the channel closed, and prepared the focused text-cell clipboard Windows CI fix for commit/push and canonical Tauri Windows CI verification.
+Closed dispatch 068 after Review PASS. Consolidated Sessions 207–209, marked the channel closed, pushed the focused text-cell clipboard Windows CI fix, and observed that the Windows unit/lint/frontend gates passed while the bundle step then failed because Tauri's bundle icon list omitted the existing `.ico` file.
 
 ### Outcome
-Pending final GitHub Actions confirmation after push: the dispatch is only considered fully accepted once the canonical Tauri Windows CI workflow is green on the pushed commit.
+Added the existing `src-tauri/icons/icon.ico` to `src-tauri/tauri.conf.json` so the MSI bundle step can find a Windows icon. Final acceptance remains the canonical Tauri Windows CI workflow passing on the pushed closeout commit.
