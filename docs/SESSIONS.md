@@ -43,23 +43,24 @@ Last updated: 2026-05-30
 | Post-MVP backlog planning | Complete | Dispatch 073 recommends Search MVP as the first post-MVP feature slice |
 | Search MVP | Complete | Dispatch 074 adds read-only top-bar search with grouped results and navigation/highlight; test-hardening follow-up optional |
 | Search test hardening | Complete | Dispatch 075 adds explicit exclusion/order coverage and tightens search-navigation pending cleanup; timer-hygiene note remains optional |
+| Search navigation timer hygiene | Complete | Dispatch 076 removes the deterministic real-timer overlap from the rAF cancellation test |
 | Phase 3 spool channels | Complete | Validated end-to-end |
 | Windows subprocess dispatch-auto | Complete | Validated on Windows 11 |
 
 ## Last Sessions
 
+- **Session 244 — Main close** (2026-05-30): Closed dispatch 076 after Review PASS, consolidated Sessions 241–243, marked the channel closed, and prepared the timer-hygiene micro follow-up for commit/push.
+- **Session 243 — Review PASS** (2026-05-30): Reviewed timer hygiene. Confirmed the rAF cancellation test now schedules zero real timers while preserving stale-rAF and second-result-selection assertions; test/lint/build passed.
+- **Session 242 — Dev** (2026-05-30): Changed the rAF cancellation test to use a block-shaped second navigation target, avoiding the 300ms row-flash timer path.
+- **Session 241 — Main dispatch** (2026-05-30): Dispatched Search navigation timer-test hygiene as a micro follow-up to dispatch 075.
 - **Session 240 — Main close** (2026-05-30): Closed dispatch 075 after Review PASS WITH NOTES, consolidated Sessions 237–239, marked the channel closed, and prepared Search MVP hardening for commit/push.
 - **Session 239 — Review PASS WITH NOTES** (2026-05-30): Reviewed Search test hardening. Verified explicit exclusion/order coverage and rAF cleanup; `npm run test` passed 453/453 plus lint/build. Deferred one deterministic timer-overlap hygiene note.
 - **Session 238 — Dev** (2026-05-30): Added Search hardening tests for checkbox/bullet/numbered exclusions and multi-level ordering; tightened `useSearchNavigation` pending rAF/fallback cleanup.
 - **Session 237 — Main dispatch** (2026-05-30): Dispatched Search MVP hardening follow-up after independent audit.
-- **Session 236 — Main close** (2026-05-30): Closed dispatch 074 after Review PASS plus independent audit, consolidated Sessions 232–235, marked the channel closed, and prepared Search MVP for commit/push.
-- **Session 235 — Review PASS** (2026-05-30): Re-reviewed Search MVP after Dev added the non-DOM navigation invariant test. `npm run lint`, `npm run build`, and `npm run test` passed (449/449, 63 suites).
-- **Session 234 — Review** (2026-05-30): Returned Search MVP to Dev for an executing read-only/no-autosave invariant test after the dedicated DOM SearchPanel test was deferred.
-- **Session 233 — Plan** (2026-05-30): Planned Search MVP implementation with pure in-memory search, top-bar panel, contextual results, and transient navigation/highlight.
 
 ## Next Recommended
 
-**Recommended next work: optional search timer-test hygiene.** Dispatch 075 completed the substantive hardening. The only remaining note is small test hygiene: remove or control the deterministic real 300ms timer overlap in `searchNavigation.test.ts` without introducing a DOM/jsdom harness. If not worth a separate micro-dispatch, the next product candidate is the next post-MVP seed: richer date/time pickers or archive/completed views.
+**Recommended next work: choose the next post-MVP product seed.** Search MVP and its hardening follow-ups are complete. The next dispatch should be a scoped planning pass or implementation kickoff for one of the remaining post-MVP candidates, with **richer date/time pickers** as the lowest-risk product improvement and **archive/completed views** as the higher-impact but higher-model-risk alternative.
 
 Remaining in the broader v1 backlog:
 - None.
@@ -78,6 +79,7 @@ Remaining in the broader v1 backlog:
 - Post-MVP backlog planning: complete — Search MVP recommended first
 - Search MVP: complete — read-only top-bar search with navigation/highlight
 - Search test hardening: complete — explicit exclusion/order coverage and pending navigation cleanup
+- Search navigation timer hygiene: complete — rAF cancellation test no longer schedules a real row-flash timer
 - Autosave UX (063): complete
 - Manual QA (065): complete — no critical defects found
 

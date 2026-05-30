@@ -69,7 +69,15 @@ describe("search navigation", () => {
   test("clears pending requestAnimationFrame navigation before scheduling the next result", () => {
     const source = createFixture();
     const destination = createFixture();
-    destination.result = { ...destination.result, workspaceId: "ws_source", blockId: "block_source", rowId: "row_source", columnId: "col_source" };
+    destination.result = {
+      ...destination.result,
+      id: "block:ws_source:block_source",
+      kind: "block",
+      workspaceId: "ws_source",
+      blockId: "block_source",
+      rowId: undefined,
+      columnId: undefined,
+    };
     let nextFrameId = 1;
     const callbacks = new Map<number, FrameRequestCallback>();
     const canceled = new Set<number>();
@@ -92,11 +100,9 @@ describe("search navigation", () => {
     }
 
     assert.deepEqual(useUiStore.getState().selection, {
-      kind: "cell",
+      kind: "block",
       workspaceId: "ws_source",
       blockId: "block_source",
-      rowId: "row_source",
-      columnId: "col_source",
     });
     assert.equal(canceled.has(1), true);
   });

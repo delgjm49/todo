@@ -3815,3 +3815,57 @@ Closed dispatch 075 after Review PASS WITH NOTES. Consolidated Sessions 237–23
 
 ### Outcome
 Search test hardening is complete. Review verified `npm run test` (453/453, 63 suites), `npm run lint`, and `npm run build`; one non-blocking note remains about a deterministic 300ms real-timer overlap in the new rAF test, suitable for a small future hygiene dispatch.
+
+---
+
+## Session 241 — Main Dispatch
+
+**Artifacts:** `agents/artifacts/076-search-navigation-timer-hygiene-dispatch.md`; `agents/channels/076-search-navigation-timer-hygiene/messages/001-main-to-dev.md`
+
+### Summary
+Dispatched a micro Search navigation timer-hygiene follow-up after closing dispatch 075. The task asks Dev to remove/control the deterministic 300ms real-timer overlap in the non-DOM rAF cancellation test while preserving the stale-rAF assertion and avoiding DOM/jsdom harness work.
+
+### Outcome
+Created Phase 3 spool channel `agents/channels/076-search-navigation-timer-hygiene/` and routed directly to Dev because the scope is tiny and test-focused.
+
+## Session 242 — Dev
+
+### Agent Type
+Dev
+
+### Artifacts
+- Channel: agents/channels/076-search-navigation-timer-hygiene/
+- Dispatch: agents/artifacts/076-search-navigation-timer-hygiene-dispatch.md
+- Complete: agents/artifacts/076-search-navigation-timer-hygiene-complete.md
+
+### Summary
+Implemented the search navigation timer-hygiene micro follow-up. The rAF cancellation test now uses a block-shaped second navigation target so it still proves stale rAF cancellation and second-result selection without scheduling the real 300ms row-flash timer.
+
+### Outcome
+Implementation complete and verified with `npm run test`, `npm run lint`, and `npm run build`. Appended `agents/channels/076-search-navigation-timer-hygiene/messages/002-dev-to-review.md` for Review.
+
+## Session 243 — Review
+
+### Agent Type
+Review
+
+### Artifacts
+- Channel: agents/channels/076-search-navigation-timer-hygiene/
+- Dispatch: agents/artifacts/076-search-navigation-timer-hygiene-dispatch.md
+- Complete: agents/artifacts/076-search-navigation-timer-hygiene-complete.md
+- Review: agents/artifacts/076-search-navigation-timer-hygiene-review.md
+
+### Summary
+Reviewed the timer-hygiene micro fix. Confirmed the block-shaped second navigation target means the only rAF callback that runs no longer reaches the `setTimeout(rowTimeout, 300)` path, so the test now schedules zero real timers while keeping the stale-rAF cancellation (`canceled.has(1)`) and second-result-selection assertions meaningful. No DOM/jsdom harness introduced; test-only change with no product behavior impact.
+
+### Outcome
+**PASS.** Independently re-ran `npm run test` (453/453), `npm run lint` (clean), and `npm run build` (success) green on zsh/macOS. Appended `agents/channels/076-search-navigation-timer-hygiene/messages/003-review-to-main.md` with `State = review-pass`. Did not commit — Main handles git.
+## Session 244 — Main Close
+
+**Artifacts:** `agents/artifacts/076-search-navigation-timer-hygiene-dispatch.md`; `agents/artifacts/076-search-navigation-timer-hygiene-complete.md`; `agents/artifacts/076-search-navigation-timer-hygiene-review.md`; `agents/channels/076-search-navigation-timer-hygiene/messages/004-main-to-main.md`
+
+### Summary
+Closed dispatch 076 after Review PASS. Consolidated Sessions 241–243, marked the channel closed, and prepared the Search navigation timer-hygiene micro follow-up for commit and push. The rAF cancellation test now uses a block-shaped second target so it still proves stale rAF cancellation and second-result selection without scheduling the real 300ms row-flash timer.
+
+### Outcome
+Search navigation timer hygiene is complete. Review verified `npm run test` (453/453, 63 suites), `npm run lint`, and `npm run build`; no required fixes or open notes remain from the Search MVP hardening chain.
