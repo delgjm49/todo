@@ -37,23 +37,24 @@ Last updated: 2026-05-30
 | Unit test CI fixes | Complete | Closed via Main → Dev → Review — initial local fixes for two Windows CI-blocking JS unit tests |
 | Test warning cleanup | Complete | Closed via Main → Dev → Review with re-review — reduced full-suite React/JSDOM warning noise |
 | Windows CI Tauri unit fixes | Complete | Dispatch 068 removes the text-cell clipboard React/JSDOM suppressor/native keyboard dispatch path, verifies alertScheduler, and includes the existing `.ico` in the Tauri bundle icon list so the Windows CI bundle step can complete |
+| Playwright e2e CI provisioning | Complete | Dispatch 070 installs Playwright Chromium and runs `npm run test:e2e` as a required Windows CI gate |
 | Phase 3 spool channels | Complete | Validated end-to-end |
 | Windows subprocess dispatch-auto | Complete | Validated on Windows 11 |
 
 ## Last Sessions
 
+- **Session 220 — Main close** (2026-05-30): Closed dispatch 070 after Review PASS, consolidated Sessions 217–219, marked the channel closed, and prepared the Playwright e2e CI provisioning workflow change for commit/push.
+- **Session 219 — Review PASS** (2026-05-30): Reviewed and passed dispatch 070. Confirmed `npx playwright install chromium` plus required `npm run test:e2e` are added to Windows CI, existing gates remain, YAML is valid, and local e2e/test-build/lint verification passed.
+- **Session 218 — Dev** (2026-05-30): Added Playwright Chromium provisioning and required e2e smoke gate to `.github/workflows/tauri-windows.yml`, preserving typecheck, unit, lint, frontend build, Tauri build, and artifact upload.
+- **Session 217 — Main dispatch** (2026-05-30): Dispatched focused Playwright e2e CI provisioning follow-up after TICKET-062.
 - **Session 216 — Main close** (2026-05-30): Closed dispatch 069 after Review PASS, consolidated Sessions 211–215, marked the channel closed, and prepared the Playwright smoke flow for commit/push.
 - **Session 215 — Review PASS** (2026-05-30): Re-reviewed and passed TICKET-062 after Dev fixes. `npm run test:e2e` passed (`1 passed`), plus `test:build` and lint; note that e2e environments need Playwright Chromium installed.
 - **Session 214 — Dev Re-fix** (2026-05-30): Fixed the smoke by asserting the real seeded Home state, adding a narrow `workspace-block-count` test hook, and waiting for persisted localStorage content before reload.
 - **Session 214 — Review** (2026-05-30): Returned the initial smoke to Dev because installing Chromium exposed a real assertion failure: Home seeds one Today block, not zero, and the block-count selector was ambiguous.
-- **Session 213 — Dev** (2026-05-30): Implemented the initial enabled Playwright smoke against the Vite renderer/Chromium boundary; test/build and lint passed, but e2e was initially misclassified as blocked only by missing browser binaries.
-- **Session 212 — Plan** (2026-05-30): Planned the TICKET-062 smoke flow, scoped to the existing Vite renderer Playwright config rather than packaged Tauri desktop automation.
-- **Session 211 — Main dispatch** (2026-05-30): Dispatched TICKET-062 Playwright smoke flow as the remaining broader backlog item.
-- **Session 210 — Main close** (2026-05-30): Closed dispatch 068 after Review PASS, consolidated Sessions 207–209, marked the channel closed, pushed the reviewed unit-test fix, and addressed the follow-on Windows bundle failure by including the existing `.ico` icon in Tauri config.
 
 ## Next Recommended
 
-**Full Planned v1 (MVP Core + Extended) plus TICKET-060, TICKET-061, and TICKET-062 are complete. The remaining near-term work is release hardening outside the original v1 backlog: confirm Windows CI/package status after the latest commits, provision Playwright browsers for any e2e CI path, and decide whether to start post-MVP backlog seeds.**
+**Full planned v1 and the e2e CI gate are complete. Next recommended work is release-readiness validation: confirm the pushed Windows CI run is green end-to-end and, if it fails, dispatch a focused CI/package fix using the failed Actions log as the source of truth. If CI is green, the next dispatch should be a post-MVP planning pass to choose the first backlog seed (search, archive/completed views, import/export, or richer date/time pickers).**
 
 Remaining in the broader v1 backlog:
 - None.
@@ -66,6 +67,7 @@ Remaining in the broader v1 backlog:
 - Unit coverage expansion (060): complete — 53 new pure-function tests
 - Integration coverage (061): complete — 30 integration tests
 - Playwright smoke flow (062): complete — Vite renderer/Chromium e2e smoke passes with browsers installed
+- Playwright e2e CI provisioning: complete — Windows CI installs Chromium and runs the smoke as a required gate
 - Autosave UX (063): complete
 - Manual QA (065): complete — no critical defects found
 

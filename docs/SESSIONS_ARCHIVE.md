@@ -3527,3 +3527,45 @@ Closed dispatch 069 after Review PASS. Consolidated Sessions 211–215, marked t
 
 ### Outcome
 TICKET-062 is complete. Review verified `npm run test:e2e` (`1 passed`), `npm run test:build`, and `npm run lint` all pass with Playwright Chromium installed. Clean environments must provision the Playwright Chromium binary before running e2e.
+
+---
+
+## Session 217 — Main Dispatch
+
+**Artifacts:** `agents/artifacts/070-playwright-e2e-ci-provisioning-dispatch.md`; `agents/channels/070-playwright-e2e-ci-provisioning/messages/001-main-to-dev.md`
+
+### Summary
+Dispatched Playwright e2e CI provisioning as a focused follow-up to TICKET-062. The task asks Dev to update the existing Windows CI workflow so clean runners install Playwright Chromium and run `npm run test:e2e` as a required gate.
+
+### Outcome
+Created Phase 3 spool channel `agents/channels/070-playwright-e2e-ci-provisioning/` and routed directly to Dev because the scope is small and workflow-focused. Review should confirm CI cannot silently pass without executing the smoke.
+
+## Session 218 — Dev
+
+**Artifacts:** `agents/channels/070-playwright-e2e-ci-provisioning/`; `agents/artifacts/070-playwright-e2e-ci-provisioning-dispatch.md`; `agents/artifacts/070-playwright-e2e-ci-provisioning-complete.md`
+
+### Summary
+Implemented Playwright e2e CI provisioning in the Windows Tauri workflow. Added a Chromium browser install step and required `npm run test:e2e` gate while preserving the existing typecheck, unit, lint, frontend build, Tauri build, and artifact upload steps.
+
+### Outcome
+Verification passed locally for `npm run test:e2e`, `npm run test:build`, and `npm run lint`. Created the Dev completion artifact and appended the Dev → Review channel message for review.
+
+## Session 219 — Review
+
+**Artifacts:** `agents/artifacts/070-playwright-e2e-ci-provisioning-review.md`; `agents/channels/070-playwright-e2e-ci-provisioning/messages/003-review-to-main.md`
+
+### Summary
+Reviewed the Windows CI workflow change for Playwright e2e provisioning. Confirmed `npx playwright install chromium` and a required `npm run test:e2e` step were added additively (git diff: two new steps, nothing removed), all existing gates (typecheck, unit, lint, frontend build, Tauri build, artifact upload) remain, and the job cannot silently pass (no `continue-on-error`/`|| true`; `playwright test` exits non-zero on failure; `webServer` is plain Vite so no desktop GUI hangs the runner). Reran `npm run test:e2e`, `npm run test:build`, and `npm run lint` locally — all pass; YAML validated.
+
+### Outcome
+**PASS.** Appended the Review → Main channel message with `State = review-pass`. Noted the expected macOS-vs-Windows verification boundary (first Actions run validates runner-side Chromium/Vite startup). Did not commit — Main handles git.
+
+## Session 220 — Main Close
+
+**Artifacts:** `agents/artifacts/070-playwright-e2e-ci-provisioning-dispatch.md`; `agents/artifacts/070-playwright-e2e-ci-provisioning-complete.md`; `agents/artifacts/070-playwright-e2e-ci-provisioning-review.md`; `agents/channels/070-playwright-e2e-ci-provisioning/messages/004-main-to-main.md`
+
+### Summary
+Closed dispatch 070 after Review PASS. Consolidated Sessions 217–219, marked the channel closed, and prepared the reviewed Windows CI workflow change for commit and push. The workflow now provisions Playwright Chromium and runs `npm run test:e2e` as a required gate while preserving existing typecheck, unit, lint, frontend build, Tauri build, and artifact upload steps.
+
+### Outcome
+Playwright e2e CI provisioning is complete. Local verification passed for `npm run test:e2e`, `npm run test:build`, and `npm run lint`; Review validated the workflow YAML and noted that the first GitHub Actions run after push is the authoritative check for `windows-latest` Chromium download and Vite startup.
