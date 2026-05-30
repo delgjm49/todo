@@ -39,23 +39,24 @@ Last updated: 2026-05-30
 | Windows CI Tauri unit fixes | Complete | Dispatch 068 removes the text-cell clipboard React/JSDOM suppressor/native keyboard dispatch path, verifies alertScheduler, and includes the existing `.ico` in the Tauri bundle icon list so the Windows CI bundle step can complete |
 | Playwright e2e CI provisioning | Complete | Dispatch 070 installs Playwright Chromium and runs `npm run test:e2e` as a required Windows CI gate |
 | Windows CI result triage | Complete | Dispatch 071 fixes Playwright/Vite Windows loopback binding after e2e CI timeout; next pushed CI run is authoritative |
+| Windows CI final green confirmation | Complete | Dispatch 072 confirmed run `26690266772` green across e2e, JS gates, frontend build, Tauri build, and MSI artifact upload |
 | Phase 3 spool channels | Complete | Validated end-to-end |
 | Windows subprocess dispatch-auto | Complete | Validated on Windows 11 |
 
 ## Last Sessions
 
+- **Session 228 — Main close** (2026-05-30): Closed dispatch 072 after Review PASS, consolidated Sessions 225–227, marked the channel closed, and prepared the final Windows CI green-confirmation artifacts for commit/push.
+- **Session 227 — Review PASS** (2026-05-30): Independently confirmed Windows CI run `26690266772` for commit `9d709f6` is green with all release gates passing and no code changes required.
+- **Session 226 — Dev** (2026-05-30): Watched run `26690266772` to completion and documented the successful e2e smoke, JS gates, frontend build, Tauri build, and Windows artifact upload.
+- **Session 225 — Main dispatch** (2026-05-30): Dispatched final Windows CI green confirmation for the run triggered by the Playwright IPv4 fix.
 - **Session 224 — Main close** (2026-05-30): Closed dispatch 071 after Review PASS, consolidated Sessions 221–223, marked the channel closed, and prepared the Playwright `webServer` Windows loopback fix for commit/push.
 - **Session 223 — Review PASS** (2026-05-30): Reviewed and passed dispatch 071. Confirmed failed run `26690052965` timed out in required e2e, the `--host 127.0.0.1` fix is minimal/correct, all CI gates remain, and local e2e/test-build/lint passed.
 - **Session 222 — Dev** (2026-05-30): Triaged Windows CI run `26690052965`; found Playwright webServer timeout and fixed `playwright.config.js` to bind Vite to `127.0.0.1`.
 - **Session 221 — Main dispatch** (2026-05-30): Dispatched Windows CI result triage for commit `7cb50d9`.
-- **Session 220 — Main close** (2026-05-30): Closed dispatch 070 after Review PASS, consolidated Sessions 217–219, marked the channel closed, and prepared the Playwright e2e CI provisioning workflow change for commit/push.
-- **Session 219 — Review PASS** (2026-05-30): Reviewed and passed dispatch 070. Confirmed `npx playwright install chromium` plus required `npm run test:e2e` are added to Windows CI, existing gates remain, YAML is valid, and local e2e/test-build/lint verification passed.
-- **Session 218 — Dev** (2026-05-30): Added Playwright Chromium provisioning and required e2e smoke gate to `.github/workflows/tauri-windows.yml`, preserving typecheck, unit, lint, frontend build, Tauri build, and artifact upload.
-- **Session 217 — Main dispatch** (2026-05-30): Dispatched focused Playwright e2e CI provisioning follow-up after TICKET-062.
 
 ## Next Recommended
 
-**Full planned v1 is complete and the e2e CI gate has its Windows loopback fix. Next recommended dispatch is one more release-readiness check: inspect the Windows CI run triggered by the pushed dispatch 071 closeout commit. If it is green, document release gate green status with no code changes and then move to post-MVP planning. If it is red, dispatch a focused fix using the failed Actions log as source of truth.**
+**Full planned v1 and release-readiness validation are complete: Windows CI is green end-to-end, including e2e smoke and MSI artifact upload. Next recommended dispatch is post-MVP planning to choose and scope the first seed from the backlog: search, archive/completed views, import/export, or richer date/time pickers.**
 
 Remaining in the broader v1 backlog:
 - None.
@@ -69,7 +70,8 @@ Remaining in the broader v1 backlog:
 - Integration coverage (061): complete — 30 integration tests
 - Playwright smoke flow (062): complete — Vite renderer/Chromium e2e smoke passes with browsers installed
 - Playwright e2e CI provisioning: complete — Windows CI installs Chromium and runs the smoke as a required gate
-- Windows CI result triage: complete — Playwright webServer binds Vite to `127.0.0.1`; next push confirms CI green
+- Windows CI result triage: complete — Playwright webServer binds Vite to `127.0.0.1`
+- Windows CI final green confirmation: complete — e2e, JS gates, frontend build, Tauri build, and Windows artifact upload passed
 - Autosave UX (063): complete
 - Manual QA (065): complete — no critical defects found
 
