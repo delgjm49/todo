@@ -111,7 +111,7 @@ export function MainPane() {
           </div>
           <div className="rounded-2xl border border-border bg-panelMuted px-4 py-3 text-right">
             <div className="text-xs uppercase tracking-[0.24em] text-textMuted">Blocks</div>
-            <div className="mt-1 text-lg font-semibold">{blockCount}</div>
+            <div className="mt-1 text-lg font-semibold" data-testid="workspace-block-count">{blockCount}</div>
           </div>
         </div>
 

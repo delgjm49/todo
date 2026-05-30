@@ -31,6 +31,7 @@ Last updated: 2026-05-30
 | TICKET-059 Workspace default settings UI | Complete | Closed via full workflow — 13 tests, no issues found, one Plan retry due to pane failure |
 | TICKET-060 Expand unit coverage for domain helpers | Complete | Closed via full workflow — 53 new pure-function tests, one Plan retry due to account quota timeout |
 | TICKET-061 Integration tests for critical editing flows | Complete | Closed via full workflow — 30 integration tests, 2 pre-existing unit-test failures unrelated |
+| TICKET-062 Playwright smoke flow | Complete | Closed via full workflow with re-review — Vite renderer/Chromium smoke validates checklist creation, row edits, checkbox toggle, reload persistence |
 | TICKET-063 Autosave dirty-state UX | Complete | Closed via full workflow — no issues found |
 | TICKET-065 Manual QA and release blockers | Complete | Closed via full workflow — audit-only, no code changes, no critical defects found |
 | Unit test CI fixes | Complete | Closed via Main → Dev → Review — initial local fixes for two Windows CI-blocking JS unit tests |
@@ -41,21 +42,21 @@ Last updated: 2026-05-30
 
 ## Last Sessions
 
+- **Session 216 — Main close** (2026-05-30): Closed dispatch 069 after Review PASS, consolidated Sessions 211–215, marked the channel closed, and prepared the Playwright smoke flow for commit/push.
+- **Session 215 — Review PASS** (2026-05-30): Re-reviewed and passed TICKET-062 after Dev fixes. `npm run test:e2e` passed (`1 passed`), plus `test:build` and lint; note that e2e environments need Playwright Chromium installed.
+- **Session 214 — Dev Re-fix** (2026-05-30): Fixed the smoke by asserting the real seeded Home state, adding a narrow `workspace-block-count` test hook, and waiting for persisted localStorage content before reload.
+- **Session 214 — Review** (2026-05-30): Returned the initial smoke to Dev because installing Chromium exposed a real assertion failure: Home seeds one Today block, not zero, and the block-count selector was ambiguous.
+- **Session 213 — Dev** (2026-05-30): Implemented the initial enabled Playwright smoke against the Vite renderer/Chromium boundary; test/build and lint passed, but e2e was initially misclassified as blocked only by missing browser binaries.
+- **Session 212 — Plan** (2026-05-30): Planned the TICKET-062 smoke flow, scoped to the existing Vite renderer Playwright config rather than packaged Tauri desktop automation.
+- **Session 211 — Main dispatch** (2026-05-30): Dispatched TICKET-062 Playwright smoke flow as the remaining broader backlog item.
 - **Session 210 — Main close** (2026-05-30): Closed dispatch 068 after Review PASS, consolidated Sessions 207–209, marked the channel closed, pushed the reviewed unit-test fix, and addressed the follow-on Windows bundle failure by including the existing `.ico` icon in Tauri config.
-- **Session 209 — Review PASS** (2026-05-30): Reviewed and passed Windows CI Tauri unit fixes. Confirmed no text-cell clipboard global error suppressor/native controlled-input `KeyboardEvent` dispatch remains; targeted tests, full JS suite (442/442), and lint passed locally.
-- **Session 208 — Dev** (2026-05-30): Removed the text-cell clipboard global error suppressor by extracting React key handling into `text-cell-key-down.ts` and testing it directly. Verified `alertScheduler.test.ts` passes locally; no alert scheduler product behavior changes.
-- **Session 207 — Main dispatch** (2026-05-30): Dispatched focused Windows CI follow-up for the two failures left red after dispatches 066/067, with Tauri Windows CI green as the authoritative acceptance gate.
-- **Session 206 — Review PASS** (2026-05-26): Re-reviewed and passed test warning cleanup. Full JS suite passes 442/442; lint clean; prior SaveStatusIndicator full-suite failure and useAlertNavigation cleanup issue fixed.
-- **Session 205 — Dev Re-fix** (2026-05-26): Fixed pending autosave timer contamination in `saveStatusIndicator.test.tsx` and corrected `useAlertNavigation` cleanup to separately cancel rAF and timeout handles.
-- **Session 204 — Review** (2026-05-26): Returned test warning cleanup to Dev for full-suite SaveStatusIndicator failure and timer cleanup correctness issue.
-- **Session 203 — Dev** (2026-05-26): Reduced React/JSDOM warning noise from roughly ~382 to ~33 via test harness cleanup and `useAlertNavigation` teardown cleanup. Full suite passed in Dev.
 
 ## Next Recommended
 
-**Full Planned v1 (MVP Core + Extended) plus TICKET-060 and TICKET-061 are now complete. Dispatch 068 has Review PASS for the remaining Tauri Windows CI unit-test blockers and includes the follow-on Tauri icon config fix needed for the Windows bundle step.**
+**Full Planned v1 (MVP Core + Extended) plus TICKET-060, TICKET-061, and TICKET-062 are complete. The remaining near-term work is release hardening outside the original v1 backlog: confirm Windows CI/package status after the latest commits, provision Playwright browsers for any e2e CI path, and decide whether to start post-MVP backlog seeds.**
 
-Remaining in the broader backlog:
-- **TICKET-062**: Add Playwright smoke flow — P2, Size M
+Remaining in the broader v1 backlog:
+- None.
 
 **Completed:**
 - Alerts epic (053–056): complete
@@ -63,6 +64,8 @@ Remaining in the broader backlog:
 - Editor defaults (058): complete
 - Workspace defaults (059): complete
 - Unit coverage expansion (060): complete — 53 new pure-function tests
+- Integration coverage (061): complete — 30 integration tests
+- Playwright smoke flow (062): complete — Vite renderer/Chromium e2e smoke passes with browsers installed
 - Autosave UX (063): complete
 - Manual QA (065): complete — no critical defects found
 

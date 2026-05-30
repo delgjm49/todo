@@ -3443,3 +3443,87 @@ Reviewed the focused Windows CI unit fixes. Verified the text-cell clipboard tes
 
 ### Outcome
 PASS. Created the review artifact and appended `messages/003-review-to-main.md`; Main should commit/push and verify the canonical Tauri Windows CI workflow is green before closing the dispatch.
+
+---
+
+## Session 210 — Main Close
+
+**Artifacts:** `agents/artifacts/068-windows-ci-tauri-unit-fixes-dispatch.md`; `agents/artifacts/068-windows-ci-tauri-unit-fixes-dev.md`; `agents/artifacts/068-windows-ci-tauri-unit-fixes-review.md`; `agents/channels/068-windows-ci-tauri-unit-fixes/messages/004-main-to-main.md`
+
+### Summary
+Closed dispatch 068 after Review PASS. Consolidated Sessions 207–209, marked the channel closed, pushed the focused text-cell clipboard Windows CI fix, and observed that the Windows unit/lint/frontend gates passed while the bundle step then failed because Tauri's bundle icon list omitted the existing `.ico` file.
+
+### Outcome
+Added the existing `src-tauri/icons/icon.ico` to `src-tauri/tauri.conf.json` so the MSI bundle step can find a Windows icon. Final acceptance remains the canonical Tauri Windows CI workflow passing on the pushed closeout commit.
+
+---
+
+## Session 211 — Main Dispatch
+
+**Artifacts:** `agents/artifacts/069-playwright-smoke-flow-dispatch.md`; `agents/channels/069-playwright-smoke-flow/messages/001-main-to-plan.md`
+
+### Summary
+Dispatched TICKET-062 Playwright smoke flow as the next remaining backlog item. The dispatch asks Plan to replace the skipped e2e placeholder with a deterministic smoke for launch/initial state, workspace creation or selection, checklist block creation, row add/edit, reload, and persistence verification.
+
+### Outcome
+Created Phase 3 spool channel `agents/channels/069-playwright-smoke-flow/` and routed to Plan. Plan should define the supported smoke boundary, including whether the existing Playwright config exercises the Vite renderer surface rather than a packaged Tauri desktop shell, before sending to Dev.
+
+## Session 212 — Plan
+
+**Artifacts:** `agents/artifacts/069-playwright-smoke-flow-plan.md`; `agents/channels/069-playwright-smoke-flow/messages/002-plan-to-dev.md`
+
+### Summary
+Created the implementation plan for TICKET-062 Playwright smoke flow. The plan scopes the test to the existing Vite renderer/Chromium Playwright setup, specifies deterministic browser `localStorage` reset for the app storage prefix, and outlines a smoke covering workspace creation/selection, checklist creation, row edits, checkbox toggle, reload, and persistence verification.
+
+### Outcome
+Plan artifact is ready for Dev. The dispatch channel is routed to Dev with required verification for `npm run test:e2e`, `npm run test:build`, and `npm run lint`.
+
+## Session 213 — Dev
+
+**Artifacts:** `agents/artifacts/069-playwright-smoke-flow-complete.md`; `agents/channels/069-playwright-smoke-flow/messages/003-dev-to-review.md`
+
+### Summary
+Implemented the TICKET-062 Playwright smoke test against the configured Vite renderer/Chromium boundary. The enabled smoke resets browser `localStorage` for the app prefix, creates and selects a workspace, adds a checklist block, edits two rows, toggles a checkbox, reloads, and verifies persisted visible state.
+
+### Outcome
+Implementation is ready for Review. `npm run test:build` and `npm run lint` pass; `npm run test:e2e` is blocked by missing local Playwright Chromium binaries and is documented as environment-only in the complete artifact.
+
+## Session 214 — Review
+
+**Artifacts:** `agents/artifacts/069-playwright-smoke-flow-review.md`; `agents/channels/069-playwright-smoke-flow/messages/004-review-to-dev.md`
+
+### Summary
+Reviewed the TICKET-062 Playwright smoke. Per the Test Risk rule that interaction tests must actually pass, Review installed the missing Chromium binary and ran `npm run test:e2e` — it fails on a real assertion at `smoke.spec.ts:37`, not the binary. The starter Home workspace seeds one "Today" checklist block (`bootstrapData.ts`), so the test's expected `0` block count is wrong; the `getByText("Blocks")` count selector is also ambiguous. `test:build` and `lint` pass.
+
+### Outcome
+FAIL — Return to Dev. The "environment-only" classification was masking an implementation defect. Routed to Dev via `messages/004-review-to-dev.md` (State = needs-dev-fix) with two required fixes (initial-state count assumption; ambiguous count selector) plus one item to validate. Not complete until Review returns review-pass.
+
+## Session 214 — Dev
+
+**Artifacts:** `agents/artifacts/069-playwright-smoke-flow-complete.md`; `agents/channels/069-playwright-smoke-flow/messages/005-dev-to-review.md`
+
+### Summary
+Addressed Review's required fixes for the Playwright smoke flow. The smoke now asserts the actual seeded Home state, uses a stable `workspace-block-count` test hook instead of ambiguous `Blocks` text, and waits for persisted browser storage content before reloading.
+
+### Outcome
+Implementation is ready for Review again. `npm run test:e2e`, `npm run test:build`, and `npm run lint` all pass locally.
+
+## Session 215 — Review
+
+**Artifacts:** `agents/artifacts/069-playwright-smoke-flow-review.md` (re-review section); `agents/channels/069-playwright-smoke-flow/messages/006-review-to-main.md`
+
+### Summary
+Re-reviewed the TICKET-062 Playwright smoke after Dev's fixes. All three findings are resolved: the test now asserts the real seeded Home state (Today block + count 1), uses the stable `workspace-block-count` data-testid instead of ambiguous `Blocks` text, and `waitForSaved` now gates on actual persisted localStorage content. Reran the full required suite with the Chromium binary installed.
+
+### Outcome
+PASS — review-pass. `npm run test:e2e` (`1 passed`), `npm run test:build`, and `npm run lint` all pass. The `MainPane.tsx` change is a single additive non-visual `data-testid`. Routed to Main via `messages/006-review-to-main.md` to close, archive PENDING, commit, and push. Note for Main: e2e requires Playwright Chromium binaries to be installed in the run environment.
+
+## Session 216 — Main Close
+
+**Artifacts:** `agents/artifacts/069-playwright-smoke-flow-dispatch.md`; `agents/artifacts/069-playwright-smoke-flow-plan.md`; `agents/artifacts/069-playwright-smoke-flow-complete.md`; `agents/artifacts/069-playwright-smoke-flow-review.md`; `agents/channels/069-playwright-smoke-flow/messages/007-main-to-main.md`
+
+### Summary
+Closed dispatch 069 after Review PASS. Consolidated Sessions 211–215, marked the channel closed, and prepared the reviewed Playwright smoke flow for commit and push. The smoke targets the configured Vite renderer/Chromium Playwright boundary, validates the seeded Home state, creates a checklist in a new workspace, edits rows, toggles a checkbox, reloads, and verifies persisted state.
+
+### Outcome
+TICKET-062 is complete. Review verified `npm run test:e2e` (`1 passed`), `npm run test:build`, and `npm run lint` all pass with Playwright Chromium installed. Clean environments must provision the Playwright Chromium binary before running e2e.
