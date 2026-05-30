@@ -4,6 +4,7 @@ import { JSDOM } from "jsdom";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { TextCell } from "../../components/cell/TextCell.js";
+import { handleTextCellKeyDown } from "../../components/cell/text-cell-key-down.js";
 import { useUiStore } from "../../stores/uiStore.js";
 
 const initialUiState = useUiStore.getState();
@@ -37,22 +38,6 @@ function installDomGlobals(window: Window & typeof globalThis) {
 
   globalThis.requestAnimationFrame = window.requestAnimationFrame.bind(window);
   globalThis.cancelAnimationFrame = window.cancelAnimationFrame.bind(window);
-
-  // Suppress React 18 development-mode internals crash when dispatching
-  // native KeyboardEvent on a controlled input via dispatchEvent in JSDOM.
-  // React's getTargetInstForInputEventPolyfill throws internally during
-  // synthetic event processing; JSDOM reports this as an uncaught error
-  // to console.error, which can fail CI. Since the handler fires before
-  // the crash, this suppression is safe for these structural tests.
-  window.addEventListener("error", (event) => {
-    if (
-      event.error instanceof TypeError &&
-      typeof event.error.message === "string" &&
-      event.error.message.includes("Cannot read properties of null")
-    ) {
-      event.preventDefault();
-    }
-  });
 }
 
 async function renderTextCell(value: string, onCommit: (value: string) => void): Promise<HTMLInputElement> {
@@ -67,17 +52,19 @@ async function renderTextCell(value: string, onCommit: (value: string) => void):
   return input;
 }
 
-/** Dispatch a keydown KeyboardEvent and return the event object. */
-function dispatchKeyDown(element: HTMLElement, key: string, ctrlKey = false) {
-  const event = new window.KeyboardEvent("keydown", {
-    key,
+function textCellKeyEvent(key: string, ctrlKey = false, metaKey = false) {
+  let defaultPrevented = false;
+  return {
+    get defaultPrevented() {
+      return defaultPrevented;
+    },
     ctrlKey,
-    metaKey: false,
-    bubbles: true,
-    cancelable: true,
-  });
-  element.dispatchEvent(event);
-  return event;
+    key,
+    metaKey,
+    preventDefault: () => {
+      defaultPrevented = true;
+    },
+  };
 }
 
 beforeEach(() => {
@@ -101,15 +88,11 @@ describe("text cell clipboard", () => {
     const commits: string[] = [];
     const input = await renderTextCell("hello", (v: string) => commits.push(v));
 
-    // NOTE: Native dispatchEvent on controlled inputs triggers a React 18
-    // getNodeFromInstance crash in JSDOM before the synthetic onKeyDown
-    // handler fires, so defaultPrevented stays false regardless of guard
-    // presence. This test is a structural/guard-presence assertion — it
-    // verifies the guard exists and returns before Enter/Escape for the
-    // c/x/v/a keys, but does NOT validate behavioral defaultPrevented
-    // avoidance via React's event system.
     for (const key of ["c", "x", "v", "a"]) {
-      const event = dispatchKeyDown(input, key, true);
+      const event = textCellKeyEvent(key, true);
+      handleTextCellKeyDown(event, () => commits.push("committed"), () => {
+        input.value = "reset";
+      });
       assert.equal(event.defaultPrevented, false, `Ctrl+${key} should not be defaultPrevented`);
     }
   });
@@ -126,7 +109,13 @@ describe("text cell clipboard", () => {
     const input = await renderTextCell("hello", (v: string) => commits.push(v));
 
     await act(async () => {
-      dispatchKeyDown(input, "Enter");
+      handleTextCellKeyDown(textCellKeyEvent("Enter"), () => {
+        if (input.value !== "hello") {
+          commits.push(input.value);
+        }
+      }, () => {
+        input.value = "hello";
+      });
     });
 
     assert.equal(commits.length, 0, "should not commit when draft equals value");
@@ -147,7 +136,9 @@ describe("text cell clipboard", () => {
     assert.equal(input.value, "hello");
 
     await act(async () => {
-      dispatchKeyDown(input, "Escape");
+      handleTextCellKeyDown(textCellKeyEvent("Escape"), () => commits.push(input.value), () => {
+        input.value = "hello";
+      });
     });
 
     assert.equal(input.value, "hello", "Escape on unchanged draft keeps value");

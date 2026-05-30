@@ -1,6 +1,6 @@
 # Sessions — Living Summary
 
-Last updated: 2026-05-26
+Last updated: 2026-05-30
 
 ## Phase Status
 
@@ -33,25 +33,26 @@ Last updated: 2026-05-26
 | TICKET-061 Integration tests for critical editing flows | Complete | Closed via full workflow — 30 integration tests, 2 pre-existing unit-test failures unrelated |
 | TICKET-063 Autosave dirty-state UX | Complete | Closed via full workflow — no issues found |
 | TICKET-065 Manual QA and release blockers | Complete | Closed via full workflow — audit-only, no code changes, no critical defects found |
-| Unit test CI fixes | Complete | Closed via Main → Dev → Review — fixed two Windows CI-blocking JS unit tests |
+| Unit test CI fixes | Complete | Closed via Main → Dev → Review — initial local fixes for two Windows CI-blocking JS unit tests |
 | Test warning cleanup | Complete | Closed via Main → Dev → Review with re-review — reduced full-suite React/JSDOM warning noise |
+| Windows CI Tauri unit fixes | Review passed; pending CI confirmation | Dispatch 068 removes the text-cell clipboard React/JSDOM suppressor/native keyboard dispatch path and verifies alertScheduler; Main must confirm Tauri Windows CI green after push |
 | Phase 3 spool channels | Complete | Validated end-to-end |
 | Windows subprocess dispatch-auto | Complete | Validated on Windows 11 |
 
 ## Last Sessions
 
+- **Session 210 — Main close** (2026-05-30): Closed dispatch 068 after Review PASS, consolidated Sessions 207–209, marked the channel closed, and prepared commit/push plus canonical Tauri Windows CI verification.
+- **Session 209 — Review PASS** (2026-05-30): Reviewed and passed Windows CI Tauri unit fixes. Confirmed no text-cell clipboard global error suppressor/native controlled-input `KeyboardEvent` dispatch remains; targeted tests, full JS suite (442/442), and lint passed locally.
+- **Session 208 — Dev** (2026-05-30): Removed the text-cell clipboard global error suppressor by extracting React key handling into `text-cell-key-down.ts` and testing it directly. Verified `alertScheduler.test.ts` passes locally; no alert scheduler product behavior changes.
+- **Session 207 — Main dispatch** (2026-05-30): Dispatched focused Windows CI follow-up for the two failures left red after dispatches 066/067, with Tauri Windows CI green as the authoritative acceptance gate.
 - **Session 206 — Review PASS** (2026-05-26): Re-reviewed and passed test warning cleanup. Full JS suite passes 442/442; lint clean; prior SaveStatusIndicator full-suite failure and useAlertNavigation cleanup issue fixed.
 - **Session 205 — Dev Re-fix** (2026-05-26): Fixed pending autosave timer contamination in `saveStatusIndicator.test.tsx` and corrected `useAlertNavigation` cleanup to separately cancel rAF and timeout handles.
 - **Session 204 — Review** (2026-05-26): Returned test warning cleanup to Dev for full-suite SaveStatusIndicator failure and timer cleanup correctness issue.
 - **Session 203 — Dev** (2026-05-26): Reduced React/JSDOM warning noise from roughly ~382 to ~33 via test harness cleanup and `useAlertNavigation` teardown cleanup. Full suite passed in Dev.
-- **Session 202 — Main dispatch** (2026-05-26): Dispatched focused warning cleanup task for remaining full-suite React/JSDOM warning noise after CI-blocking tests were fixed.
-- **Session 201 — Review PASS** (2026-05-26): Reviewed and passed unit-test CI fixes. Target test files pass standalone with zero `act(...)` warnings/uncaught errors; full JS suite passes 442/442; lint clean. Remaining warnings are unrelated pre-existing harness issues.
-- **Session 200 — Dev** (2026-05-26): Fixed `saveStatusIndicator.test.tsx` retry flushing and `textCellClipboard.test.tsx` JSDOM/React controlled-input keyboard dispatch timing. Test-only changes; no product source modifications.
-- **Session 199 — Main dispatch** (2026-05-26): Dispatched focused Main → Dev → Review task for two Windows CI-blocking unit-test failures.
 
 ## Next Recommended
 
-**Full Planned v1 (MVP Core + Extended) plus TICKET-060 and TICKET-061 are now complete. The two known JS unit-test failures blocking Windows CI have been fixed, and full-suite React/JSDOM warning noise has been substantially reduced.**
+**Full Planned v1 (MVP Core + Extended) plus TICKET-060 and TICKET-061 are now complete. Dispatch 068 has Review PASS for the remaining Tauri Windows CI unit-test blockers; Main must verify the canonical Windows CI workflow is green after push before considering the loop fully closed.**
 
 Remaining in the broader backlog:
 - **TICKET-062**: Add Playwright smoke flow — P2, Size M
@@ -67,7 +68,7 @@ Remaining in the broader backlog:
 
 ## Blockers / Open Questions
 
-None.
+- Pending Main closeout verification: canonical Tauri Windows CI must be green on the pushed dispatch 068 commit.
 
 ## Full Archive
 
