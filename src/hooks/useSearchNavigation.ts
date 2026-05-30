@@ -4,10 +4,23 @@ import { useUiStore } from "../stores/uiStore.js";
 import type { SearchResult } from "../domain/search/index.js";
 
 type TimeoutHandle = ReturnType<typeof setTimeout>;
+type PendingSearchNavigationHandle =
+  | { kind: "timeout"; handle: TimeoutHandle }
+  | { kind: "animationFrame"; handle: number };
 
-export function navigateToSearchResult(result: SearchResult, timeoutHandles: TimeoutHandle[] = []): void {
-  for (const handle of timeoutHandles) clearTimeout(handle);
-  timeoutHandles.length = 0;
+function clearPendingSearchNavigation(handles: PendingSearchNavigationHandle[]): void {
+  for (const entry of handles) {
+    if (entry.kind === "animationFrame" && typeof cancelAnimationFrame === "function") {
+      cancelAnimationFrame(entry.handle);
+    } else if (entry.kind === "timeout") {
+      clearTimeout(entry.handle);
+    }
+  }
+  handles.length = 0;
+}
+
+export function navigateToSearchResult(result: SearchResult, timeoutHandles: PendingSearchNavigationHandle[] = []): void {
+  clearPendingSearchNavigation(timeoutHandles);
 
   useDocumentStore.getState().selectWorkspace(result.workspaceId);
 
@@ -33,21 +46,23 @@ export function navigateToSearchResult(result: SearchResult, timeoutHandles: Tim
           ?.scrollIntoView({ behavior: "smooth", block: "nearest" });
         useUiStore.getState().setSearchFlashRowId(result.rowId ?? null);
         const flashTimeout = setTimeout(() => useUiStore.getState().setSearchFlashRowId(null), 2600);
-        timeoutHandles.push(flashTimeout);
+        timeoutHandles.push({ kind: "timeout", handle: flashTimeout });
       }, 300);
-      timeoutHandles.push(rowTimeout);
+      timeoutHandles.push({ kind: "timeout", handle: rowTimeout });
     }
   };
 
   if (typeof requestAnimationFrame === "function") {
-    requestAnimationFrame(selectAndScroll);
+    const animationFrame = requestAnimationFrame(selectAndScroll);
+    timeoutHandles.push({ kind: "animationFrame", handle: animationFrame });
   } else {
-    setTimeout(selectAndScroll, 0);
+    const fallbackTimeout = setTimeout(selectAndScroll, 0);
+    timeoutHandles.push({ kind: "timeout", handle: fallbackTimeout });
   }
 }
 
 export function useSearchNavigation(): (result: SearchResult) => void {
-  const timeoutHandles = useRef<TimeoutHandle[]>([]);
+  const timeoutHandles = useRef<PendingSearchNavigationHandle[]>([]);
 
   return useCallback((result: SearchResult) => {
     navigateToSearchResult(result, timeoutHandles.current);

@@ -55,12 +55,52 @@ function createFixture(): {
   };
 }
 
+const originalRequestAnimationFrame = globalThis.requestAnimationFrame;
+const originalCancelAnimationFrame = globalThis.cancelAnimationFrame;
+
 afterEach(() => {
   useDocumentStore.setState(initialDocumentState, true);
   useUiStore.setState(initialUiState, true);
+  globalThis.requestAnimationFrame = originalRequestAnimationFrame;
+  globalThis.cancelAnimationFrame = originalCancelAnimationFrame;
 });
 
 describe("search navigation", () => {
+  test("clears pending requestAnimationFrame navigation before scheduling the next result", () => {
+    const source = createFixture();
+    const destination = createFixture();
+    destination.result = { ...destination.result, workspaceId: "ws_source", blockId: "block_source", rowId: "row_source", columnId: "col_source" };
+    let nextFrameId = 1;
+    const callbacks = new Map<number, FrameRequestCallback>();
+    const canceled = new Set<number>();
+    globalThis.requestAnimationFrame = ((callback: FrameRequestCallback) => {
+      const id = nextFrameId;
+      nextFrameId += 1;
+      callbacks.set(id, callback);
+      return id;
+    }) as typeof requestAnimationFrame;
+    globalThis.cancelAnimationFrame = ((id: number) => {
+      canceled.add(id);
+    }) as typeof cancelAnimationFrame;
+    const pendingHandles: NonNullable<Parameters<typeof navigateToSearchResult>[1]> = [];
+
+    navigateToSearchResult(source.result, pendingHandles);
+    navigateToSearchResult(destination.result, pendingHandles);
+
+    for (const [id, callback] of callbacks) {
+      if (!canceled.has(id)) callback(0);
+    }
+
+    assert.deepEqual(useUiStore.getState().selection, {
+      kind: "cell",
+      workspaceId: "ws_source",
+      blockId: "block_source",
+      rowId: "row_source",
+      columnId: "col_source",
+    });
+    assert.equal(canceled.has(1), true);
+  });
+
   test("selects the result target without dirtying or saving", async () => {
     const fixture = createFixture();
     let saveCalls = 0;

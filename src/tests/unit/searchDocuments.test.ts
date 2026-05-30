@@ -60,7 +60,23 @@ describe("searchDocuments", () => {
     assert.equal(searchDocuments({ query: "waiting", workspaceIndex, workspacesById: data }).results[0]?.columnId, "status");
   });
 
-  test("excludes checkbox, marker, formatting, and id metadata", () => {
+  test("excludes checkbox boolean values from searchable text", () => {
+    const result = searchDocuments({ query: "true", workspaceIndex, workspacesById: fixture() });
+    assert.equal(result.totalMatches, 0);
+  });
+
+  test("excludes bullet and numbered marker string values from searchable text", () => {
+    const data = fixture();
+    const row = data.ws1.blocks[0]?.rows[0];
+    if (!row) throw new Error("missing fixture row");
+    row.cells.bullet = { value: "marker needle bullet" };
+    row.cells.numbered = { value: "marker needle numbered" };
+
+    const result = searchDocuments({ query: "marker needle", workspaceIndex, workspacesById: data });
+    assert.equal(result.totalMatches, 0);
+  });
+
+  test("excludes formatting and id metadata from searchable text", () => {
     const result = searchDocuments({ query: "needle", workspaceIndex, workspacesById: fixture() });
     assert.equal(result.totalMatches, 0);
     assert.equal(searchDocuments({ query: "r1", workspaceIndex, workspacesById: fixture() }).totalMatches, 0);
@@ -69,6 +85,39 @@ describe("searchDocuments", () => {
   test("preserves workspace, block, row, and column order", () => {
     const result = searchDocuments({ query: "a", workspaceIndex, workspacesById: fixture() });
     assert.deepEqual(result.results.map((entry) => entry.id).slice(0, 5), ["workspace:ws1", "block:ws1:b1", "cell:ws1:b1:r1:text", "cell:ws1:b1:r1:status", "workspace:ws2"]);
+  });
+
+  test("orders matches deterministically across multiple workspaces, blocks, rows, and columns", () => {
+    const columns = [column("late", "text", 2, "Late"), column("early", "text", 1, "Early")];
+    const orderedIndex: WorkspaceIndexEntry[] = [
+      { id: "ws_late", title: "Late", order: 2, style: {} },
+      { id: "ws_early", title: "Early", order: 1, style: {} },
+    ];
+    const data: Record<string, WorkspaceDocument> = {
+      ws_late: { id: "ws_late", blocks: [block("late_block", 0, columns, [row("late_row", 0, { early: { value: "target late" }, late: { value: "target late" } })], "Late block")] },
+      ws_early: {
+        id: "ws_early",
+        blocks: [
+          block("block_second", 2, columns, [row("row_second", 2, { early: { value: "target second" }, late: { value: "target second" } })], "Second block"),
+          block("block_first", 1, columns, [
+            row("row_late", 3, { early: { value: "target row late" }, late: { value: "target row late" } }),
+            row("row_early", 1, { early: { value: "target row early" }, late: { value: "target row early" } }),
+          ], "First block"),
+        ],
+      },
+    };
+
+    const result = searchDocuments({ query: "target", workspaceIndex: orderedIndex, workspacesById: data });
+    assert.deepEqual(result.results.map((entry) => entry.id), [
+      "cell:ws_early:block_first:row_early:early",
+      "cell:ws_early:block_first:row_early:late",
+      "cell:ws_early:block_first:row_late:early",
+      "cell:ws_early:block_first:row_late:late",
+      "cell:ws_early:block_second:row_second:early",
+      "cell:ws_early:block_second:row_second:late",
+      "cell:ws_late:late_block:late_row:early",
+      "cell:ws_late:late_block:late_row:late",
+    ]);
   });
 
   test("caps retained results while counting all matches", () => {

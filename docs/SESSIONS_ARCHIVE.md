@@ -3774,3 +3774,44 @@ Closed dispatch 074 after Review PASS and a user-requested independent audit fou
 
 ### Outcome
 Search MVP is complete. Review verified `npm run lint`, `npm run build`, and `npm run test` (449/449, 63 suites); Dev also reported `npm run test:e2e` passing. The documented non-blocking follow-up is search test hardening: add extra exclusion/order coverage and consider tightening search-navigation timer cleanup.
+
+---
+
+## Session 237 — Main Dispatch
+
+**Artifacts:** `agents/artifacts/075-search-test-hardening-dispatch.md`; `agents/channels/075-search-test-hardening/messages/001-main-to-dev.md`
+
+### Summary
+Dispatched a small Search MVP hardening follow-up after closing dispatch 074. The task asks Dev to add explicit non-DOM unit coverage for checkbox/bullet/numbered exclusions and multi-block/multi-row ordering, and to inspect/tighten search-navigation pending rAF/fallback cleanup if warranted.
+
+### Outcome
+Created Phase 3 spool channel `agents/channels/075-search-test-hardening/` and routed directly to Dev because the scope is small and test-focused. Full DOM SearchPanel/jsdom harness work is explicitly out of scope.
+
+## Session 238 — Dev
+
+**Artifacts:** `agents/artifacts/075-search-test-hardening-complete.md`; `agents/channels/075-search-test-hardening/messages/002-dev-to-review.md`
+
+### Summary
+Implemented the Search MVP hardening follow-up. Added explicit non-DOM unit coverage for checkbox boolean exclusion, bullet/numbered marker string exclusion, formatting/id metadata exclusion, and deterministic ordering across multiple workspaces, blocks, rows, and columns. Tightened `useSearchNavigation` pending cleanup to cancel tracked requestAnimationFrame and timeout handles before scheduling new navigation, with unit coverage for stale rAF cancellation.
+
+### Outcome
+Verification passed: `npm run test`, `npm run lint`, and `npm run build`. Appended the Dev → Review handoff for dispatch 075.
+
+## Session 239 — Review
+
+**Artifacts:** `agents/artifacts/075-search-test-hardening-review.md`; `agents/channels/075-search-test-hardening/messages/003-review-to-main.md`
+
+### Summary
+Reviewed the Search MVP hardening implementation against the dispatch scope. Confirmed all four acceptance criteria: explicit non-DOM exclusion coverage for checkbox/bullet/numbered (and formatting/id metadata) values, deterministic multi-workspace/block/row/column ordering (hand-traced the expected id sequence), and the `useSearchNavigation` typed pending-handle cleanup that now cancels a stale `requestAnimationFrame`/fallback timeout before scheduling a new navigation with non-DOM fake-rAF test coverage. Independently re-ran `npm run test` (453/453, 63 suites), `npm run lint`, and `npm run build` — all green; also ran the compiled navigation suite 6× in isolation to confirm determinism.
+
+### Outcome
+**PASS WITH NOTES → Main (review-pass).** No required fixes. One deferred, non-blocking test-hygiene note (N1): the new rAF test leaves a real 300ms timer that overlaps the next test under `isolation: "none"`, but behavior is deterministic (verified). Appended the Review → Main handoff for dispatch 075. Did not commit — Main handles git.
+## Session 240 — Main Close
+
+**Artifacts:** `agents/artifacts/075-search-test-hardening-dispatch.md`; `agents/artifacts/075-search-test-hardening-complete.md`; `agents/artifacts/075-search-test-hardening-review.md`; `agents/channels/075-search-test-hardening/messages/004-main-to-main.md`
+
+### Summary
+Closed dispatch 075 after Review PASS WITH NOTES. Consolidated Sessions 237–239, marked the channel closed, and prepared the Search MVP hardening follow-up for commit and push. The work adds explicit tests for checkbox/bullet/numbered exclusions and multi-workspace/block/row/column ordering, and tightens `useSearchNavigation` pending rAF/fallback cleanup.
+
+### Outcome
+Search test hardening is complete. Review verified `npm run test` (453/453, 63 suites), `npm run lint`, and `npm run build`; one non-blocking note remains about a deterministic 300ms real-timer overlap in the new rAF test, suitable for a small future hygiene dispatch.
