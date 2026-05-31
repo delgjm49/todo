@@ -23,6 +23,19 @@ agents/channels/*/.sessions/
 
 Legacy single-file channels (`agents/channels/*-channel.md`) are historical/smoke-readable only. New dispatches must use spool directories.
 
+## Universal Pickup Boot Order
+
+Every role must start each pickup by reading fresh on-disk state in this order:
+
+1. Repo guide (`AGENTS.md`, `CLAUDE.md`, or repo equivalent).
+2. This dispatch protocol.
+3. The applicable role prompt / repo role guidance, if present.
+4. The exact latest channel message file named by the pickup prompt.
+5. Referenced artifacts from that message.
+6. Relevant current source/test files needed to ground the task.
+
+Ignore cached or remembered channel state from earlier turns. Current files and the latest channel message are authoritative over memory.
+
 ## Message File Rules
 
 Message files are immutable. Agents must never edit, delete, rename, or replace an existing `messages/*.md` file.
@@ -72,13 +85,15 @@ ready-for-dev
 - agents/artifacts/###-feature-plan.md
 
 ## Task
-Implement the plan.
+Implement the plan artifact. If this message conflicts with the referenced artifact, treat the artifact as authoritative and route to Main if ambiguity affects scope.
 
 ## Close Requirements
 - Create exactly one next message file in this channel's messages directory.
-- Update docs/SESSIONS.md.
+- Append a concise entry to the repo's configured session append buffer.
 - Do not commit; Main handles git.
 ```
+
+Channel messages should be concise handoffs, not substitute plans. Avoid speculative implementation recaps or brittle root-cause summaries. Put detailed analysis in artifacts; referenced artifacts are authoritative over short channel summaries.
 
 Allowed `State` values:
 
@@ -125,13 +140,14 @@ A human-invoked pickup is always Main. If the latest message is addressed to Pla
 
 Orchestrator pickup starts with `[dispatch-auto]` and includes the latest file and allowed next filename(s). In that case the worker must:
 
-1. Re-read the exact latest file named in the pickup prompt from disk.
-2. Ignore remembered/cached channel state from earlier turns.
-3. Confirm that file's `## To` matches the expected role.
-4. Perform the task.
-5. Create exactly one new message file with one of the allowed filenames named in the pickup prompt.
-6. Use only the allowed `## State` tokens above (`ready-for-review` for any Dev → Review handoff, including re-review).
-7. Never edit existing message files.
+1. Follow the Universal Pickup Boot Order above.
+2. Re-read the exact latest file named in the pickup prompt from disk.
+3. Ignore remembered/cached channel state from earlier turns.
+4. Confirm that file's `## To` matches the expected role.
+5. Perform the task.
+6. Create exactly one new message file with one of the allowed filenames named in the pickup prompt.
+7. Use only the allowed `## State` tokens above (`ready-for-review` for any Dev → Review handoff, including re-review).
+8. Never edit existing message files.
 
 ## Agent Responsibilities
 
@@ -139,38 +155,57 @@ Orchestrator pickup starts with `[dispatch-auto]` and includes the latest file a
 
 - Creates the dispatch artifact.
 - Creates `agents/channels/<slug>/messages/001-main-to-plan.md`.
+- Keeps handoff messages concise: include scope, out-of-scope boundaries, key artifacts, likely files to inspect, and required verification, but avoid speculative root-cause claims unless evidence-backed.
+- Before commit/close, confirms every dirty file is either reviewed in-scope or explicitly accepted, reverted, or split out.
 - Commits/pushes only after explicit user approval.
 
 ### Plan
 
+- Follows the Universal Pickup Boot Order.
 - Reads the pickup-specified latest message file.
+- Completes reconnaissance before writing or finalizing the plan artifact: inspect the active channel message, dispatch artifact, relevant current files, and existing tests/patterns needed to ground the plan.
 - Creates or revises the plan artifact.
+- Includes a `## Verified Current-State Facts` section in the plan artifact, citing concrete files/tests and facts verified from disk.
+- Does not state a root cause unless backed by current code/test evidence; label unverified explanations as hypotheses.
+- If a prior assumption is disproven, revises the plan before handoff. Do not hand off an artifact containing superseded assumptions; if immutable channel history conflicts with the corrected plan and ambiguity affects scope, route to Main.
 - Creates `002-plan-to-dev.md` for normal progress.
 - May create `002-plan-to-main.md` with `State = needs-main-fix`, `stalled`, or `error` if it cannot proceed safely.
-- Updates `docs/SESSIONS.md`.
+- Appends a concise entry to the repo's configured session append buffer.
 - Does not commit.
 
 ### Dev
 
+- Follows the Universal Pickup Boot Order.
 - Reads the pickup-specified latest message file.
+- Treats the referenced plan artifact as authoritative over any short channel recap. If the channel message and artifact conflict in a scope-affecting way, stop and route to Main.
 - Implements or fixes the requested work.
 - Creates/updates the complete artifact.
 - Creates `NNN-dev-to-review.md` for normal progress, using `State = ready-for-review` even when returning after a Review-requested fix.
 - May create `NNN-dev-to-main.md` with `State = needs-main-fix`, `stalled`, or `error` if it cannot proceed safely.
-- Updates `docs/SESSIONS.md`.
+- Appends a concise entry to the repo's configured session append buffer.
 - Does not commit.
 
 ### Review
 
+- Follows the Universal Pickup Boot Order.
 - Reads the pickup-specified latest message file.
-- Reviews the work. Review is read-only on implementation and test files.
+- Reviews the work against the latest relevant plan and any later Review fix messages, not only the original summary.
+- Review is read-only on implementation and test files.
 - Creates/updates the review artifact.
+- The review artifact must include an unambiguous `## Final Verdict` section near the end. If the artifact preserves an earlier FAIL section and later re-review passes, the final verdict must clearly state the current outcome, e.g. `PASS — Ready for Main`.
+- Classifies unexpected dirty files in a `## Out-of-Scope Working Tree Changes` section with path, suspected cause, recommendation (`revert`, `keep`, `split`, or `Main decide`), and blocking status (`blocking` or `non-blocking`).
 - Creates one of:
   - `NNN-review-to-main.md` with `State = review-pass` for pass
   - `NNN-review-to-dev.md` with `State = needs-dev-fix` for fixable implementation failures
   - `NNN-review-to-main.md` with `State = needs-main-fix`, `stalled`, or `error` for Main/human triage
-- Updates `docs/SESSIONS.md`.
+- Appends a concise entry to the repo's configured session append buffer.
 - Does not commit.
+
+## Session Append Rule
+
+Agents must append required session notes to the repo's configured session append buffer (for example, a `SESSIONS_PENDING` file if the repo uses one). Do not assume a universal path such as `docs/SESSIONS.md`; follow the repo guide.
+
+If an exact edit/append operation fails, read the current file and write back the original content plus the new entry. Never silently skip required session logging.
 
 ## Chat Output Rule
 
