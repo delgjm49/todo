@@ -93,6 +93,52 @@ function entry(overrides: Partial<WorkspaceIndexEntry> = {}): WorkspaceIndexEntr
 // Tests
 // ---------------------------------------------------------------------------
 
+describe("WorkspaceCard drag contract", () => {
+  test("sets drag data before notifying drag start", async () => {
+    let started = false;
+    const calls: Array<[string, string]> = [];
+    const dataTransfer = {
+      effectAllowed: "uninitialized",
+      setData: (format: string, value: string) => {
+        calls.push([format, value]);
+      },
+    };
+
+    await renderNode(
+      <WorkspaceCard
+        entry={entry({ id: "ws_drag" as WorkspaceIndexEntry["id"] })}
+        active={false}
+        dragging={false}
+        dropTarget={false}
+        onOpenMenu={() => {}}
+        onSelect={() => {}}
+        onDragStart={() => {
+          started = true;
+        }}
+        onDragEnd={() => {}}
+        onDrop={() => {}}
+        onDragOver={() => {}}
+      />,
+    );
+
+    const button = document.querySelector('[role="button"]');
+    assert.ok(button);
+    const event = new dom.window.Event("dragstart", { bubbles: true, cancelable: true });
+    Object.defineProperty(event, "dataTransfer", {
+      configurable: true,
+      value: dataTransfer,
+    });
+
+    await act(async () => {
+      button.dispatchEvent(event);
+    });
+
+    assert.equal(dataTransfer.effectAllowed, "move");
+    assert.deepEqual(calls, [["text/plain", "ws_drag"]]);
+    assert.equal(started, true);
+  });
+});
+
 describe("WorkspaceCard alert badge", () => {
   test("hides badge when alertSummary is null", async () => {
     await renderNode(
@@ -344,7 +390,7 @@ describe("WorkspaceCard alert badge", () => {
     );
 
     // The card renders the title normally
-    const button = document.querySelector("button");
+    const button = document.querySelector('[role="button"]');
     assert.ok(button);
     assert.ok(button.textContent?.includes("My Workspace"));
 

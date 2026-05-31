@@ -24,8 +24,8 @@ export function LeftDock() {
   useEffect(() => () => resetWorkspaceInteractionState(), [resetWorkspaceInteractionState]);
 
   return (
-    <aside className="flex min-h-screen w-[280px] flex-col border-r border-border bg-panel/90 px-4 py-4 backdrop-blur">
-      <div className="rounded-2xl border border-border bg-panelMuted/70 px-4 py-4 shadow-soft">
+    <aside className="flex h-full w-[280px] flex-col border-r border-border bg-panel/90 px-4 py-4 backdrop-blur">
+      <div className="shrink-0 rounded-2xl border border-border bg-panelMuted/70 px-4 py-4 shadow-soft">
         <div className="text-xs uppercase tracking-[0.28em] text-textMuted">Todo</div>
         <div className="mt-1 text-lg font-semibold">Workspace Dock</div>
         <p className="mt-2 text-sm leading-6 text-textMuted">
@@ -33,7 +33,7 @@ export function LeftDock() {
         </p>
       </div>
 
-      <div className="mt-4 flex items-center justify-between gap-3">
+      <div className="mt-4 flex shrink-0 items-center justify-between gap-3">
         <button
           className="inline-flex items-center rounded-lg border border-accent/40 bg-accent/10 px-3 py-2 text-sm font-medium text-text transition hover:bg-accent/20"
           onClick={() => void createWorkspace()}
@@ -80,12 +80,18 @@ export function LeftDock() {
         )}
       </div>
 
-      <div className="mt-4 rounded-2xl border border-border bg-panelMuted/70 px-4 py-4">
+      <div className="mt-4 shrink-0 rounded-2xl border border-border bg-panelMuted/70 px-4 py-4">
         <button
-          className="w-full rounded-lg border border-border bg-transparent px-3 py-2 text-left text-sm font-medium transition hover:bg-panel"
+          aria-label="Settings"
+          className="inline-flex w-full items-center gap-2 rounded-lg border border-border bg-transparent px-3 py-2 text-left text-sm font-medium transition hover:bg-panel"
           onClick={() => showSettingsScreen()}
+          title="Settings"
           type="button"
         >
+          <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z" />
+            <path d="M19.4 15a1.8 1.8 0 0 0 .36 1.98l.04.04a2.1 2.1 0 0 1-2.97 2.97l-.04-.04a1.8 1.8 0 0 0-1.98-.36 1.8 1.8 0 0 0-1.09 1.65V21.3a2.1 2.1 0 0 1-4.2 0v-.06a1.8 1.8 0 0 0-1.09-1.65 1.8 1.8 0 0 0-1.98.36l-.04.04a2.1 2.1 0 1 1-2.97-2.97l.04-.04A1.8 1.8 0 0 0 4.6 15a1.8 1.8 0 0 0-1.65-1.09H2.9a2.1 2.1 0 1 1 0-4.2h.06A1.8 1.8 0 0 0 4.6 8.62a1.8 1.8 0 0 0-.36-1.98l-.04-.04a2.1 2.1 0 1 1 2.97-2.97l.04.04a1.8 1.8 0 0 0 1.98.36A1.8 1.8 0 0 0 10.28 2.4V2.1a2.1 2.1 0 0 1 4.2 0v.3a1.8 1.8 0 0 0 1.09 1.65 1.8 1.8 0 0 0 1.98-.36l.04-.04a2.1 2.1 0 1 1 2.97 2.97l-.04.04a1.8 1.8 0 0 0-.36 1.98 1.8 1.8 0 0 0 1.65 1.09h.3a2.1 2.1 0 0 1 0 4.2h-.3A1.8 1.8 0 0 0 19.4 15Z" />
+          </svg>
           Settings
         </button>
         <p className="mt-3 text-xs leading-5 text-textMuted">Workspace-level styling is edited in the inspector.</p>

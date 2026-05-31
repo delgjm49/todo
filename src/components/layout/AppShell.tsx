@@ -14,7 +14,7 @@ export function AppShell() {
   const inspectorOpen = useUiStore((state) => state.inspectorOpen);
 
   return (
-    <main className="grid min-h-screen grid-cols-[280px_minmax(0,1fr)] bg-canvas text-text">
+    <main className="grid h-screen overflow-hidden grid-cols-[280px_minmax(0,1fr)] bg-canvas text-text">
       <LeftDock />
       <div className="flex min-w-0 flex-col">
         <TopBar />

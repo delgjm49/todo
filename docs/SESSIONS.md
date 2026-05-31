@@ -1,6 +1,6 @@
 # Sessions — Living Summary
 
-Last updated: 2026-05-30
+Last updated: 2026-05-31
 
 ## Phase Status
 
@@ -44,23 +44,29 @@ Last updated: 2026-05-30
 | Search MVP | Complete | Dispatch 074 adds read-only top-bar search with grouped results and navigation/highlight; test-hardening follow-up optional |
 | Search test hardening | Complete | Dispatch 075 adds explicit exclusion/order coverage and tightens search-navigation pending cleanup; timer-hygiene note remains optional |
 | Search navigation timer hygiene | Complete | Dispatch 076 removes the deterministic real-timer overlap from the rAF cancellation test |
+| Left dock and top-bar polish | Complete | Dispatch 077 fixes fixed-height dock/list scrolling, bottom Settings gear, top-bar simplification, always-visible search, icon Undo/Redo, persistent add-block templates, and persistent workspace drag reorder |
 | Phase 3 spool channels | Complete | Validated end-to-end |
 | Windows subprocess dispatch-auto | Complete | Validated on Windows 11 |
 
 ## Last Sessions
 
+- **Session 250 — Main close** (2026-05-31): Closed dispatch 077 after Review PASS, consolidated Sessions 245–249, marked the channel closed, and prepared left dock/top-bar polish for commit/push; reverted unrelated `package-lock.json` libc-field churn.
+- **Session 249 — Review re-review PASS** (2026-05-31): Confirmed WorkspaceCard now uses a draggable `div role="button"` root with keyboard activation, drag payload hardening, updated tests, runtime reorder persistence verification, and passing test/lint/build.
+- **Session 248 — Dev fix** (2026-05-31): Replaced the WorkspaceCard native button root with an accessible draggable div, updated tests, and performed Playwright runtime verification that workspace reorder persists across reload.
+- **Session 247 — Review FAIL** (2026-05-31): Found the first implementation skipped the plan-required WorkspaceCard root replacement and lacked runtime reorder verification; routed back to Dev.
+- **Session 246 — Plan** (2026-05-31): Planned dispatch 077, root-causing workspace drag reorder to the native button drag root and scoping the shell/top-bar/search/add-block polish changes.
+- **Session 245 — Main dispatch** (2026-05-31): Dispatched live-QA left dock/top-bar polish with workspace drag reorder repair folded in.
 - **Session 244 — Main close** (2026-05-30): Closed dispatch 076 after Review PASS, consolidated Sessions 241–243, marked the channel closed, and prepared the timer-hygiene micro follow-up for commit/push.
 - **Session 243 — Review PASS** (2026-05-30): Reviewed timer hygiene. Confirmed the rAF cancellation test now schedules zero real timers while preserving stale-rAF and second-result-selection assertions; test/lint/build passed.
-- **Session 242 — Dev** (2026-05-30): Changed the rAF cancellation test to use a block-shaped second navigation target, avoiding the 300ms row-flash timer path.
-- **Session 241 — Main dispatch** (2026-05-30): Dispatched Search navigation timer-test hygiene as a micro follow-up to dispatch 075.
-- **Session 240 — Main close** (2026-05-30): Closed dispatch 075 after Review PASS WITH NOTES, consolidated Sessions 237–239, marked the channel closed, and prepared Search MVP hardening for commit/push.
-- **Session 239 — Review PASS WITH NOTES** (2026-05-30): Reviewed Search test hardening. Verified explicit exclusion/order coverage and rAF cleanup; `npm run test` passed 453/453 plus lint/build. Deferred one deterministic timer-overlap hygiene note.
-- **Session 238 — Dev** (2026-05-30): Added Search hardening tests for checkbox/bullet/numbered exclusions and multi-level ordering; tightened `useSearchNavigation` pending rAF/fallback cleanup.
-- **Session 237 — Main dispatch** (2026-05-30): Dispatched Search MVP hardening follow-up after independent audit.
 
 ## Next Recommended
 
-**Recommended next work: choose the next post-MVP product seed.** Search MVP and its hardening follow-ups are complete. The next dispatch should be a scoped planning pass or implementation kickoff for one of the remaining post-MVP candidates, with **richer date/time pickers** as the lowest-risk product improvement and **archive/completed views** as the higher-impact but higher-model-risk alternative.
+**Recommended next work: continue live-QA product polish.** Dispatch 077 is complete. The remaining live-QA polish dispatches are:
+
+1. **Viewport-safe menus and sortable block headers** — clamp block/workspace/column popover menus to the viewport; clean block column header alignment/overflow; support click-to-sort and re-click asc/desc toggling on sortable headers; make non-sortable marker headers visually minimal; clean up numbered-list header weirdness.
+2. **Light-mode persisted default color cleanup** — fix fresh light-mode defaults for workspace cards/buttons and block text, while clarifying/preserving behavior for existing explicit dark formatting.
+
+Future note only: richer/inline text formatting for checklist/list text remains a later idea, not yet dispatched unless a planning artifact is desired.
 
 Remaining in the broader v1 backlog:
 - None.
@@ -80,6 +86,7 @@ Remaining in the broader v1 backlog:
 - Search MVP: complete — read-only top-bar search with navigation/highlight
 - Search test hardening: complete — explicit exclusion/order coverage and pending navigation cleanup
 - Search navigation timer hygiene: complete — rAF cancellation test no longer schedules a real row-flash timer
+- Left dock and top-bar polish: complete — fixed dock/top-bar polish and persistent workspace drag reorder
 - Autosave UX (063): complete
 - Manual QA (065): complete — no critical defects found
 
@@ -89,7 +96,7 @@ None.
 
 ## Full Archive
 
-Complete historical session entries (all 150 sessions) live at [`docs/SESSIONS_ARCHIVE.md`](docs/SESSIONS_ARCHIVE.md).
+Complete historical session entries live at [`docs/SESSIONS_ARCHIVE.md`](docs/SESSIONS_ARCHIVE.md).
 
 **For workers (Plan / Dev / Review):** Append new session entries to [`docs/SESSIONS_PENDING.md`](docs/SESSIONS_PENDING.md). Do not edit this living summary.
 

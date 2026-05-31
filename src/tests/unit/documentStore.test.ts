@@ -171,6 +171,47 @@ describe("document store autosave", () => {
     assert.equal(useHistoryStore.getState().canUndo, true);
   });
 
+  test("reorders workspaces and persists the order across reload", async () => {
+    const service = await createMemoryStorageService();
+
+    await useDocumentStore.getState().initializeAppData(service);
+    const firstWorkspaceId = useDocumentStore.getState().activeWorkspaceId;
+    assert.ok(firstWorkspaceId);
+
+    assert.equal(useDocumentStore.getState().createWorkspace("Second", { service, autosaveDelayMs: 5 }), true);
+    const secondWorkspaceId = useDocumentStore.getState().activeWorkspaceId;
+    assert.ok(secondWorkspaceId);
+    assert.equal(useDocumentStore.getState().createWorkspace("Third", { service, autosaveDelayMs: 5 }), true);
+    const thirdWorkspaceId = useDocumentStore.getState().activeWorkspaceId;
+    assert.ok(thirdWorkspaceId);
+
+    const reordered = useDocumentStore
+      .getState()
+      .reorderWorkspaces(thirdWorkspaceId, firstWorkspaceId, { service, autosaveDelayMs: 5 });
+    assert.equal(reordered, true);
+    assert.deepEqual(
+      useDocumentStore.getState().workspaceIndex.map((workspace) => workspace.id),
+      [thirdWorkspaceId, firstWorkspaceId, secondWorkspaceId]
+    );
+    assert.deepEqual(
+      useDocumentStore.getState().workspaceIndex.map((workspace) => workspace.order),
+      [0, 1, 2]
+    );
+
+    await wait(20);
+    assert.equal(useDocumentStore.getState().saveStatus, "saved");
+
+    await useDocumentStore.getState().initializeAppData(service);
+    assert.deepEqual(
+      useDocumentStore.getState().workspaceIndex.map((workspace) => workspace.id),
+      [thirdWorkspaceId, firstWorkspaceId, secondWorkspaceId]
+    );
+    assert.deepEqual(
+      useDocumentStore.getState().workspaceIndex.map((workspace) => workspace.order),
+      [0, 1, 2]
+    );
+  });
+
   test("creates blocks from each supported template through the store", async () => {
     const service = await createMemoryStorageService();
     const calls: AppDocumentSnapshot[] = [];

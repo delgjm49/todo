@@ -8,8 +8,32 @@ import { useDocumentStore } from "../../stores/documentStore.js";
 import { useUiStore } from "../../stores/uiStore.js";
 import { getVisibleColumnsInDisplayOrder } from "../../domain/columns/createColumn.js";
 import { mapClipboardRowsToBlock } from "../../domain/clipboard/index.js";
-import type { BlockSort } from "../../types/block.js";
+import type { BlockSort, BlockType } from "../../types/block.js";
 import type { ColumnId } from "../../domain/ids.js";
+
+function AddBlockTemplateButtons({
+  onSelectTemplate,
+  disambiguateNames = false,
+}: {
+  onSelectTemplate: (templateType: BlockType) => void;
+  disambiguateNames?: boolean;
+}) {
+  return (
+    <div className="mt-4 flex flex-wrap gap-3">
+      {BLOCK_TEMPLATES.map((template, index) => (
+        <button
+          key={template.type}
+          aria-label={disambiguateNames ? `Add block preset ${index + 1}` : undefined}
+          className="rounded-lg border border-border bg-panel px-4 py-2 text-sm font-medium text-text transition hover:border-accent/40 hover:bg-panelMuted"
+          onClick={() => onSelectTemplate(template.type)}
+          type="button"
+        >
+          Add {template.label}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export function MainPane() {
   const workspaceIndex = useDocumentStore((state) => state.workspaceIndex);
@@ -98,7 +122,7 @@ export function MainPane() {
   useEffect(() => () => resetRowInteractionState(), [resetRowInteractionState]);
 
   return (
-    <section className="min-h-0 min-w-0 bg-canvas px-5 py-5">
+    <section className="min-h-0 min-w-0 overflow-y-auto bg-canvas px-5 py-5">
       <div className="h-full rounded-3xl border border-border bg-panel/80 px-6 py-6 shadow-soft">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -123,22 +147,12 @@ export function MainPane() {
                 ? "Use a preset to add your first block to this workspace."
                 : "Create or select a workspace to continue."}
             </p>
-            <div className="mt-4 flex flex-wrap gap-3">
-              {BLOCK_TEMPLATES.map((template) => (
-                <button
-                  key={template.type}
-                  className="rounded-lg border border-border bg-panel px-4 py-2 text-sm font-medium text-text transition hover:border-accent/40 hover:bg-panelMuted"
-                  onClick={() => createBlockFromTemplate(template.type)}
-                  type="button"
-                >
-                  Add {template.label}
-                </button>
-              ))}
-            </div>
+            <AddBlockTemplateButtons onSelectTemplate={(templateType) => createBlockFromTemplate(templateType)} />
           </div>
         ) : (
-          <div className="mt-6 space-y-4">
-            {blocks.map((block) => (
+          <div className="mt-6">
+            <div className="space-y-4">
+              {blocks.map((block) => (
               <BlockCard
                 key={block.id}
                 block={block}
@@ -197,7 +211,12 @@ export function MainPane() {
                   openRowMenu(block.workspaceId, block.id, rowId, x, y);
                 }}
               />
-            ))}
+              ))}
+            </div>
+            <div className="mt-6 rounded-2xl border border-border bg-panelMuted/60 px-5 py-5">
+              <div className="text-sm font-medium text-text">Add another block</div>
+              <AddBlockTemplateButtons disambiguateNames onSelectTemplate={(templateType) => createBlockFromTemplate(templateType)} />
+            </div>
           </div>
         )}
 

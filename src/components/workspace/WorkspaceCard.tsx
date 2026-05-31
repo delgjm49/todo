@@ -22,14 +22,15 @@ export function WorkspaceCard({
   onDragStart: () => void;
   onDragEnd: () => void;
   onDrop: () => void;
-  onDragOver: (event: DragEvent<HTMLButtonElement>) => void;
+  onDragOver: (event: DragEvent<HTMLDivElement>) => void;
 }) {
   const workspaceBackground = entry.style.background ?? undefined;
   const workspaceTextColor = entry.style.textColor ?? undefined;
 
   return (
-    <button
-      className={`group relative flex w-full items-stretch overflow-hidden rounded-2xl border text-left transition ${
+    <div
+      aria-pressed={active}
+      className={`group relative flex w-full cursor-pointer items-stretch overflow-hidden rounded-2xl border text-left transition ${
         active
           ? "border-accent/70 shadow-soft ring-1 ring-accent/40"
           : "border-border bg-panelMuted/60 hover:border-accent/40"
@@ -42,16 +43,27 @@ export function WorkspaceCard({
       }}
       onDragEnd={onDragEnd}
       onDragOver={onDragOver}
-      onDragStart={onDragStart}
+      onDragStart={(event) => {
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", entry.id);
+        onDragStart();
+      }}
       onDrop={(event) => {
         event.preventDefault();
         onDrop();
       }}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onSelect();
+        }
+      }}
+      role="button"
       style={{
         backgroundColor: workspaceBackground,
         color: workspaceTextColor,
       }}
-      type="button"
+      tabIndex={0}
     >
       <div
         className={`w-2 shrink-0 ${
@@ -80,7 +92,7 @@ export function WorkspaceCard({
           <span>{entry.style.textColor ?? "#F9FAFB"}</span>
         </div>
       </div>
-    </button>
+    </div>
   );
 }
 
