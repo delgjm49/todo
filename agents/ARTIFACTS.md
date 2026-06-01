@@ -1,3 +1,4 @@
+<!-- Synced wholesale from meta-workflow/agents/templates/dispatch. Edit the canonical file and run tools/sync_dispatch_workflow.py --apply; do not hand-edit in app repos. -->
 # Artifact Format Specification
 
 Artifacts are structured markdown files that describe work state. Dispatch channels carry the messages between agents. Together they let agents parse project state reliably without long copy/paste prompts in chat.
@@ -23,9 +24,9 @@ Artifacts are structured markdown files that describe work state. Dispatch chann
 - [Explicitly OUT of scope: item]
 
 ## Related Spec Sections
-- docs/TODO_APP_TECH_SPEC.md §X (relevant section)
-- docs/TODO_APP_UI_SPEC.md §X (relevant section)
-- docs/TODO_APP_IMPLEMENTATION_BACKLOG.md TICKET-### (relevant ticket)
+- [docs/SPEC.md §X — relevant section]
+- [docs/ARCHITECTURE.md — relevant section]
+- [Ticket / backlog reference, if any]
 
 ## Constraints
 - [Any technical constraints, must-use libraries, patterns to follow]
@@ -45,14 +46,19 @@ Artifacts are structured markdown files that describe work state. Dispatch chann
 ## Overview
 [2-3 sentence summary]
 
+## Verified Current-State Facts
+[Concrete facts confirmed from disk during reconnaissance: which files/tests/functions
+were read and what they currently do. This grounds the plan. Anything not verified is
+labeled below as an assumption or hypothesis.]
+
 ## Prerequisites
 - [Any dependency that must be done first]
 
 ## Files to Create/Modify
 | Action | Path | Description |
 |--------|------|-------------|
-| Create | src/components/X.tsx | ... |
-| Modify | src/store/X.ts | ... |
+| Create | path/to/new/file | ... |
+| Modify | path/to/existing/file | ... |
 
 ## Implementation Steps
 ### Step 1: [Title]
@@ -63,13 +69,16 @@ Artifacts are structured markdown files that describe work state. Dispatch chann
 ### Step 2: [Title]
 ...
 
-## Data / Storage Changes
-[JSON schema or shape changes, migration notes if any]
+## Data / Storage / Schema Changes
+[Shape/schema changes, migration notes if any. None, if not applicable.]
 
 ## UI Specifications
 - Component hierarchy
 - States: loading, empty, error, success
 - Key interactions and animations
+
+## Assumptions / Hypotheses
+[Anything not verified from disk that the plan depends on, to be confirmed during implementation.]
 
 ## Acceptance Criteria
 - [ ] [Criterion 1]
@@ -82,7 +91,7 @@ Artifacts are structured markdown files that describe work state. Dispatch chann
 
 ### 3. Complete (`*-complete.md`)
 **Created by**: Dev
-**Consumed by**: Review (or Plan)
+**Consumed by**: Review
 
 ```markdown
 # Complete: [Feature Name]
@@ -121,7 +130,7 @@ Report each required command using the form in [`CLOSING.md`](CLOSING.md#verific
 
 ### 4. Review (`*-review.md`)
 **Created by**: Review
-**Consumed by**: Main, Plan, or Dev
+**Consumed by**: Main or Dev
 
 ```markdown
 # Review: [Feature Name]
@@ -154,10 +163,19 @@ Report each required command using the form in [`CLOSING.md`](CLOSING.md#verific
 ## Verification
 Report each required command rerun by Review using the form in [`CLOSING.md`](CLOSING.md#verification-reporting-rule).
 
-## Verdict
-**[PASS / PASS WITH NOTES / FAIL — Return to Dev / FAIL — Return to Plan / FAIL — Return to Main]**
+## Out-of-Scope Working Tree Changes
+[Classify any dirty file not expected from this dispatch: path, suspected cause,
+recommendation (revert / keep / split / Main decide), blocking status
+(blocking / non-blocking). State "None" if the working tree is clean of surprises.]
 
-Note: PASS WITH NOTES is only for genuinely optional, intentionally deferred suggestions. Actionable low-severity items should be required fixes when they are reasonable within the current dispatch. Any required fix must route to Dev, Plan, or Main and then return to Review for all-clear.
+## Final Verdict
+**[PASS — Ready for Main / PASS WITH NOTES / FAIL — Return to Dev / FAIL — Return to Main]**
+
+This section states the *current* outcome unambiguously. If an earlier FAIL section is
+preserved above and a later re-review passes, the Final Verdict must clearly say so
+(e.g. `PASS — Ready for Main`). PASS WITH NOTES is only for genuinely optional,
+intentionally deferred suggestions; any required fix routes to Dev or Main and then
+returns to Review for all-clear.
 
 ## Next Steps
 [Short prose only. The next-agent message belongs in the dispatch channel, not here.]
@@ -201,11 +219,11 @@ Create the implementation plan for this dispatch. Write the plan to `agents/arti
 
 ## Close Requirements
 - Create exactly one next message file in this channel's `messages/` directory.
-- Append a session entry to `docs/SESSIONS_PENDING.md`.
+- Append a session entry to the repo's configured session append buffer.
 - Do not commit; Main handles git.
 ```
 
-See [`workflows/dispatch-channel-protocol.md`](workflows/dispatch-channel-protocol.md) for complete rules.
+See [`workflows/dispatch-channel-protocol.md`](workflows/dispatch-channel-protocol.md) for complete rules, including the allowed `## State` values.
 
 ## Naming Convention
 
@@ -221,8 +239,8 @@ agents/channels/###-feature-slug/
 Example:
 
 ```text
-agents/artifacts/001-block-editor-polish-dispatch.md
-agents/channels/001-block-editor-polish/
+agents/artifacts/001-feature-slug-dispatch.md
+agents/channels/001-feature-slug/
 ```
 
 ## Storage & Cleanup
@@ -230,4 +248,4 @@ agents/channels/001-block-editor-polish/
 - Active artifacts live in `agents/artifacts/`
 - Active dispatch channels live in `agents/channels/`
 - After a feature passes review, artifacts and channels can optionally be archived
-- The `docs/SESSIONS.md` living summary (updated by Main from `docs/SESSIONS_PENDING.md`) should reference both artifact numbers and the channel for traceability
+- The repo's living session summary should reference both artifact numbers and the channel for traceability

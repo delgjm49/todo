@@ -1,3 +1,4 @@
+<!-- DISPATCH-SHARED:review-protocol-pre — synced from meta-workflow/agents/templates/dispatch. Edit the canonical file and run tools/sync_dispatch_workflow.py --apply; do not hand-edit here. Repo-specific text belongs in DISPATCH-LOCAL blocks. -->
 # Review Protocol
 
 How review works, what constitutes pass/fail, and how to handle failures.
@@ -10,21 +11,23 @@ Review **must not edit implementation or test files**. If code needs to change, 
 
 - the review artifact (`*-review.md`)
 - the dispatch channel
-- `docs/SESSIONS_PENDING.md`
+- the repo's configured session append buffer
 
-If Review fixes code inline and self-passes the checkpoint, the audit trail and Dev → Review feedback loop break. Always route fixes through Dev/Plan/Main and require re-review.
+If Review fixes code inline and self-passes the checkpoint, the audit trail and Dev → Review feedback loop break. Always route fixes through Dev or Main and require re-review.
 
 ---
 
 ## Review Checklist
 
-Every review must inspect:
+Every review must inspect plan compliance plus the repo's stack-specific criteria.
 
 ### 1. Plan Compliance
 - [ ] All steps in the plan were addressed
 - [ ] All acceptance criteria are met
 - [ ] No scope creep (extra features not in the plan)
 - [ ] Any deviations are documented and reasonable
+<!-- /DISPATCH-SHARED:review-protocol-pre -->
+<!-- DISPATCH-LOCAL:review-checklist-stack — repo-owned: stack-specific review criteria (build/typecheck commands, data-layer integrity, UI/test risks, naming conventions). Sync preserves this block; edit it here. -->
 
 ### 2. Code Correctness
 - [ ] TypeScript compiles without errors (`npm run build` or `tsc --noEmit`)
@@ -54,21 +57,28 @@ React/jsdom controlled-input tests are high-risk in this repo:
 - Do not trust static inspection alone for new input/editing tests.
 - If tests exercise focus, blur, input, or change behavior, those tests must actually pass locally before Review can pass the checkpoint.
 - Store-level passing tests **do not prove** the UI interaction path is valid — both layers must be verified.
-- Treat jsdom/react input-focus errors as red flags, especially messages involving `attachEvent`, `detachEvent`, or repeated `act(...)` warnings tied to new behavior under review.
+- Treat jsdom/react input-focus errors as red flags, especially messages involving `attachEvent`, `detachEvent`, or repeated `act(...)` warnings.
+<!-- /DISPATCH-LOCAL:review-checklist-stack -->
+<!-- DISPATCH-SHARED:review-protocol-post — synced from meta-workflow/agents/templates/dispatch. Edit the canonical file and run tools/sync_dispatch_workflow.py --apply; do not hand-edit here. Repo-specific text belongs in DISPATCH-LOCAL blocks. -->
 
-### 7. Verification Reporting
+### Verification Reporting
 - [ ] Required commands were rerun by Review (not just inspected)
 - [ ] Each command outcome is reported using the form in [`../CLOSING.md`](../CLOSING.md#verification-reporting-rule)
 - [ ] Failures in unrelated pre-existing or out-of-scope repo state are called out explicitly, not collapsed into the checkpoint status
+
+### Out-of-Scope Working Tree Changes
+- [ ] `git status` inspected; any unexpected dirty file is classified in the review artifact's `## Out-of-Scope Working Tree Changes` section (path, suspected cause, recommendation, blocking status)
 
 ---
 
 ## Verdict Definitions
 
+The review artifact must end with an unambiguous `## Final Verdict` section. The verdict is one of:
+
 ### PASS
 All criteria met. No issues found. Feature is complete.
 
-**Next action**: Review creates the next `Review → Main` message file to the dispatch channel with `State = review-pass`. User continues with `pickup agents/channels/###-feature-slug/` so Main can close, commit, and push.
+**Next action**: Review creates the next `Review → Main` message file to the dispatch channel with `State = review-pass`. User continues with `pickup agents/channels/###-feature-slug/` so Main can run the dirty-file close gate, then close, commit, and push.
 
 ### PASS WITH NOTES
 All core criteria met. Only genuinely optional, intentionally deferred suggestions are provided. No one is required to change files before the work can be closed.
@@ -82,11 +92,6 @@ A note may remain optional only when Review explicitly documents why it should n
 - issue already captured by a queued/future dispatch
 - truly cosmetic preference with no meaningful user or maintenance impact
 
-Examples of acceptable optional notes:
-- "This animation could be smoother, but changing motion behavior is subjective and outside this dispatch."
-- "This helper could be generalized later, but it is only used once today."
-- "A larger refactor would reduce duplication, but it is not low-risk enough for this fix round."
-
 **Important**: Low severity does not automatically mean optional. If an issue is useful, clear, and reasonable to fix now, route it as a required fix even if it is small.
 
 **Next action**: Same as PASS only when every note has a documented deferral reason and no files need to change before completion.
@@ -94,7 +99,7 @@ Examples of acceptable optional notes:
 ### FAIL — Return to Dev
 One or more specific, fixable issues found. The plan is fine; the implementation needs correction.
 
-This includes high/medium defects and also low-severity polish when the fix is reasonable, helpful, and within the current dispatch. Review should route back to Dev for fixes rather than leave actionable polish as optional notes when any of the following apply:
+This includes high/medium defects and also low-severity polish when the fix is reasonable, helpful, and within the current dispatch. Route back to Dev rather than leaving actionable polish as optional notes when any of the following apply:
 - fix is trivial or low-risk
 - fix improves future maintainability or catches future issues
 - fix adds/adjusts useful tests or smoke-test docs
@@ -105,45 +110,38 @@ This includes high/medium defects and also low-severity polish when the fix is r
 Examples:
 - Missing error state in a component
 - A step from the plan was skipped
-- TypeScript compilation errors
+- Build/typecheck errors
 - Incorrect data shape on save
 - Trivial stale import/dead component cleanup
 - Missing test for a new branch that would catch regressions
-- Confusing label in a newly added UI surface
 
 **Format for issues**:
 
 ```markdown
 ## Issues Found
-1. **[Severity: High]** Missing error state in BlockEditor
-   - File: src/components/BlockEditor.tsx
+1. **[Severity: High]** Missing error state in <Component>
+   - File: src/components/<Component>
    - Problem: When the save fails, the component shows nothing. No error message.
-   - Fix: Add an error state with a retry button, following the pattern in src/components/ErrorBoundary.tsx
+   - Fix: Add an error state with a retry button, following the existing error-handling pattern.
 ```
 
-**Next action**: Review creates the next `Review → Dev` message file in the dispatch channel with `State = needs-dev-fix`. Dev reads the review, fixes the listed issues, updates the complete artifact with fix notes, creates the next `Dev → Review` message file, then re-review follows.
+**Next action**: Review creates the next `Review → Dev` message file in the dispatch channel with `State = needs-dev-fix`. Dev reads the review, fixes the listed issues, updates the complete artifact with fix notes, creates the next `Dev → Review` message file (`State = ready-for-review`), then re-review follows.
 
-### FAIL — Return to Plan
-The issue is in the design, not the implementation. The plan needs adjustment.
+### FAIL — Return to Main
+The issue is design/plan-level, or it requires Main-owned action rather than Dev work.
 
 Examples:
 - Plan didn't account for an edge case that makes the current approach unworkable
-- Plan's data shape has a design flaw
-- Plan's component architecture won't scale
+- Plan's data shape or architecture has a design flaw
 - Requirements were misunderstood
-
-**Next action**: Review creates the next `Review → Plan` message file in the dispatch channel with `State = needs-plan-revision`. Plan revises and creates the next `Plan → Dev` message file; Dev implements the revision and creates the next `Dev → Review` message file; re-review follows.
-
-### FAIL — Return to Main
-The issue requires Main-owned action rather than Dev or Plan work.
-
-Examples:
 - Workflow/process documentation needs correction
 - Main-created dispatch or channel metadata is wrong
 - The feature should be re-scoped, paused, or closed differently
 - Git/commit/release coordination needs correction
 
-**Next action**: Review creates the next `Review → Main` message file in the dispatch channel with `State = needs-main-fix`. Main applies the required fixes and creates the next `Main → Review` message file with `State = ready-for-re-review`; re-review follows. Main must not mark the dispatch closed until Review later returns `review-pass`.
+**Next action**: Review creates the next `Review → Main` message file in the dispatch channel with `State = needs-main-fix`. Main applies the required fixes — re-engaging Plan if the plan itself needs revision — and creates the next `Main → Review` message file with `State = ready-for-review`; re-review follows. Main must not mark the dispatch closed until Review later returns `review-pass`.
+
+> Note: there is no `Review → Plan` route. Design/plan-level failures go to Main via `needs-main-fix`; Main owns re-engaging Plan. (See the dispatch-channel protocol for the full allowed-state list and retired tokens.)
 
 ---
 
@@ -151,13 +149,13 @@ Examples:
 
 Any required fix must return to Review before the work can be finalized.
 
-When Dev, Plan, or Main returns after a FAIL verdict:
+When Dev or Main returns after a FAIL verdict:
 
 1. Review reads the latest channel message and previous review artifact.
-2. Review checks only the fixes unless the scope of changes is large.
-3. Review writes a new review artifact or updates the existing one with a re-review section.
+2. Review checks the fixes against the issues it previously raised (and the wider scope if changes are large).
+3. Review writes a new review artifact or updates the existing one with a re-review section and an updated `## Final Verdict`.
 4. If fixes resolve the issues → PASS or narrowly justified PASS WITH NOTES with `State = review-pass`.
-5. If not → FAIL again with specifics and create another Review → Dev, Review → Plan, or Review → Main message file.
+5. If not → FAIL again with specifics and create another Review → Dev or Review → Main message file.
 
 Main may only close the dispatch after this all-clear review.
 
@@ -187,11 +185,12 @@ review-pass
 - agents/artifacts/###-feature-complete.md
 
 ## Task
-Close the feature. Confirm the PASS verdict, process `docs/SESSIONS_PENDING.md` into archive and living summary, commit, and push.
+Close the feature. Confirm the Final Verdict, run the dirty-file close gate, consolidate the session log, commit, and push.
 
 ## Close Requirements
+- Run the dirty-file close gate before committing.
 - Commit and push if the review is valid.
-- Process `docs/SESSIONS_PENDING.md` into archive and update `docs/SESSIONS.md` living summary.
+- Consolidate the session log per agents/CLOSING.md.
 - Provide the next main/pickup instruction.
 ```
 
@@ -222,8 +221,8 @@ Address each issue listed in the review. Update the complete artifact with fix n
 ## ⚠️ BEFORE YOU END
 When you finish fixing the issues:
 - [ ] Update the complete artifact with fix notes
-- [ ] Append a session entry to `docs/SESSIONS_PENDING.md`
-- [ ] Create the next Dev → Review message file in this dispatch channel
+- [ ] Append a session entry to the configured session append buffer
+- [ ] Create the next Dev → Review message file in this dispatch channel (State = ready-for-review)
 - [ ] Output only the short pickup instruction to the user
 - [ ] Do NOT commit — Main handles git
 ```
@@ -245,15 +244,14 @@ needs-main-fix
 ## Read
 - agents/channels/###-feature-slug/
 - agents/artifacts/###-feature-review.md
-- [any files Main must fix]
+- [any files Main must fix, or the plan if it needs revision]
 
 ## Task
-Address each required Main-owned issue listed in the review. When fixed, create a Main → Review message file for re-review. Do not close the dispatch yet.
+Address each required Main-owned or design/plan-level issue listed in the review. Re-engage Plan if the plan itself needs revision. When fixed, create a Main → Review message file for re-review. Do not close the dispatch yet.
 
 ## Close Requirements
-- Apply the listed fixes.
-- Process `docs/SESSIONS_PENDING.md` into archive and update `docs/SESSIONS.md` living summary.
-- Create the next Main → Review message file with State = ready-for-re-review.
+- Apply the listed fixes (re-engaging Plan if needed).
+- Create the next Main → Review message file with State = ready-for-review.
 - Do not mark the dispatch closed until Review returns State = review-pass.
 ```
 
@@ -269,7 +267,7 @@ Main
 Review
 
 ## State
-ready-for-re-review
+ready-for-review
 
 ## Read
 - agents/channels/###-feature-slug/
@@ -277,40 +275,11 @@ ready-for-re-review
 - [fixed files]
 
 ## Task
-Re-review the required fixes. If all issues are resolved, create the next Review → Main message file with State = review-pass. If issues remain, create the appropriate Review → Dev/Plan/Main fix message file.
+Re-review the required fixes. If all issues are resolved, create the next Review → Main message file with State = review-pass. If issues remain, create the appropriate Review → Dev or Review → Main fix message file.
 
 ## Close Requirements
-- Write or update the review artifact with re-review findings.
-- Append a session entry to `docs/SESSIONS_PENDING.md`.
-- Create the next numbered message file in this dispatch channel.
-- Do not commit; Main handles git.
-```
-
-### FAIL → Plan Channel Message
-
-```markdown
-# Message NNN — Review → Plan — YYYY-MM-DD
-
-## From
-Review
-
-## To
-Plan
-
-## State
-needs-plan-revision
-
-## Read
-- agents/artifacts/###-feature-dispatch.md
-- agents/artifacts/###-feature-plan.md
-- agents/artifacts/###-feature-review.md
-
-## Task
-Revise the plan to address the design issues identified in the review. Create the next Plan → Dev message file when done.
-
-## Close Requirements
-- Update the plan artifact.
-- Append a session entry to `docs/SESSIONS_PENDING.md`.
+- Write or update the review artifact with re-review findings and an updated Final Verdict.
+- Append a session entry to the configured session append buffer.
 - Create the next numbered message file in this dispatch channel.
 - Do not commit; Main handles git.
 ```
@@ -326,5 +295,6 @@ For critical features, two independent review sessions can be run by creating ex
 
 Both reviews are written, and Dev addresses combined findings. Use for:
 - Storage / migration changes
-- Block editor / input-heavy UI surfaces (jsdom test risk)
+- Input-heavy UI surfaces
 - Session-close / dispatch-channel workflow changes
+<!-- /DISPATCH-SHARED:review-protocol-post -->

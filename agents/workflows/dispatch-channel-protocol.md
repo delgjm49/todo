@@ -109,6 +109,8 @@ Allowed `State` values:
 
 Use exactly these tokens in new messages. In particular, every Dev → Review handoff uses `ready-for-review`, including a second/subsequent handoff after Review requested fixes. Do **not** use legacy variants such as `ready-for-re-review`.
 
+There is no `Review → Plan` route and no `needs-plan-revision` state. Design/plan-level review failures use `needs-main-fix` (Review → Main); Main owns re-engaging Plan if the plan itself needs revision. `needs-plan-revision` is a retired token — the dispatch-auto parser rejects it as invalid.
+
 **Close message format.** After `review-pass`, Main closes the dispatch with a final message using `To: Main` and `State: closed`:
 
 ```markdown
