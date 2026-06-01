@@ -45,8 +45,8 @@ Artifacts describe work state. They live in `agents/artifacts/`.
 |----------|------------|-------------|---------|
 | **Dispatch** (`*-dispatch.md`) | Main or Plan | Plan or Dev | Defines WHAT to build, at a feature level |
 | **Plan** (`*-plan.md`) | Plan | Dev | Defines HOW to build it, with step-by-step breakdown |
-| **Complete** (`*-complete.md`) | Dev | Review or Plan | Summarizes what was built, files changed, decisions made |
-| **Review** (`*-review.md`) | Review | Main or Plan | Findings: pass/fail, issues found, recommendations |
+| **Complete** (`*-complete.md`) | Dev | Review | Summarizes what was built, files changed, decisions made |
+| **Review** (`*-review.md`) | Review | Main or Dev | Findings: pass/fail, issues found, recommendations |
 
 Dispatch channels carry handoff messages. They live in `agents/channels/`.
 
@@ -95,7 +95,7 @@ Review Agent
   │  User starts new session with the same pickup command
   │  Review checks work, writes review artifact
   │  If PASS → creates next `review-to-main` message file with State = review-pass
-  │  If required fixes → creates next message file to Dev, Plan, or Main
+  │  If required fixes → creates next message file to Dev or Main
   │  Fixer routes back to Review after fixes
   │
   └──→ Back to Main only after Review confirms State = review-pass
