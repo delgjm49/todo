@@ -1,4 +1,4 @@
-<!-- DISPATCH-SHARED:review-protocol-pre — synced from meta-workflow/agents/templates/dispatch. Edit the canonical file and run tools/sync_dispatch_workflow.py --apply; do not hand-edit here. Repo-specific text belongs in DISPATCH-LOCAL blocks. -->
+<!-- DISPATCH-SHARED:review-protocol-pre — synced from meta-workflow/agents/templates/dispatch. Edit the canonical file and run tools/sync_repo_agents.py --apply; do not hand-edit here. Repo-specific text belongs in DISPATCH-LOCAL blocks. -->
 # Review Protocol
 
 How review works, what constitutes pass/fail, and how to handle failures.
@@ -59,7 +59,7 @@ React/jsdom controlled-input tests are high-risk in this repo:
 - Store-level passing tests **do not prove** the UI interaction path is valid — both layers must be verified.
 - Treat jsdom/react input-focus errors as red flags, especially messages involving `attachEvent`, `detachEvent`, or repeated `act(...)` warnings.
 <!-- /DISPATCH-LOCAL:review-checklist-stack -->
-<!-- DISPATCH-SHARED:review-protocol-post — synced from meta-workflow/agents/templates/dispatch. Edit the canonical file and run tools/sync_dispatch_workflow.py --apply; do not hand-edit here. Repo-specific text belongs in DISPATCH-LOCAL blocks. -->
+<!-- DISPATCH-SHARED:review-protocol-post — synced from meta-workflow/agents/templates/dispatch. Edit the canonical file and run tools/sync_repo_agents.py --apply; do not hand-edit here. Repo-specific text belongs in DISPATCH-LOCAL blocks. -->
 
 ### Verification Reporting
 - [ ] Required commands were rerun by Review (not just inspected)

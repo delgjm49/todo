@@ -2,7 +2,7 @@
 
 The Todo app uses a **multi-agent development workflow**. Instead of one agent doing everything, work flows through specialized agents with formal artifacts and append-only dispatch channels.
 
-> **Dispatch workflow sync.** The role prompts (`prompts/*.md`), `ARTIFACTS.md`, `CLOSING.md`, and the workflow docs are synced from the **meta-workflow** repo. Content in `DISPATCH-SHARED` blocks is owned centrally — edit it there and run `python3 tools/sync_dispatch_workflow.py --apply` (from meta-workflow), not here. Only `DISPATCH-LOCAL` blocks (this repo's project name, doc paths, session buffer, and stack-specific criteria) are repo-owned.
+> **Dispatch workflow sync.** The role prompts (`prompts/*.md`), `ARTIFACTS.md`, `CLOSING.md`, and the workflow docs are synced from the **meta-workflow** repo. Content in `DISPATCH-SHARED` blocks is owned centrally — edit it there and run `python3 tools/sync_repo_agents.py --apply` (from meta-workflow), not here. Only `DISPATCH-LOCAL` blocks (this repo's project name, doc paths, session buffer, and stack-specific criteria) are repo-owned.
 
 ## Agent Types
 

@@ -1,4 +1,4 @@
-<!-- Synced wholesale from meta-workflow/agents/templates/dispatch. Edit the canonical file and run tools/sync_dispatch_workflow.py --apply; do not hand-edit in app repos. -->
+<!-- Synced wholesale from meta-workflow/agents/templates/dispatch. Edit the canonical file and run tools/sync_repo_agents.py --apply; do not hand-edit in app repos. -->
 # Standard Development Flow
 
 A step-by-step walkthrough of how a feature moves through the agent pipeline using dispatch channels.

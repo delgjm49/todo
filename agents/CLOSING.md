@@ -1,4 +1,4 @@
-<!-- DISPATCH-SHARED:closing-pre — synced from meta-workflow/agents/templates/dispatch. Edit the canonical file and run tools/sync_dispatch_workflow.py --apply; do not hand-edit here. Repo-specific text belongs in DISPATCH-LOCAL blocks. -->
+<!-- DISPATCH-SHARED:closing-pre — synced from meta-workflow/agents/templates/dispatch. Edit the canonical file and run tools/sync_repo_agents.py --apply; do not hand-edit here. Repo-specific text belongs in DISPATCH-LOCAL blocks. -->
 # Session Closing Protocol
 
 Every agent session ends with a structured close. This ensures documentation is current, work is not lost, and the next agent can continue through the dispatch channel without a long chat prompt.
@@ -83,7 +83,7 @@ Session entry format:
 [For Review: PASS / FAIL; next channel message created to Main/Dev]
 ```
 <!-- /DISPATCH-LOCAL:session-model -->
-<!-- DISPATCH-SHARED:closing-post — synced from meta-workflow/agents/templates/dispatch. Edit the canonical file and run tools/sync_dispatch_workflow.py --apply; do not hand-edit here. Repo-specific text belongs in DISPATCH-LOCAL blocks. -->
+<!-- DISPATCH-SHARED:closing-post — synced from meta-workflow/agents/templates/dispatch. Edit the canonical file and run tools/sync_repo_agents.py --apply; do not hand-edit here. Repo-specific text belongs in DISPATCH-LOCAL blocks. -->
 
 ## Main Close (Full Close)
 

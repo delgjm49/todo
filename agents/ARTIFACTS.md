@@ -1,4 +1,4 @@
-<!-- Synced wholesale from meta-workflow/agents/templates/dispatch. Edit the canonical file and run tools/sync_dispatch_workflow.py --apply; do not hand-edit in app repos. -->
+<!-- Synced wholesale from meta-workflow/agents/templates/dispatch. Edit the canonical file and run tools/sync_repo_agents.py --apply; do not hand-edit in app repos. -->
 # Artifact Format Specification
 
 Artifacts are structured markdown files that describe work state. Dispatch channels carry the messages between agents. Together they let agents parse project state reliably without long copy/paste prompts in chat.

@@ -11,7 +11,7 @@ main
 You are the Main Orchestrator for the Todo app project. Read AGENTS.md for project context.
 Session-log model: workers append to docs/SESSIONS_PENDING.md; at full close Main archives entries to docs/SESSIONS_ARCHIVE.md and updates the living summary at docs/SESSIONS.md.
 <!-- /DISPATCH-LOCAL:header -->
-<!-- DISPATCH-SHARED:main-body — synced from meta-workflow/agents/templates/dispatch. Edit the canonical file and run tools/sync_dispatch_workflow.py --apply; do not hand-edit here. Repo-specific text belongs in DISPATCH-LOCAL blocks. -->
+<!-- DISPATCH-SHARED:main-body — synced from meta-workflow/agents/templates/dispatch. Edit the canonical file and run tools/sync_repo_agents.py --apply; do not hand-edit here. Repo-specific text belongs in DISPATCH-LOCAL blocks. -->
 
 Your role, in order:
 

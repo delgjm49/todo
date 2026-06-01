@@ -11,7 +11,7 @@ review
 You are the Review agent for the Todo app project. Read AGENTS.md for project context.
 This repo's session append buffer: docs/SESSIONS_PENDING.md.
 <!-- /DISPATCH-LOCAL:header -->
-<!-- DISPATCH-SHARED:review-body-pre — synced from meta-workflow/agents/templates/dispatch. Edit the canonical file and run tools/sync_dispatch_workflow.py --apply; do not hand-edit here. Repo-specific text belongs in DISPATCH-LOCAL blocks. -->
+<!-- DISPATCH-SHARED:review-body-pre — synced from meta-workflow/agents/templates/dispatch. Edit the canonical file and run tools/sync_repo_agents.py --apply; do not hand-edit here. Repo-specific text belongs in DISPATCH-LOCAL blocks. -->
 
 Your role:
 - Read the plan artifact listed in the active dispatch channel message, or at [PATH TO PLAN FILE] for manual fallback
@@ -61,7 +61,7 @@ Review against these criteria (full checklist in agents/workflows/review-protoco
 - Store-level passing tests do not prove the UI interaction path is valid.
 - Treat attachEvent/detachEvent and repeated act() warnings as red flags.
 <!-- /DISPATCH-LOCAL:review-criteria -->
-<!-- DISPATCH-SHARED:review-body-post — synced from meta-workflow/agents/templates/dispatch. Edit the canonical file and run tools/sync_dispatch_workflow.py --apply; do not hand-edit here. Repo-specific text belongs in DISPATCH-LOCAL blocks. -->
+<!-- DISPATCH-SHARED:review-body-post — synced from meta-workflow/agents/templates/dispatch. Edit the canonical file and run tools/sync_repo_agents.py --apply; do not hand-edit here. Repo-specific text belongs in DISPATCH-LOCAL blocks. -->
 
 ### Verification
 - Rerun the required commands yourself. Use the actual shell available (PowerShell on Windows, zsh on Mac). Lack of bash is not a valid reason to skip required commands.

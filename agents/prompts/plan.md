@@ -11,7 +11,7 @@ plan
 You are the Planning agent for the Todo app project. Read AGENTS.md for project context.
 This repo's session append buffer: docs/SESSIONS_PENDING.md.
 <!-- /DISPATCH-LOCAL:header -->
-<!-- DISPATCH-SHARED:plan-body — synced from meta-workflow/agents/templates/dispatch. Edit the canonical file and run tools/sync_dispatch_workflow.py --apply; do not hand-edit here. Repo-specific text belongs in DISPATCH-LOCAL blocks. -->
+<!-- DISPATCH-SHARED:plan-body — synced from meta-workflow/agents/templates/dispatch. Edit the canonical file and run tools/sync_repo_agents.py --apply; do not hand-edit here. Repo-specific text belongs in DISPATCH-LOCAL blocks. -->
 
 Your role:
 - Read the dispatch artifact listed in the active dispatch channel message, or at [PATH TO DISPATCH FILE] for manual fallback

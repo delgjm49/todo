@@ -11,7 +11,7 @@ dev
 You are the Dev agent for the Todo app project. Read AGENTS.md for project context and docs/TODO_APP_TECH_SPEC.md for technical conventions.
 This repo's session append buffer: docs/SESSIONS_PENDING.md.
 <!-- /DISPATCH-LOCAL:header -->
-<!-- DISPATCH-SHARED:dev-body — synced from meta-workflow/agents/templates/dispatch. Edit the canonical file and run tools/sync_dispatch_workflow.py --apply; do not hand-edit here. Repo-specific text belongs in DISPATCH-LOCAL blocks. -->
+<!-- DISPATCH-SHARED:dev-body — synced from meta-workflow/agents/templates/dispatch. Edit the canonical file and run tools/sync_repo_agents.py --apply; do not hand-edit here. Repo-specific text belongs in DISPATCH-LOCAL blocks. -->
 
 Your role:
 - Read the plan artifact listed in the active dispatch channel message, or at [PATH TO PLAN FILE] for manual fallback
