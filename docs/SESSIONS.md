@@ -1,6 +1,6 @@
 # Sessions — Living Summary
 
-Last updated: 2026-05-31
+Last updated: 2026-06-03
 
 ## Phase Status
 
@@ -45,26 +45,28 @@ Last updated: 2026-05-31
 | Search test hardening | Complete | Dispatch 075 adds explicit exclusion/order coverage and tightens search-navigation pending cleanup; timer-hygiene note remains optional |
 | Search navigation timer hygiene | Complete | Dispatch 076 removes the deterministic real-timer overlap from the rAF cancellation test |
 | Left dock and top-bar polish | Complete | Dispatch 077 fixes fixed-height dock/list scrolling, bottom Settings gear, top-bar simplification, always-visible search, icon Undo/Redo, persistent add-block templates, and persistent workspace drag reorder |
+| Viewport-safe menus and sortable block headers | Complete | Dispatch 078 adds shared viewport-clamped menus, sortable header click/toggle behavior, minimal marker headers, numbered-list header cleanup, and targeted tests |
 | Phase 3 spool channels | Complete | Validated end-to-end |
 | Windows subprocess dispatch-auto | Complete | Validated on Windows 11 |
 
 ## Last Sessions
 
+- **Session 255 — Main close** (2026-06-03): Closed dispatch 078 after Review PASS WITH NOTES, consolidated Sessions 251–254, marked the channel closed, and prepared viewport-safe menus/sortable headers for commit/push; two low-severity notes deferred.
+- **Session 254 — Review PASS WITH NOTES** (2026-06-03): Verified all acceptance criteria for viewport-clamped menus and sortable block headers; lint/build passed and tests had only the pre-existing unrelated alertScheduler failure.
+- **Session 253 — Dev** (2026-06-03): Implemented shared clamped menu popover, sortable header click/toggle behavior, minimal marker headers, bullet sort-menu exclusion, and targeted tests.
+- **Session 252 — Plan** (2026-06-03): Planned dispatch 078 from current menu/header/sort code and defined shared clamp hook, header sort wiring, UI sort predicate, and node:test coverage.
+- **Session 251 — Main dispatch** (2026-06-03): Dispatched viewport-safe menus and sortable block headers as the next live-QA polish slice.
 - **Session 250 — Main close** (2026-05-31): Closed dispatch 077 after Review PASS, consolidated Sessions 245–249, marked the channel closed, and prepared left dock/top-bar polish for commit/push; reverted unrelated `package-lock.json` libc-field churn.
 - **Session 249 — Review re-review PASS** (2026-05-31): Confirmed WorkspaceCard now uses a draggable `div role="button"` root with keyboard activation, drag payload hardening, updated tests, runtime reorder persistence verification, and passing test/lint/build.
 - **Session 248 — Dev fix** (2026-05-31): Replaced the WorkspaceCard native button root with an accessible draggable div, updated tests, and performed Playwright runtime verification that workspace reorder persists across reload.
-- **Session 247 — Review FAIL** (2026-05-31): Found the first implementation skipped the plan-required WorkspaceCard root replacement and lacked runtime reorder verification; routed back to Dev.
-- **Session 246 — Plan** (2026-05-31): Planned dispatch 077, root-causing workspace drag reorder to the native button drag root and scoping the shell/top-bar/search/add-block polish changes.
-- **Session 245 — Main dispatch** (2026-05-31): Dispatched live-QA left dock/top-bar polish with workspace drag reorder repair folded in.
-- **Session 244 — Main close** (2026-05-30): Closed dispatch 076 after Review PASS, consolidated Sessions 241–243, marked the channel closed, and prepared the timer-hygiene micro follow-up for commit/push.
-- **Session 243 — Review PASS** (2026-05-30): Reviewed timer hygiene. Confirmed the rAF cancellation test now schedules zero real timers while preserving stale-rAF and second-result-selection assertions; test/lint/build passed.
 
 ## Next Recommended
 
-**Recommended next work: continue live-QA product polish.** Dispatch 077 is complete. The remaining live-QA polish dispatches are:
+**Recommended next work: light-mode persisted default color cleanup.** Dispatch 078 is complete. The remaining live-QA polish slice is:
 
-1. **Viewport-safe menus and sortable block headers** — clamp block/workspace/column popover menus to the viewport; clean block column header alignment/overflow; support click-to-sort and re-click asc/desc toggling on sortable headers; make non-sortable marker headers visually minimal; clean up numbered-list header weirdness.
-2. **Light-mode persisted default color cleanup** — fix fresh light-mode defaults for workspace cards/buttons and block text, while clarifying/preserving behavior for existing explicit dark formatting.
+1. **Light-mode persisted default color cleanup** — fix fresh light-mode defaults for workspace cards/buttons and block text, while clarifying/preserving behavior for existing explicit dark formatting.
+
+Optional tiny follow-up items from dispatch 078 may be folded into that next polish dispatch if still trivial: remove the cosmetic active-sort aria-label spacing before the comma and add a fallback glyph/label for manually emptied non-checkbox sortable headers.
 
 Future note only: richer/inline text formatting for checklist/list text remains a later idea, not yet dispatched unless a planning artifact is desired.
 
@@ -87,6 +89,7 @@ Remaining in the broader v1 backlog:
 - Search test hardening: complete — explicit exclusion/order coverage and pending navigation cleanup
 - Search navigation timer hygiene: complete — rAF cancellation test no longer schedules a real row-flash timer
 - Left dock and top-bar polish: complete — fixed dock/top-bar polish and persistent workspace drag reorder
+- Viewport-safe menus and sortable block headers: complete — shared clamped menus, header click-sort/toggle, minimal marker headers, and targeted tests
 - Autosave UX (063): complete
 - Manual QA (065): complete — no critical defects found
 

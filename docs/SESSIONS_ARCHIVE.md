@@ -3950,3 +3950,82 @@ Closed dispatch 077 after Review PASS. Consolidated Sessions 245–249, marked t
 
 ### Outcome
 Dispatch 077 closed. Reverted unrelated `package-lock.json` optional-dependency `libc` field churn before commit scope; source, tests, artifacts, and channel updates are ready to commit/push.
+
+## Session 251 — 2026-06-03
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: agents/channels/078-viewport-menus-sortable-headers/
+- Dispatch: agents/artifacts/078-viewport-menus-sortable-headers-dispatch.md
+
+### Summary
+Dispatched the next live-QA product polish slice for viewport-safe menus and sortable block headers. Scope includes viewport clamping for block/workspace/column menus, block header alignment/overflow cleanup, click-to-sort and re-click asc/desc toggling, visually minimal non-sortable marker headers, and numbered-list header cleanup.
+
+### Outcome
+Created the dispatch artifact and initial Main → Plan spool message. Next agent should plan the implementation from `agents/channels/078-viewport-menus-sortable-headers/`.
+
+## Session 252 — 2026-06-03
+
+### Agent Type
+plan
+
+### Artifacts
+- Channel: agents/channels/078-viewport-menus-sortable-headers/ (message 002-plan-to-dev.md)
+- Plan: agents/artifacts/078-viewport-menus-sortable-headers-plan.md
+
+### Summary
+Grounded reconnaissance from disk: all four menus (workspace/block/column/row) render at raw click coordinates with no viewport clamping (LeftDock + MainPane); `BlockColumnHeaderRow` renders every column as a bordered button with a type-letter badge and no sort affordance; sort domain/store (`sortBlockRows`, `sortRowsByColumn`, `isSortableColumn`) already exist; tests run on `node:test` (not Vitest). Wrote the implementation plan: a shared `useClampedMenuPosition` hook (with pure `clampMenuPosition`) applied to all four menus; header rebuild for click-to-sort + asc/desc toggle on sortable columns and minimal centered markers for numbered/bullet; `onSortColumn` wiring `BlockCard → MainPane → sortBlockRows`; a UI-facing `isUserSortableColumn` predicate (excludes the no-op bullet marker) used by header + `BlockContextMenu`. Added test plan: pure clamp unit tests, interactive header click-sort test, and an update to `blockGridRender.test.tsx` for the new header presentation.
+
+### Outcome
+Plan complete; handed off to Dev via 002-plan-to-dev.md (State ready-for-dev). One flagged design decision: `isUserSortableColumn` drops the bullet marker from the sort menu for header/menu consistency. Did not commit.
+
+## Session 253 — 2026-06-03
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: agents/channels/078-viewport-menus-sortable-headers/ (message 003-dev-to-review.md)
+- Complete: agents/artifacts/078-viewport-menus-sortable-headers-complete.md
+
+### Summary
+Implemented the full plan: created `useClampedMenuPosition` hook with pure `clampMenuPosition`, shared `MenuPopover` component, and applied viewport clamping to all four menus (workspace, block, column, row). Rebuilt `BlockColumnHeaderRow` with sortable-vs-marker header distinction — sortable headers have click-to-sort with asc/desc toggle and `▲`/`▼` indicators, marker headers (numbered/bullet) render as minimal muted centered glyphs. Threaded sort wiring through `BlockCard → MainPane → sortBlockRows`. Added `isUserSortableColumn` predicate and used it in `BlockContextMenu` to drop the no-op bullet marker. Created 3 test files (`menuPositioning.test.ts`, `blockHeaderSort.test.tsx`, updated `blockGridRender.test.tsx`). All checkpoint-scoped tests pass (465 pass, 1 pre-existing failure in alertScheduler). `npm run lint` and `npm run build` pass clean.
+
+### Outcome
+Implementation complete. Handed off to Review via 003-dev-to-review.md (State ready-for-review). One design decision flagged: `isUserSortableColumn` excludes the bullet marker from UI sort surfaces. Did not commit.
+
+## Session 254 — 2026-06-03
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: agents/channels/078-viewport-menus-sortable-headers/ (message 004-review-to-main.md)
+- Review: agents/artifacts/078-viewport-menus-sortable-headers-review.md
+
+### Summary
+Reviewed the implementation against the plan and complete artifacts. All 12 acceptance criteria met: viewport clamping for all four menus via shared `MenuPopover`/`clampMenuPosition`, header click-to-sort + asc/desc toggle, minimal non-sortable marker headers, `isUserSortableColumn` dropping the no-op bullet from the sort menu, and sort routed through the existing `sortBlockRows` path. Reran all required commands in zsh: `npm run test` = 465 pass / 1 fail (pre-existing unrelated `alertScheduler.test.js`, confirmed not in this dispatch's diff; all checkpoint-scoped tests pass), `npm run lint` clean, `npm run build` clean. No out-of-scope working-tree changes.
+
+### Outcome
+PASS WITH NOTES — Review → Main via 004-review-to-main.md (State review-pass). Two non-blocking, deferred low-severity notes: (1) stray space before the comma in the active-sort aria-label (truly cosmetic); (2) empty-label non-checkbox sortable headers render no glyph (unreachable via default labels). No required fixes, no re-review needed. Did not commit.
+
+## Session 255 — 2026-06-03
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: agents/channels/078-viewport-menus-sortable-headers/ (closing message 005-main-to-main.md)
+- Dispatch: agents/artifacts/078-viewport-menus-sortable-headers-dispatch.md
+- Plan: agents/artifacts/078-viewport-menus-sortable-headers-plan.md
+- Complete: agents/artifacts/078-viewport-menus-sortable-headers-complete.md
+- Review: agents/artifacts/078-viewport-menus-sortable-headers-review.md
+
+### Summary
+Closed dispatch 078 after Review PASS WITH NOTES. Consolidated Sessions 251–254, marked the channel closed, and prepared viewport-safe menus and sortable block headers for commit and push. The dispatch shipped shared viewport-clamped menu positioning, a shared menu popover, click-to-sort sortable block headers with asc/desc toggling, minimal marker headers, numbered-list header cleanup, and targeted tests.
+
+### Outcome
+Dispatch 078 closed. Review verified `npm run lint` and `npm run build` pass; `npm run test` has 465 passing tests and one pre-existing unrelated `alertScheduler.test.js` failure. Two non-blocking low-severity notes remain intentionally deferred for a possible follow-up: cosmetic active-sort aria-label spacing and unreachable empty-label sortable-header fallback glyph behavior.
+

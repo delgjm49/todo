@@ -78,8 +78,13 @@ describe("block grid render", () => {
     );
 
     assert.notEqual(html.includes("Row and cell editing land in the next checkpoint"), true);
-    assert.equal(html.indexOf("NUM"), html.lastIndexOf("NUM"));
-    assert.ok(html.indexOf("NUM") < html.indexOf("Task"));
+    // Marker header glyphs: # for numbered, • for bullet (not present here).
+    assert.ok(html.includes("#"));
+    assert.ok(html.indexOf("#") < html.indexOf("Task"));
+    // Old type-letter badges (NUM/CHK/TXT/BLT/DATE/TIME/OPT) are gone.
+    assert.equal(html.includes(">NUM<"), false);
+    assert.equal(html.includes(">CHK<"), false);
+    assert.equal(html.includes(">TXT<"), false);
     assert.ok(html.indexOf("First") < html.indexOf("Second"));
     assert.ok(html.includes('data-testid="column-header-col_num"'));
     assert.ok(html.includes('data-testid="column-header-col_text_b"'));

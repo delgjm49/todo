@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type DragEvent, type KeyboardEvent } from "react";
-import type { Block } from "../../types/block.js";
+import type { Block, BlockSort } from "../../types/block.js";
 import type { ColumnId, RowId } from "../../domain/ids.js";
 import { BlockColumnHeaderRow } from "./BlockColumnHeaderRow.js";
 import { RowView } from "../row/RowView.js";
@@ -18,6 +18,7 @@ export function BlockCard({
   onOpenMenu,
   onOpenColumnMenu,
   onOpenRowMenu,
+  onSortColumn,
   onSelectBlock,
   onDragStart,
   onDragEnd,
@@ -37,6 +38,7 @@ export function BlockCard({
   onOpenMenu: (x: number, y: number) => void;
   onOpenColumnMenu?: (columnId: ColumnId, x: number, y: number) => void;
   onOpenRowMenu?: (rowId: RowId | null, x: number, y: number) => void;
+  onSortColumn?: (columnId: ColumnId, direction: BlockSort["direction"]) => void;
   onSelectBlock: () => void;
   onDragStart: () => void;
   onDragEnd: () => void;
@@ -182,6 +184,8 @@ export function BlockCard({
               columns={block.columns}
               onOpenColumnMenu={onOpenColumnMenu}
               workspaceId={block.workspaceId}
+              sort={block.sort}
+              onSortColumn={onSortColumn}
             />
             <RowView block={block} workspaceId={block.workspaceId} />
           </div>

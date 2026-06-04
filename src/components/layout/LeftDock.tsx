@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useDocumentStore } from "../../stores/documentStore.js";
 import { useUiStore } from "../../stores/uiStore.js";
 import { WorkspaceCard } from "../workspace/WorkspaceCard.js";
+import { MenuPopover } from "../shared/MenuPopover.js";
 
 export function LeftDock() {
   const workspaceIndex = useDocumentStore((state) => state.workspaceIndex);
@@ -98,17 +99,9 @@ export function LeftDock() {
       </div>
 
       {workspaceMenu ? (
-        <>
+        <MenuPopover backdropTestId="workspace-menu-backdrop" onDismiss={() => closeWorkspaceMenu()} x={workspaceMenu.x} y={workspaceMenu.y}>
           <div
-            aria-hidden="true"
-            className="fixed inset-0 z-40"
-            data-testid="workspace-menu-backdrop"
-            onPointerDown={() => closeWorkspaceMenu()}
-          />
-          <div
-            className="fixed z-50 w-56 rounded-xl border border-border bg-panel px-2 py-2 shadow-soft"
-            style={{ left: `${workspaceMenu.x}px`, top: `${workspaceMenu.y}px` }}
-            onPointerDown={(event) => event.stopPropagation()}
+            className="w-56 rounded-xl border border-border bg-panel px-2 py-2 shadow-soft"
           >
             <MenuButton label="Rename workspace" onClick={() => {
               const entry = workspaceIndex.find((item) => item.id === workspaceMenu.workspaceId);
@@ -164,7 +157,7 @@ export function LeftDock() {
               }}
             />
           </div>
-        </>
+        </MenuPopover>
       ) : null}
     </aside>
   );

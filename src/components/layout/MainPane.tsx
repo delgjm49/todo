@@ -3,6 +3,7 @@ import { BlockCard } from "../block/BlockCard.js";
 import { BlockContextMenu } from "../block/BlockContextMenu.js";
 import { ColumnContextMenu } from "../block/ColumnContextMenu.js";
 import { RowContextMenu } from "../row/RowContextMenu.js";
+import { MenuPopover } from "../shared/MenuPopover.js";
 import { BLOCK_TEMPLATES } from "../../domain/templates/blockTemplates.js";
 import { useDocumentStore } from "../../stores/documentStore.js";
 import { useUiStore } from "../../stores/uiStore.js";
@@ -210,6 +211,9 @@ export function MainPane() {
                   setEditingBlockId(null);
                   openRowMenu(block.workspaceId, block.id, rowId, x, y);
                 }}
+                onSortColumn={(columnId, direction) => {
+                  void sortBlockRows(block.workspaceId, block.id, columnId, direction);
+                }}
               />
               ))}
             </div>
@@ -235,151 +239,115 @@ export function MainPane() {
       </div>
 
       {blockMenu && activeBlockMenuBlock ? (
-        <>
-          <div
-            aria-hidden="true"
-            className="fixed inset-0 z-40"
-            data-testid="block-menu-backdrop"
-            onPointerDown={() => closeBlockMenu()}
+        <MenuPopover backdropTestId="block-menu-backdrop" onDismiss={() => closeBlockMenu()} x={blockMenu.x} y={blockMenu.y}>
+          <BlockContextMenu
+            block={activeBlockMenuBlock}
+            onDelete={() => {
+              if (window.confirm(`Delete block "${activeBlockMenuBlock.title}"?`)) {
+                void deleteBlock(activeBlockMenuBlock.workspaceId, activeBlockMenuBlock.id);
+              }
+              setEditingBlockId(null);
+              closeBlockMenu();
+            }}
+            onMoveToWorkspace={(workspaceId) => {
+              void moveBlockToWorkspace(activeBlockMenuBlock.workspaceId, activeBlockMenuBlock.id, workspaceId);
+              setEditingBlockId(null);
+              closeBlockMenu();
+            }}
+            onRename={() => {
+              setEditingBlockId(activeBlockMenuBlock.id);
+              closeBlockMenu();
+            }}
+            onSort={(columnId: ColumnId, direction: BlockSort["direction"]) => {
+              void sortBlockRows(activeBlockMenuBlock.workspaceId, activeBlockMenuBlock.id, columnId, direction);
+              setEditingBlockId(null);
+              closeBlockMenu();
+            }}
+            onToggleCollapsed={() => {
+              void toggleBlockCollapsed(activeBlockMenuBlock.workspaceId, activeBlockMenuBlock.id);
+              setEditingBlockId(null);
+              closeBlockMenu();
+            }}
+            workspaces={workspaceIndex}
           />
-          <div
-            className="fixed z-50"
-            onPointerDown={(event) => event.stopPropagation()}
-            style={{ left: `${blockMenu.x}px`, top: `${blockMenu.y}px` }}
-          >
-            <BlockContextMenu
-              block={activeBlockMenuBlock}
-              onDelete={() => {
-                if (window.confirm(`Delete block "${activeBlockMenuBlock.title}"?`)) {
-                  void deleteBlock(activeBlockMenuBlock.workspaceId, activeBlockMenuBlock.id);
-                }
-                setEditingBlockId(null);
-                closeBlockMenu();
-              }}
-              onMoveToWorkspace={(workspaceId) => {
-                void moveBlockToWorkspace(activeBlockMenuBlock.workspaceId, activeBlockMenuBlock.id, workspaceId);
-                setEditingBlockId(null);
-                closeBlockMenu();
-              }}
-              onRename={() => {
-                setEditingBlockId(activeBlockMenuBlock.id);
-                closeBlockMenu();
-              }}
-              onSort={(columnId: ColumnId, direction: BlockSort["direction"]) => {
-                void sortBlockRows(activeBlockMenuBlock.workspaceId, activeBlockMenuBlock.id, columnId, direction);
-                setEditingBlockId(null);
-                closeBlockMenu();
-              }}
-              onToggleCollapsed={() => {
-                void toggleBlockCollapsed(activeBlockMenuBlock.workspaceId, activeBlockMenuBlock.id);
-                setEditingBlockId(null);
-                closeBlockMenu();
-              }}
-              workspaces={workspaceIndex}
-            />
-          </div>
-        </>
+        </MenuPopover>
       ) : null}
 
       {columnMenu && activeColumnMenuColumn && activeColumnMenuBlock && columnMenu.workspaceId ? (
-        <>
-          <div
-            aria-hidden="true"
-            className="fixed inset-0 z-40"
-            data-testid="column-menu-backdrop"
-            onPointerDown={() => closeColumnMenu()}
+        <MenuPopover backdropTestId="column-menu-backdrop" onDismiss={() => closeColumnMenu()} x={columnMenu.x} y={columnMenu.y}>
+          <ColumnContextMenu
+            canMoveLeft={
+              getVisibleColumnsInDisplayOrder(activeColumnMenuBlock.columns).findIndex(
+                (c) => c.id === activeColumnMenuColumn.id
+              ) > 0
+            }
+            canMoveRight={
+              getVisibleColumnsInDisplayOrder(activeColumnMenuBlock.columns).findIndex(
+                (c) => c.id === activeColumnMenuColumn.id
+              ) <
+              getVisibleColumnsInDisplayOrder(activeColumnMenuBlock.columns).length - 1
+            }
+            column={activeColumnMenuColumn}
+            onAddLeft={(type) => {
+              void addColumnLeft(columnMenu.workspaceId, columnMenu.blockId, columnMenu.columnId, type);
+              closeColumnMenu();
+            }}
+            onAddRight={(type) => {
+              void addColumnRight(columnMenu.workspaceId, columnMenu.blockId, columnMenu.columnId, type);
+              closeColumnMenu();
+            }}
+            onChangeType={(type) => {
+              void changeColumnType(columnMenu.workspaceId, columnMenu.blockId, columnMenu.columnId, type);
+              closeColumnMenu();
+            }}
+            onClose={() => closeColumnMenu()}
+            onDelete={() => {
+              if (window.confirm("Delete this column?")) {
+                void deleteColumn(columnMenu.workspaceId, columnMenu.blockId, columnMenu.columnId);
+              }
+              closeColumnMenu();
+            }}
+            onMoveLeft={() => {
+              void moveColumnLeft(columnMenu.workspaceId, columnMenu.blockId, columnMenu.columnId);
+              closeColumnMenu();
+            }}
+            onMoveRight={() => {
+              void moveColumnRight(columnMenu.workspaceId, columnMenu.blockId, columnMenu.columnId);
+              closeColumnMenu();
+            }}
+            onRename={(label) => {
+              void renameColumn(columnMenu.workspaceId, columnMenu.blockId, columnMenu.columnId, label);
+            }}
+            onUpdateSettings={(patch) => {
+              void updateColumnSettings(columnMenu.workspaceId, columnMenu.blockId, columnMenu.columnId, patch);
+            }}
           />
-          <div
-            className="fixed z-50"
-            onPointerDown={(event) => event.stopPropagation()}
-            style={{ left: `${columnMenu.x}px`, top: `${columnMenu.y}px` }}
-          >
-            <ColumnContextMenu
-              canMoveLeft={
-                getVisibleColumnsInDisplayOrder(activeColumnMenuBlock.columns).findIndex(
-                  (c) => c.id === activeColumnMenuColumn.id
-                ) > 0
-              }
-              canMoveRight={
-                getVisibleColumnsInDisplayOrder(activeColumnMenuBlock.columns).findIndex(
-                  (c) => c.id === activeColumnMenuColumn.id
-                ) <
-                getVisibleColumnsInDisplayOrder(activeColumnMenuBlock.columns).length - 1
-              }
-              column={activeColumnMenuColumn}
-              onAddLeft={(type) => {
-                void addColumnLeft(columnMenu.workspaceId, columnMenu.blockId, columnMenu.columnId, type);
-                closeColumnMenu();
-              }}
-              onAddRight={(type) => {
-                void addColumnRight(columnMenu.workspaceId, columnMenu.blockId, columnMenu.columnId, type);
-                closeColumnMenu();
-              }}
-              onChangeType={(type) => {
-                void changeColumnType(columnMenu.workspaceId, columnMenu.blockId, columnMenu.columnId, type);
-                closeColumnMenu();
-              }}
-              onClose={() => closeColumnMenu()}
-              onDelete={() => {
-                if (window.confirm("Delete this column?")) {
-                  void deleteColumn(columnMenu.workspaceId, columnMenu.blockId, columnMenu.columnId);
-                }
-                closeColumnMenu();
-              }}
-              onMoveLeft={() => {
-                void moveColumnLeft(columnMenu.workspaceId, columnMenu.blockId, columnMenu.columnId);
-                closeColumnMenu();
-              }}
-              onMoveRight={() => {
-                void moveColumnRight(columnMenu.workspaceId, columnMenu.blockId, columnMenu.columnId);
-                closeColumnMenu();
-              }}
-              onRename={(label) => {
-                void renameColumn(columnMenu.workspaceId, columnMenu.blockId, columnMenu.columnId, label);
-              }}
-              onUpdateSettings={(patch) => {
-                void updateColumnSettings(columnMenu.workspaceId, columnMenu.blockId, columnMenu.columnId, patch);
-              }}
-            />
-          </div>
-        </>
+        </MenuPopover>
       ) : null}
 
       {rowMenu && activeRowMenuBlock ? (
-        <>
-          <div
-            aria-hidden="true"
-            className="fixed inset-0 z-40"
-            data-testid="row-menu-backdrop"
-            onPointerDown={() => closeRowMenu()}
+        <MenuPopover backdropTestId="row-menu-backdrop" onDismiss={() => closeRowMenu()} x={rowMenu.x} y={rowMenu.y}>
+          <RowContextMenu
+            canCutOrCopy={rowMenu.targetRowId !== null}
+            canPaste={canPaste}
+            onCopy={() => {
+              if (rowMenu.targetRowId) {
+                void copyRows(rowMenu.workspaceId, rowMenu.blockId, [rowMenu.targetRowId]);
+              }
+              closeRowMenu();
+            }}
+            onCut={() => {
+              if (rowMenu.targetRowId) {
+                void cutRows(rowMenu.workspaceId, rowMenu.blockId, [rowMenu.targetRowId]);
+              }
+              closeRowMenu();
+            }}
+            onPaste={() => {
+              void pasteRows(rowMenu.workspaceId, rowMenu.blockId, rowMenu.targetRowId);
+              closeRowMenu();
+            }}
           />
-          <div
-            className="fixed z-50"
-            onPointerDown={(event) => event.stopPropagation()}
-            style={{ left: `${rowMenu.x}px`, top: `${rowMenu.y}px` }}
-          >
-            <RowContextMenu
-              canCutOrCopy={rowMenu.targetRowId !== null}
-              canPaste={canPaste}
-              onCopy={() => {
-                if (rowMenu.targetRowId) {
-                  void copyRows(rowMenu.workspaceId, rowMenu.blockId, [rowMenu.targetRowId]);
-                }
-                closeRowMenu();
-              }}
-              onCut={() => {
-                if (rowMenu.targetRowId) {
-                  void cutRows(rowMenu.workspaceId, rowMenu.blockId, [rowMenu.targetRowId]);
-                }
-                closeRowMenu();
-              }}
-              onPaste={() => {
-                void pasteRows(rowMenu.workspaceId, rowMenu.blockId, rowMenu.targetRowId);
-                closeRowMenu();
-              }}
-            />
-          </div>
-        </>
+        </MenuPopover>
       ) : null}
     </section>
   );

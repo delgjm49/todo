@@ -3,7 +3,7 @@ import type { ColumnDefinition } from "../../types/column.js";
 import type { WorkspaceIndexEntry } from "../../types/workspace.js";
 import type { ColumnId, WorkspaceId } from "../../domain/ids.js";
 import { getVisibleColumnsInDisplayOrder } from "../../domain/columns/createColumn.js";
-import { isSortableColumn } from "../../domain/sorting/compareValues.js";
+import { isUserSortableColumn } from "../../domain/sorting/compareValues.js";
 
 export function BlockContextMenu({
   block,
@@ -23,7 +23,7 @@ export function BlockContextMenu({
   onDelete: () => void;
 }) {
   const otherWorkspaces = workspaces.filter((workspace) => workspace.id !== block.workspaceId);
-  const sortableColumns = getVisibleColumnsInDisplayOrder(block.columns).filter(isSortableColumn);
+  const sortableColumns = getVisibleColumnsInDisplayOrder(block.columns).filter(isUserSortableColumn);
 
   return (
     <div className="w-80 rounded-xl border border-border bg-panel px-2 py-2 shadow-soft">

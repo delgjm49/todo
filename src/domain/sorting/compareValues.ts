@@ -16,6 +16,15 @@ export function isSortableColumn(column: ColumnDefinition | undefined): column i
   return column !== undefined && sortableColumnTypes.has(column.type);
 }
 
+/**
+ * Columns a user can meaningfully sort by from the header / block sort menu.
+ * Excludes marker columns: `numbered` (already excluded by isSortableColumn)
+ * and `bullet` (in the sortable set but compareCellValues is a no-op for it).
+ */
+export function isUserSortableColumn(column: ColumnDefinition | undefined): column is ColumnDefinition {
+  return isSortableColumn(column) && column.type !== "bullet";
+}
+
 export function compareCellValues(
   left: PersistedCell | undefined,
   right: PersistedCell | undefined,
