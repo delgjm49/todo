@@ -4420,3 +4420,159 @@ Re-reviewed dispatch 083 Round 2 fixes from `messages/007-dev-to-review.md`, ign
 
 ### Outcome
 PASS — Ready for Main. Next channel message created at `agents/channels/083-date-time-picker-implementation/messages/008-review-to-main.md`.
+
+## Session 280 — 2026-06-06
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: agents/channels/083-date-time-picker-implementation/
+- Dispatch: agents/artifacts/083-date-time-picker-implementation-dispatch.md
+- Plan: agents/artifacts/083-date-time-picker-implementation-plan.md
+- Complete: agents/artifacts/083-date-time-picker-implementation-complete.md
+- Review: agents/artifacts/083-date-time-picker-implementation-review.md
+
+### Summary
+Closed dispatch 083 after Review PASS and consolidated Sessions 271–279 into the archive. The implementation shipped compact native date/time picker affordances with graceful fallback, strict calendar-valid DateCell validation, unchanged `string | null` storage, and targeted row editing tests; Review verified full test/lint/build/e2e pass.
+
+### Outcome
+Dispatch 083 closed via `agents/channels/083-date-time-picker-implementation/messages/009-main-to-main.md`. Ready to continue the approved queue with dispatch 084 archive/completed views planning.
+
+## Session 281 — 2026-06-06
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: agents/channels/084-archive-completed-views-planning/
+- Dispatch: agents/artifacts/084-archive-completed-views-planning-dispatch.md
+
+### Summary
+Registered the final approved bundle item with auto-close enabled after closing dispatch 083. Framed dispatch 084 as a Plan → Dev → Review audit/planning dispatch to define archive/completed row lifecycle semantics before any product implementation, including storage/schema risks and future implementation acceptance criteria.
+
+### Outcome
+Dispatch 084 is ready for Plan via `agents/channels/084-archive-completed-views-planning/messages/001-main-to-plan.md`. Queue automation remains authorized to auto-close review-passing work.
+
+## Session 282 — 2026-06-06
+
+### Agent Type
+plan
+
+### Artifacts
+- Channel: agents/channels/084-archive-completed-views-planning/
+- Dispatch: agents/artifacts/084-archive-completed-views-planning-dispatch.md
+- Plan: agents/artifacts/084-archive-completed-views-planning-plan.md
+
+### Summary
+Created the archive/completed views planning artifact after auditing current checkbox-derived completion, storage/schema shapes, document-store mutation patterns, and relevant alert/search/sort/clipboard/tests. The plan directs Dev to produce a planning/audit complete artifact only, with no product source/test changes.
+
+### Outcome
+Plan is ready for Dev via `agents/channels/084-archive-completed-views-planning/messages/002-plan-to-dev.md`. Dev should recommend or reject the first future archive/completed-view implementation slice and document storage/schema and lifecycle risks.
+
+## Session 283 — 2026-06-06
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: agents/channels/084-archive-completed-views-planning/
+- Dispatch: agents/artifacts/084-archive-completed-views-planning-dispatch.md
+- Plan: agents/artifacts/084-archive-completed-views-planning-plan.md
+- Complete: agents/artifacts/084-archive-completed-views-planning-complete.md
+
+### Summary
+Produced the archive/completed views planning complete artifact after independent verification of current checkbox-derived completion behavior, storage/schema validation (normalizeRow strips unknown fields, STORAGE_SCHEMA_VERSION 1), store mutation architecture (commitSnapshot → history → autosave), and all referenced domain files (alerts, search, sort, clipboard). Recommended a derived completed-row view/filter with a single new Block.hideCompletedRows boolean field — no Row schema changes, no STORAGE_SCHEMA_VERSION bump, no migration risk. Explicitly rejected persisted archive state for the first slice and deferred it behind real-world usage feedback. No product source or test files were modified.
+
+### Outcome
+Dev is ready for Review via `agents/channels/084-archive-completed-views-planning/messages/003-dev-to-review.md`. Review should confirm the recommendation is grounded, non-destructive, and concrete enough for a future implementation dispatch.
+
+## Session 284 — 2026-06-06
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: agents/channels/084-archive-completed-views-planning/
+- Dispatch: agents/artifacts/084-archive-completed-views-planning-dispatch.md
+- Plan: agents/artifacts/084-archive-completed-views-planning-plan.md
+- Complete: agents/artifacts/084-archive-completed-views-planning-complete.md
+- Review: agents/artifacts/084-archive-completed-views-planning-review.md
+
+### Summary
+Reviewed the archive/completed views planning complete artifact against the plan and current code. Verified lifecycle-adjacent tests, lint, and build pass, but found the planning artifact internally contradictory about zero schema changes versus a persisted `Block.hideCompletedRows` field, and found an incorrect clipboard assertion because current paste preserves compatible checkbox values.
+
+### Outcome
+Review returned FAIL to Dev via `agents/channels/084-archive-completed-views-planning/messages/004-review-to-dev.md`. Dev must correct the complete artifact and send a new Dev → Review handoff with `State = ready-for-review` before Main can close dispatch 084.
+
+## Session 285 — 2026-06-06
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: agents/channels/084-archive-completed-views-planning/
+- Dispatch: agents/artifacts/084-archive-completed-views-planning-dispatch.md
+- Plan: agents/artifacts/084-archive-completed-views-planning-plan.md
+- Complete: agents/artifacts/084-archive-completed-views-planning-complete.md (updated)
+- Review: agents/artifacts/084-archive-completed-views-planning-review.md
+
+### Summary
+Addressed both Review issues from Session 284. Resolved the schema/persistence contradiction by making the recommendation consistent throughout: one backward-compatible `Block.hideCompletedRows` boolean field with no `Row` changes, no `STORAGE_SCHEMA_VERSION` bump, and no migration logic. Corrected the clipboard paste behavior: `mapClipboardRowsToBlock` preserves compatible checkbox values via `normalizeCellForColumnType` + `structuredClone`, not fresh defaults. Updated acceptance criteria, domain impact coverage, test table, future file map, and conclusion accordingly. Added Review Fix Notes section documenting both fixes. No product source or test files were modified.
+
+### Outcome
+Dev is ready for re-review via `agents/channels/084-archive-completed-views-planning/messages/005-dev-to-review.md`. Review should confirm both issues are resolved and the artifact is internally consistent for a future implementation dispatch.
+
+## Session 286 — 2026-06-06
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: agents/channels/084-archive-completed-views-planning/
+- Dispatch: agents/artifacts/084-archive-completed-views-planning-dispatch.md
+- Plan: agents/artifacts/084-archive-completed-views-planning-plan.md
+- Complete: agents/artifacts/084-archive-completed-views-planning-complete.md
+- Review: agents/artifacts/084-archive-completed-views-planning-review.md
+
+### Summary
+Re-reviewed the updated archive/completed views planning complete artifact after Dev's fixes. Verified the schema/persistence recommendation is now consistent and the clipboard domain analysis mostly reflects current `mapClipboardRowsToBlock` behavior, but found one remaining stale acceptance criterion that still says insert/paste rows are uncompleted and always visible, conflicting with preserved checkbox values on paste.
+
+### Outcome
+Review returned FAIL to Dev via `agents/channels/084-archive-completed-views-planning/messages/006-review-to-dev.md`. Dev should correct the remaining acceptance-criteria contradiction and send a new Dev → Review handoff with `State = ready-for-review` before Main can close dispatch 084.
+
+## Session 287 — 2026-06-06
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: agents/channels/084-archive-completed-views-planning/
+- Dispatch: agents/artifacts/084-archive-completed-views-planning-dispatch.md
+- Plan: agents/artifacts/084-archive-completed-views-planning-plan.md
+- Complete: agents/artifacts/084-archive-completed-views-planning-complete.md (updated)
+- Review: agents/artifacts/084-archive-completed-views-planning-review.md
+
+### Summary
+Addressed the remaining Review issue from Session 286. Fixed the stale acceptance criterion that conflated insert and paste semantics: new rows are always uncompleted/visible (createRow defaults checkboxes to false), but pasted rows preserve compatible checkbox values and may be hidden immediately. Split the criterion into separate insert and paste expectations. Updated Review Fix Notes with a new Issue 3 entry documenting the fix. No product source or test files were modified.
+
+### Outcome
+Dev is ready for re-review via `agents/channels/084-archive-completed-views-planning/messages/007-dev-to-review.md`. Review should confirm all acceptance criteria are now consistent with the corrected clipboard behavior.
+
+## Session 288 — 2026-06-06
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: agents/channels/084-archive-completed-views-planning/
+- Dispatch: agents/artifacts/084-archive-completed-views-planning-dispatch.md
+- Plan: agents/artifacts/084-archive-completed-views-planning-plan.md
+- Complete: agents/artifacts/084-archive-completed-views-planning-complete.md
+- Review: agents/artifacts/084-archive-completed-views-planning-review.md
+
+### Summary
+Re-reviewed the final archive/completed views planning artifact after Dev corrected the stale insert/paste acceptance criterion. Confirmed the recommendation is now internally consistent, clipboard and insert semantics match current code, and the artifact is concrete enough for future implementation scoping. Verification passed for lifecycle-adjacent tests, lint, and build; no product source/test files were modified.
+
+### Outcome
+Review returned PASS to Main via `agents/channels/084-archive-completed-views-planning/messages/008-review-to-main.md`. Main should run the dirty-file close gate, consolidate session logs, and close/commit dispatch 084 if valid.

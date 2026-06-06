@@ -51,25 +51,26 @@ Last updated: 2026-06-06
 | Sortable-header polish follow-up | Complete | Dispatch 081 fixes active-sort aria-label spacing and empty-label sortable-header fallback text; pushed CI run passed |
 | Richer date/time picker planning | Complete | Dispatch 082 recommends compact native picker affordances alongside existing text inputs, preserving `string | null` storage |
 | Date/time picker implementation | Complete | Dispatch 083 adds compact native picker affordances, strict DateCell validation, unchanged `string \| null` storage, and targeted tests |
+| Archive/completed views planning | Complete | Dispatch 084 recommends a derived hide-completed rows filter with one backward-compatible `Block.hideCompletedRows` preference and defers persisted row archive state |
 | Phase 3 spool channels | Complete | Validated end-to-end |
 | Windows subprocess dispatch-auto | Complete | Validated on Windows 11 |
 
 ## Last Sessions
 
-- **Session 280 — Main close** (2026-06-06): Closed dispatch 083 after Review PASS, consolidated Sessions 271–279, and prepared the date/time picker implementation for commit/push before continuing the queue.
-- **Session 279 — Review PASS** (2026-06-06): Verified dispatch 083 after two fix rounds; full test suite passed 512/512 with no attachEvent/detachEvent errors, and lint/build/e2e passed.
-- **Session 278 — Dev fix** (2026-06-06): Added the full-suite JSDOM compatibility fix for React controlled-input attachEvent/detachEvent behavior in rowEditing tests.
-- **Session 277 — Review FAIL** (2026-06-06): Found the first fix round did not resolve attachEvent/detachEvent errors in the full suite.
-- **Session 276 — Dev fix** (2026-06-06): Added initial JSDOM attachEvent/detachEvent stubs plus TimeCell and keyboard picker coverage.
-- **Session 275 — Review FAIL** (2026-06-06): Requested fixes for supported-picker focus errors and incomplete picker affordance coverage.
-- **Session 274 — Dev** (2026-06-06): Implemented compact date/time picker affordances, strict DateCell validation, and targeted row editing tests.
-- **Session 273 — Plan** (2026-06-06): Planned dispatch 083 from the reviewed dispatch 082 recommendation and current code/tests.
+- **Session 289 — Main close** (2026-06-06): Closed dispatch 084 after Review PASS, consolidated Sessions 280–288, and prepared archive/completed views planning for commit/push.
+- **Session 288 — Review PASS** (2026-06-06): Confirmed dispatch 084's final planning artifact is internally consistent, non-destructive, and concrete enough for future implementation scoping.
+- **Session 287 — Dev fix** (2026-06-06): Split insert vs paste semantics in the future acceptance criteria so compatible pasted checkbox values can remain completed/hidden.
+- **Session 286 — Review FAIL** (2026-06-06): Found one stale insert/paste acceptance criterion after the first artifact fix.
+- **Session 285 — Dev fix** (2026-06-06): Resolved schema-scope and clipboard-behavior contradictions in the archive/completed views planning artifact.
+- **Session 284 — Review FAIL** (2026-06-06): Requested artifact fixes for inconsistent schema language and incorrect clipboard paste assumptions.
+- **Session 283 — Dev** (2026-06-06): Produced the dispatch 084 planning/audit artifact recommending a derived hide-completed rows filter and deferring persisted archive state.
+- **Session 282 — Plan** (2026-06-06): Planned dispatch 084 from current checkbox completion, storage, alert, search, sort, clipboard, and test behavior.
 
 ## Next Recommended
 
-**Recommended next work: continue the approved post-MVP bundle.** Dispatch 083 is complete. Remaining queued work:
+**Recommended next work: implement the hide-completed rows slice.** Dispatch 084 is complete. The reviewed recommendation is:
 
-1. **Archive/completed views planning** — define row lifecycle semantics before any persistence/UI implementation to avoid conflating checkbox-completed state with archive state.
+1. **Hide completed rows implementation** — add a per-block derived completed-row filter, persisted as `Block.hideCompletedRows: boolean`, with no row archive lifecycle state and no destructive behavior.
 
 Remaining in the broader v1 backlog:
 - None.
@@ -96,6 +97,7 @@ Remaining in the broader v1 backlog:
 - Sortable-header polish follow-up: complete — aria-label spacing and empty-header fallback fixes; follow-up CI green
 - Richer date/time picker planning: complete — reviewed recommendation for compact picker affordances with unchanged `string | null` storage
 - Date/time picker implementation: complete — compact picker affordances, strict DateCell validation, unchanged `string | null` storage, and passing full verification
+- Archive/completed views planning: complete — recommends derived hide-completed rows filter and defers explicit archive state
 - Autosave UX (063): complete
 - Manual QA (065): complete — no critical defects found
 
