@@ -119,3 +119,51 @@ Reviewed the light-mode default color cleanup against the plan. Confirmed the he
 
 ### Outcome
 PASS. Next channel message created: `agents/channels/080-light-mode-default-color-cleanup/messages/004-review-to-main.md`. Ready for Main to run the dirty-file close gate, consolidate sessions, commit, push, and advance the queue.
+
+## Session 263 — 2026-06-06
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: agents/channels/081-sortable-header-polish-follow-up/
+- Dispatch: agents/artifacts/081-sortable-header-polish-follow-up-dispatch.md
+
+### Summary
+Framed queue item #3 as a direct-to-Dev dispatch for the two deferred low-severity sortable-header polish notes from dispatch 078 Review. The dispatch scopes a component-local fix for clean active-sort aria labels and visible fallback text/glyphs for manually emptied non-checkbox sortable headers, with targeted tests and standard verification.
+
+### Outcome
+Dispatch 081 is ready for Dev via `agents/channels/081-sortable-header-polish-follow-up/messages/001-main-to-dev.md`. Queue automation remains authorized to auto-close review-passing work.
+
+## Session 264 — 2026-06-06
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: agents/channels/081-sortable-header-polish-follow-up/
+- Dispatch: agents/artifacts/081-sortable-header-polish-follow-up-dispatch.md
+- Complete: agents/artifacts/081-sortable-header-polish-follow-up-complete.md
+
+### Summary
+Implemented both low-severity polish items from dispatch 078 Review. Fixed `ariaLabel` construction in `BlockColumnHeaderRow.tsx` to use a template literal instead of array join, eliminating the stray space before the comma. Extended `getSortableGlyph` to return `getColumnTypeName(type)` for non-checkbox sortable types, providing a muted type-name fallback for manually emptied headers. Added two targeted tests covering the aria-label format and the empty-label fallback. 502 tests pass, lint and build both pass.
+
+### Outcome
+Implementation complete. Next channel message created: `agents/channels/081-sortable-header-polish-follow-up/messages/002-dev-to-review.md`. Ready for Review.
+
+## Session 265 — 2026-06-06
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: agents/channels/081-sortable-header-polish-follow-up/
+- Dispatch: agents/artifacts/081-sortable-header-polish-follow-up-dispatch.md
+- Complete: agents/artifacts/081-sortable-header-polish-follow-up-complete.md
+- Review: agents/artifacts/081-sortable-header-polish-follow-up-review.md
+
+### Summary
+Reviewed the sortable-header polish follow-up against dispatch 081 and the deferred notes from review 078. Confirmed active-sort aria labels no longer include a stray space before the comma, empty-label sortable headers render visible type-name fallback text while checkbox keeps `☑`, marker headers remain minimal/non-sortable, and the targeted tests exercise both fixes. Reran the full test suite, lint, and build; all passed.
+
+### Outcome
+PASS. Next channel message created: `agents/channels/081-sortable-header-polish-follow-up/messages/003-review-to-main.md`. Ready for Main to run the dirty-file close gate, consolidate sessions, commit, push, and advance the queue.

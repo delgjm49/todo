@@ -6,7 +6,7 @@ import { useUiStore } from "../../stores/uiStore.js";
 
 function getSortableGlyph(type: ColumnDefinition["type"]): string {
   if (type === "checkbox") return "☑";
-  return "";
+  return getColumnTypeName(type);
 }
 
 function getMarkerGlyph(type: ColumnDefinition["type"]): string {
@@ -60,11 +60,8 @@ export function BlockColumnHeaderRow({
 
         if (userSortable) {
           const label = column.label.trim();
-          const ariaLabel = [
-            "Sort by",
-            label || getColumnTypeName(column.type),
-            isActive ? `, currently ${direction}ending` : "",
-          ].filter(Boolean).join(" ");
+          const displayName = label || getColumnTypeName(column.type);
+          const ariaLabel = `Sort by ${displayName}${isActive ? `, currently ${direction}ending` : ""}`;
 
           return (
             <button

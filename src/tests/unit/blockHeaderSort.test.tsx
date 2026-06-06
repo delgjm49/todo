@@ -3,8 +3,11 @@ import { afterEach, beforeEach, describe, test } from "node:test";
 import { JSDOM } from "jsdom";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
+import { BlockColumnHeaderRow } from "../../components/block/BlockColumnHeaderRow.js";
 import { MainPane } from "../../components/layout/MainPane.js";
 import { createBlockTemplate } from "../../domain/templates/blockTemplates.js";
+import type { BlockSort } from "../../types/block.js";
+import type { ColumnDefinition } from "../../types/column.js";
 import { createMemoryStorageService } from "../../services/storage/index.js";
 import { useDocumentStore } from "../../stores/documentStore.js";
 import { useUiStore } from "../../stores/uiStore.js";
@@ -287,5 +290,61 @@ describe("block header sort", () => {
 
     // data-sort-direction should still be absent
     assert.equal(numberedHeader.hasAttribute("data-sort-direction"), false);
+  });
+});
+
+describe("BlockColumnHeaderRow aria-label and empty-label fallback", () => {
+  test("active-sort aria-label has no stray space before comma", async () => {
+    const col: ColumnDefinition = {
+      id: "col_text",
+      type: "text",
+      label: "Task",
+      order: 0,
+      width: 100,
+      visible: true,
+      settings: {},
+      format: {},
+    };
+    const sort: BlockSort = { columnId: "col_text", direction: "asc" };
+
+    await renderNode(
+      <BlockColumnHeaderRow
+        blockId="block_test"
+        columns={[col]}
+        workspaceId="ws_test"
+        sort={sort}
+      />
+    );
+
+    const header = document.querySelector('[data-testid="column-header-col_text"]') as HTMLElement;
+    assert.ok(header);
+    assert.equal(header.getAttribute("aria-label"), "Sort by Task, currently ascending");
+  });
+
+  test("empty-label sortable header renders type-name fallback and clean aria-label", async () => {
+    const col: ColumnDefinition = {
+      id: "col_text",
+      type: "text",
+      label: "",
+      order: 0,
+      width: 100,
+      visible: true,
+      settings: {},
+      format: {},
+    };
+
+    await renderNode(
+      <BlockColumnHeaderRow
+        blockId="block_test"
+        columns={[col]}
+        workspaceId="ws_test"
+        sort={null}
+      />
+    );
+
+    const header = document.querySelector('[data-testid="column-header-col_text"]') as HTMLElement;
+    assert.ok(header);
+    assert.ok(header.textContent?.includes("Text"), "empty-label text column should show 'Text' fallback");
+    assert.equal(header.getAttribute("aria-label"), "Sort by Text");
   });
 });
