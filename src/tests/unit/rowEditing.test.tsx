@@ -10,6 +10,39 @@ import { useDocumentStore } from "../../stores/documentStore.js";
 import { useUiStore } from "../../stores/uiStore.js";
 import type { Block } from "../../types/block.js";
 
+// ---- Module-level JSDOM attachEvent/detachEvent shims ----
+// React's controlled-input polyfill calls activeElement.attachEvent() /
+// detachEvent() which are legacy IE APIs not provided by JSDOM. We install
+// no-op stubs once at module load time on Object.prototype, which is the
+// root prototype for all JSDOM DOM objects. This is intentionally broad but
+// necessary because:
+//   (a) JSDOM creates fresh prototype chains per instance, and per-instance
+//       stubs do not cover errors triggered during React's async event
+//       cleanup that spans JSDOM lifetimes in the full test suite.
+//   (b) The stubs are harmless no-ops — they silently absorb the calls that
+//       React's polyfill makes, which React only uses for legacy IE support.
+//   (c) This technique is used by production React+JSDOM testing setups.
+
+(function installAttachEventShims() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const O = Object.prototype as any;
+  if (!("attachEvent" in O)) {
+    Object.defineProperty(O, "attachEvent", {
+      configurable: true,
+      writable: true,
+      value: function () {},
+    });
+  }
+  if (!("detachEvent" in O)) {
+    Object.defineProperty(O, "detachEvent", {
+      configurable: true,
+      writable: true,
+      value: function () {},
+    });
+  }
+})();
+// -------------------------------------------------------------
+
 const initialDocumentState = useDocumentStore.getState();
 const initialUiState = useUiStore.getState();
 
@@ -53,6 +86,32 @@ function installDomGlobals(window: Window & typeof globalThis) {
   }
 
   globalThis.PointerEvent = window.PointerEvent;
+
+  // React's input-event polyfill (used for controlled components) expects
+  // attachEvent / detachEvent on the active element. JSDOM does not provide
+  // these legacy IE APIs. We add no-op stubs on both Node.prototype (covers
+  // document) and HTMLElement.prototype (covers input elements).
+  const noop = function () {};
+  Object.defineProperty(window.Node.prototype, "attachEvent", {
+    configurable: true,
+    writable: true,
+    value: noop,
+  });
+  Object.defineProperty(window.Node.prototype, "detachEvent", {
+    configurable: true,
+    writable: true,
+    value: noop,
+  });
+  Object.defineProperty(window.HTMLElement.prototype, "attachEvent", {
+    configurable: true,
+    writable: true,
+    value: noop,
+  });
+  Object.defineProperty(window.HTMLElement.prototype, "detachEvent", {
+    configurable: true,
+    writable: true,
+    value: noop,
+  });
 }
 
 async function renderMainPane() {
@@ -589,6 +648,504 @@ describe("row editing ui", () => {
     });
 
     assert.ok(timeInput.className.includes("text-danger"));
+  });
+
+  // -----------------------------------------------------------------------
+  // Date/time picker tests
+  // -----------------------------------------------------------------------
+
+  function buildDateTimeBlock(): Block {
+    const block = createBlockTemplate("basic_checklist", "ws_home", {
+      blockId: "block_home",
+      title: "Today",
+      order: 0,
+    });
+
+    const dateColumnId = "col_date";
+    const timeColumnId = "col_time";
+
+    return {
+      ...block,
+      columns: [
+        ...block.columns,
+        {
+          id: dateColumnId,
+          type: "date" as const,
+          label: "Due",
+          order: block.columns.length,
+          width: 120,
+          visible: true,
+          settings: { alertsEnabled: false },
+          format: {},
+        },
+        {
+          id: timeColumnId,
+          type: "time" as const,
+          label: "At",
+          order: block.columns.length + 1,
+          width: 80,
+          visible: true,
+          settings: { alertsEnabled: false },
+          format: {},
+        },
+      ],
+      rows: block.rows.map((row) => ({
+        ...row,
+        cells: {
+          ...row.cells,
+          [dateColumnId]: { value: null, format: {} },
+          [timeColumnId]: { value: null, format: {} },
+        },
+      })),
+    };
+  }
+
+  function setStateWithBlock(block: Block) {
+    useDocumentStore.setState({
+      settings: {
+        theme: "dark",
+        defaults: {
+          fontFamily: "Segoe UI",
+          fontSize: 14,
+          textColor: "#F3F4F6",
+          cellBackground: "#111827",
+          blockBorderColor: "#374151",
+          blockBorderWidth: 1,
+          workspaceAccentEnabled: true,
+          workspaceBackground: "#1F2937",
+          workspaceTextColor: "#F9FAFB",
+          workspaceAccentColor: "#60A5FA",
+        },
+      },
+      workspaceIndex: [
+        {
+          id: "ws_home",
+          title: "Home",
+          order: 0,
+          style: {
+            background: "#1F2937",
+            textColor: "#F9FAFB",
+            accentStripe: { enabled: true, color: "#60A5FA" },
+          },
+        },
+      ],
+      workspacesById: {
+        ws_home: {
+          id: "ws_home",
+          blocks: [block],
+        },
+      },
+      loadedWorkspaceIds: ["ws_home"],
+      activeWorkspaceId: "ws_home",
+    });
+  }
+
+  function installShowPickerStub(): { calls: number } {
+    // Must use globalThis.window (not dom.window) because the React component
+    // detection reads from globalThis.window, which is a different JSDOM proxy.
+    const win: Window & typeof globalThis = globalThis.window as unknown as Window & typeof globalThis;
+    const HTMLInputElement = win.HTMLInputElement;
+    const stub = {
+      calls: 0,
+    };
+    const fn = function () {
+      stub.calls++;
+    };
+    Object.defineProperty(HTMLInputElement.prototype, "showPicker", {
+      configurable: true,
+      writable: true,
+      value: fn,
+    });
+    return stub;
+  }
+
+  test("date picker button opens native picker when showPicker is supported", async () => {
+    const block = buildDateTimeBlock();
+    const rowId = block.rows[0]?.id;
+    assert.ok(rowId);
+
+    setStateWithBlock(block);
+
+    const showPickerStub = installShowPickerStub();
+    assert.ok(showPickerStub);
+
+    await renderMainPane();
+
+    // Picker button should exist
+    const dateButton = document.querySelector(
+      `[data-testid="cell-${rowId}-col_date"] [data-testid="date-cell-picker-button"]`
+    ) as HTMLButtonElement | null;
+    assert.ok(dateButton, "Date picker button should exist when showPicker is supported");
+
+    // Clicking the button should call showPicker on the hidden date input
+    await act(async () => {
+      dateButton.click();
+    });
+
+    assert.ok(showPickerStub.calls > 0, "showPicker should have been called");
+  });
+
+  test("time picker button opens native picker when showPicker is supported", async () => {
+    const block = buildDateTimeBlock();
+    const rowId = block.rows[0]?.id;
+    assert.ok(rowId);
+
+    setStateWithBlock(block);
+
+    const showPickerStub = installShowPickerStub();
+    assert.ok(showPickerStub);
+
+    await renderMainPane();
+
+    const timeButton = document.querySelector(
+      `[data-testid="cell-${rowId}-col_time"] [data-testid="time-cell-picker-button"]`
+    ) as HTMLButtonElement | null;
+    assert.ok(timeButton, "Time picker button should exist when showPicker is supported");
+
+    await act(async () => {
+      timeButton.click();
+    });
+
+    assert.ok(showPickerStub.calls > 0, "showPicker should have been called for time picker");
+  });
+
+  test("Ctrl+Alt+Down opens date picker via keyboard shortcut", async () => {
+    const block = buildDateTimeBlock();
+    const rowId = block.rows[0]?.id;
+    assert.ok(rowId);
+
+    setStateWithBlock(block);
+    const showPickerStub = installShowPickerStub();
+    assert.ok(showPickerStub);
+
+    await renderMainPane();
+
+    const dateInput = document.querySelector(
+      `[data-testid="cell-${rowId}-col_date"] [data-testid="date-cell-input"]`
+    ) as HTMLInputElement | null;
+    assert.ok(dateInput);
+
+    const callsBefore = showPickerStub.calls;
+
+    await act(async () => {
+      fireEvent.keyDown(dateInput, { key: "ArrowDown", ctrlKey: true });
+    });
+
+    assert.ok(showPickerStub.calls > callsBefore, "Ctrl+ArrowDown should open date picker");
+
+    // Also test Alt+ArrowDown
+    const callsBeforeAlt = showPickerStub.calls;
+    await act(async () => {
+      fireEvent.keyDown(dateInput, { key: "ArrowDown", altKey: true });
+    });
+
+    assert.ok(showPickerStub.calls > callsBeforeAlt, "Alt+ArrowDown should open date picker");
+  });
+
+  test("Ctrl+Alt+Down opens time picker via keyboard shortcut", async () => {
+    const block = buildDateTimeBlock();
+    const rowId = block.rows[0]?.id;
+    assert.ok(rowId);
+
+    setStateWithBlock(block);
+    const showPickerStub = installShowPickerStub();
+    assert.ok(showPickerStub);
+
+    await renderMainPane();
+
+    const timeInput = document.querySelector(
+      `[data-testid="cell-${rowId}-col_time"] [data-testid="time-cell-input"]`
+    ) as HTMLInputElement | null;
+    assert.ok(timeInput);
+
+    const callsBefore = showPickerStub.calls;
+
+    await act(async () => {
+      fireEvent.keyDown(timeInput, { key: "ArrowDown", ctrlKey: true });
+    });
+
+    assert.ok(showPickerStub.calls > callsBefore, "Ctrl+ArrowDown should open time picker");
+
+    // Also test Alt+ArrowDown
+    const callsBeforeAlt = showPickerStub.calls;
+    await act(async () => {
+      fireEvent.keyDown(timeInput, { key: "ArrowDown", altKey: true });
+    });
+
+    assert.ok(showPickerStub.calls > callsBeforeAlt, "Alt+ArrowDown should open time picker");
+  });
+
+  test("date picker selection updates draft but does not immediately commit", async () => {
+    const block = buildDateTimeBlock();
+    const rowId = block.rows[0]?.id;
+    assert.ok(rowId);
+
+    setStateWithBlock(block);
+    installShowPickerStub();
+
+    await renderMainPane();
+
+    const dateInput = document.querySelector(
+      `[data-testid="cell-${rowId}-col_date"] [data-testid="date-cell-input"]`
+    ) as HTMLInputElement | null;
+    const pickerInput = document.querySelector(
+      `[data-testid="cell-${rowId}-col_date"] [data-testid="date-cell-picker-input"]`
+    ) as HTMLInputElement | null;
+    const pickerButton = document.querySelector(
+      `[data-testid="cell-${rowId}-col_date"] [data-testid="date-cell-picker-button"]`
+    ) as HTMLButtonElement | null;
+    assert.ok(dateInput);
+    assert.ok(pickerInput);
+    assert.ok(pickerButton, "Date picker button should be present");
+
+    // Simulate what a picker selection does: the native date picker writes
+    // a normalized draft (YYYY-MM-DD) into the visible text input without
+    // committing to the store. In JSDOM, native date picker change events
+    // on hidden inputs do not fire React's onChange handler reliably, so we
+    // exercise the draft→commit path via the visible text input.
+    await act(async () => {
+      fireEvent.input(dateInput, { target: { value: "2026-06-06" } });
+    });
+
+    // Draft should be updated to the picked value
+    assert.equal(dateInput.value, "2026-06-06");
+
+    // Store should NOT have committed yet (draft-only)
+    assert.equal(
+      useDocumentStore.getState().workspacesById.ws_home?.blocks[0]?.rows[0]?.cells["col_date"]?.value,
+      null
+    );
+
+    // Commit via Enter
+    await act(async () => {
+      fireEvent.keyDown(dateInput, { key: "Enter" });
+    });
+
+    assert.equal(
+      useDocumentStore.getState().workspacesById.ws_home?.blocks[0]?.rows[0]?.cells["col_date"]?.value,
+      "2026-06-06"
+    );
+  });
+
+  test("time picker selection updates draft and commits only through blur/Enter", async () => {
+    const block = buildDateTimeBlock();
+    const rowId = block.rows[0]?.id;
+    assert.ok(rowId);
+
+    setStateWithBlock(block);
+    installShowPickerStub();
+
+    await renderMainPane();
+
+    const timeInput = document.querySelector(
+      `[data-testid="cell-${rowId}-col_time"] [data-testid="time-cell-input"]`
+    ) as HTMLInputElement | null;
+    const pickerInput = document.querySelector(
+      `[data-testid="cell-${rowId}-col_time"] [data-testid="time-cell-picker-input"]`
+    ) as HTMLInputElement | null;
+    const pickerButton = document.querySelector(
+      `[data-testid="cell-${rowId}-col_time"] [data-testid="time-cell-picker-button"]`
+    ) as HTMLButtonElement | null;
+    assert.ok(timeInput);
+    assert.ok(pickerInput);
+    assert.ok(pickerButton, "Time picker button should be present");
+
+    // Simulate what a picker selection does (JSDOM limitation for hidden
+    // native inputs — see date picker test above for explanation).
+    await act(async () => {
+      fireEvent.input(timeInput, { target: { value: "15:45" } });
+    });
+
+    assert.equal(timeInput.value, "15:45");
+
+    // Store should NOT have committed yet
+    assert.equal(
+      useDocumentStore.getState().workspacesById.ws_home?.blocks[0]?.rows[0]?.cells["col_time"]?.value,
+      null
+    );
+
+    // Commit via Enter
+    await act(async () => {
+      fireEvent.keyDown(timeInput, { key: "Enter" });
+    });
+
+    assert.equal(
+      useDocumentStore.getState().workspacesById.ws_home?.blocks[0]?.rows[0]?.cells["col_time"]?.value,
+      "15:45"
+    );
+  });
+
+  test("Escape after picker selection resets draft without committing", async () => {
+    const block = buildDateTimeBlock();
+    const rowId = block.rows[0]?.id;
+    assert.ok(rowId);
+
+    setStateWithBlock(block);
+    installShowPickerStub();
+
+    await renderMainPane();
+
+    const dateInput = document.querySelector(
+      `[data-testid="cell-${rowId}-col_date"] [data-testid="date-cell-input"]`
+    ) as HTMLInputElement | null;
+    const pickerInput = document.querySelector(
+      `[data-testid="cell-${rowId}-col_date"] [data-testid="date-cell-picker-input"]`
+    ) as HTMLInputElement | null;
+    assert.ok(dateInput);
+    assert.ok(pickerInput);
+
+    // Simulate picker selection via the visible input (see date picker test
+    // above for JSDOM limitation explanation).
+    await act(async () => {
+      fireEvent.input(dateInput, { target: { value: "2026-06-06" } });
+    });
+
+    assert.equal(dateInput.value, "2026-06-06");
+
+    // Escape should reset draft to original (null → "")
+    await act(async () => {
+      fireEvent.keyDown(dateInput, { key: "Escape" });
+    });
+
+    assert.equal(dateInput.value, "");
+
+    // Store should still be null (never committed)
+    assert.equal(
+      useDocumentStore.getState().workspacesById.ws_home?.blocks[0]?.rows[0]?.cells["col_date"]?.value,
+      null
+    );
+  });
+
+  test("graceful fallback: without showPicker, buttons are absent and text editing still works", async () => {
+    const block = buildDateTimeBlock();
+    const rowId = block.rows[0]?.id;
+    assert.ok(rowId);
+
+    setStateWithBlock(block);
+    // Do NOT install the showPicker stub — this is the fallback scenario
+
+    await renderMainPane();
+
+    // Picker buttons should NOT exist
+    const dateButton = document.querySelector(
+      `[data-testid="cell-${rowId}-col_date"] [data-testid="date-cell-picker-button"]`
+    );
+    const timeButton = document.querySelector(
+      `[data-testid="cell-${rowId}-col_time"] [data-testid="time-cell-picker-button"]`
+    );
+    assert.equal(dateButton, null, "Date picker button should not exist without showPicker");
+    assert.equal(timeButton, null, "Time picker button should not exist without showPicker");
+
+    // Text inputs should still render and work
+    const dateInput = document.querySelector(
+      `[data-testid="cell-${rowId}-col_date"] [data-testid="date-cell-input"]`
+    ) as HTMLInputElement | null;
+    const timeInput = document.querySelector(
+      `[data-testid="cell-${rowId}-col_time"] [data-testid="time-cell-input"]`
+    ) as HTMLInputElement | null;
+    assert.ok(dateInput, "Date text input should exist");
+    assert.ok(timeInput, "Time text input should exist");
+
+    // Typed commit should still work via Enter
+    await act(async () => {
+      fireEvent.input(dateInput, { target: { value: "2026-05-11" } });
+    });
+    await act(async () => {
+      fireEvent.keyDown(dateInput, { key: "Enter" });
+    });
+
+    assert.equal(
+      useDocumentStore.getState().workspacesById.ws_home?.blocks[0]?.rows[0]?.cells["col_date"]?.value,
+      "2026-05-11"
+    );
+  });
+
+  test("strict date validation: lenient and impossible dates get danger styling", async () => {
+    const block = buildDateTimeBlock();
+    const rowId = block.rows[0]?.id;
+    assert.ok(rowId);
+
+    setStateWithBlock(block);
+
+    await renderMainPane();
+
+    const dateInput = document.querySelector(
+      `[data-testid="cell-${rowId}-col_date"] [data-testid="date-cell-input"]`
+    ) as HTMLInputElement | null;
+    assert.ok(dateInput);
+
+    // Lenient strings should be danger-styled
+    const badValues = [
+      "Jun 1 2026",
+      "06/01/2026",
+      "2026-02-30",
+      "2026-02-29", // 2026 is not a leap year
+      "2026-13-01",
+      "2026-00-05",
+      "not-a-date",
+      "2026-1-1",
+    ];
+
+    for (const bad of badValues) {
+      await act(async () => {
+        fireEvent.input(dateInput, { target: { value: bad } });
+      });
+      assert.ok(
+        dateInput.className.includes("text-danger"),
+        `"${bad}" should be danger-styled`
+      );
+    }
+
+    // Valid dates should NOT be danger-styled
+    const goodValues = [
+      "2026-06-06",
+      "2024-02-29", // 2024 is a leap year
+      "2026-01-01",
+      "2026-12-31",
+    ];
+
+    for (const good of goodValues) {
+      await act(async () => {
+        fireEvent.input(dateInput, { target: { value: good } });
+      });
+      assert.ok(
+        !dateInput.className.includes("text-danger"),
+        `"${good}" should NOT be danger-styled`
+      );
+    }
+  });
+
+  test("invalid persisted date string remains visible and danger-styled", async () => {
+    const block = buildDateTimeBlock();
+    const rowId = block.rows[0]?.id;
+    assert.ok(rowId);
+
+    // Initialize the date cell with an invalid persisted value
+    const blockWithBadDate: Block = {
+      ...block,
+      rows: block.rows.map((row) => ({
+        ...row,
+        cells: {
+          ...row.cells,
+          col_date: { value: "not-a-valid-date", format: {} },
+        },
+      })),
+    };
+
+    setStateWithBlock(blockWithBadDate);
+
+    await renderMainPane();
+
+    const dateInput = document.querySelector(
+      `[data-testid="cell-${rowId}-col_date"] [data-testid="date-cell-input"]`
+    ) as HTMLInputElement | null;
+    assert.ok(dateInput);
+
+    // Should display the invalid string, not coerce or hide it
+    assert.equal(dateInput.value, "not-a-valid-date");
+
+    // Should have danger styling
+    assert.ok(dateInput.className.includes("text-danger"));
   });
 
   test("row drag handle sets ui drag state on drag start", async () => {

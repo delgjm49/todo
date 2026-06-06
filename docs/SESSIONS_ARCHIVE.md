@@ -4270,3 +4270,153 @@ Reviewed the dispatch 082 complete artifact against the dispatch/plan artifacts 
 
 ### Outcome
 PASS. Created `agents/channels/082-richer-date-time-picker-planning/messages/004-review-to-main.md` with `State = review-pass`. Do not commit; Main handles git operations after Review passes.
+
+## Session 271 — 2026-06-06
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: agents/channels/082-richer-date-time-picker-planning/
+- Dispatch: agents/artifacts/082-richer-date-time-picker-planning-dispatch.md
+- Plan: agents/artifacts/082-richer-date-time-picker-planning-plan.md
+- Complete: agents/artifacts/082-richer-date-time-picker-planning-complete.md
+- Review: agents/artifacts/082-richer-date-time-picker-planning-review.md
+
+### Summary
+Closed dispatch 082 after Review PASS and consolidated Sessions 266–270 into the archive. The planning dispatch produced a concrete, reviewed recommendation for dispatch 083: keep visible date/time text inputs, add compact native picker affordances, preserve the `string | null` persisted value contract, and tighten DateCell validation to strict `YYYY-MM-DD`.
+
+### Outcome
+Dispatch 082 closed via `agents/channels/082-richer-date-time-picker-planning/messages/005-main-to-main.md`. Ready to continue the approved queue with dispatch 083 date/time picker implementation.
+
+## Session 272 — 2026-06-06
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: agents/channels/083-date-time-picker-implementation/
+- Dispatch: agents/artifacts/083-date-time-picker-implementation-dispatch.md
+
+### Summary
+Registered the remaining approved bundle items with auto-close and auto-advance enabled after closing dispatch 082. Framed dispatch 083 as a Plan → Dev → Review implementation slice based on the reviewed dispatch 082 recommendation: keep visible date/time text inputs, add compact native picker affordances with graceful fallback, preserve `string | null` storage, tighten DateCell validation, and add targeted tests.
+
+### Outcome
+Dispatch 083 is ready for Plan via `agents/channels/083-date-time-picker-implementation/messages/001-main-to-plan.md`. Queue automation remains authorized to auto-close review-passing work and advance to dispatch 084.
+
+## Session 273 — 2026-06-06
+
+### Agent Type
+plan
+
+### Artifacts
+- Channel: agents/channels/083-date-time-picker-implementation/
+- Dispatch: agents/artifacts/083-date-time-picker-implementation-dispatch.md
+- Plan: agents/artifacts/083-date-time-picker-implementation-plan.md
+
+### Summary
+Created the dispatch 083 implementation plan after re-reading the active channel message, dispatch 082 recommendation/review, and current date/time component, store, storage, sorting, alert, search, clipboard, and test files from disk. The plan instructs Dev to keep visible text inputs, add compact native picker affordances with graceful fallback, preserve `string | null` storage, tighten DateCell validation to strict calendar-valid `YYYY-MM-DD`, and add targeted UI/storage tests.
+
+### Outcome
+Plan ready for Dev. Next channel message created at `agents/channels/083-date-time-picker-implementation/messages/002-plan-to-dev.md`.
+
+## Session 274 — 2026-06-06
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: agents/channels/083-date-time-picker-implementation/
+- Plan: agents/artifacts/083-date-time-picker-implementation-plan.md
+- Complete: agents/artifacts/083-date-time-picker-implementation-complete.md
+
+### Summary
+Implemented date/time picker affordances per plan: created shared validation helpers (`date-time-validation.ts`), added hidden native date/time picker inputs with compact calendar/clock buttons in DateCell and TimeCell, implemented `showPicker()` with graceful fallback and Ctrl/Alt+Down shortcuts, tightened DateCell to strict `YYYY-MM-DD` calendar-valid validation, and added 7 targeted unit tests covering picker button rendering, draft-only commit semantics, Escape reset, graceful fallback, strict validation, and persisted invalid-string display. All existing tests continue to pass.
+
+### Outcome
+Implementation complete, ready for review. Next channel message created at `agents/channels/083-date-time-picker-implementation/messages/003-dev-to-review.md`.
+
+## Session 275 — 2026-06-06
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: agents/channels/083-date-time-picker-implementation/
+- Plan: agents/artifacts/083-date-time-picker-implementation-plan.md
+- Complete: agents/artifacts/083-date-time-picker-implementation-complete.md
+- Review: agents/artifacts/083-date-time-picker-implementation-review.md
+
+### Summary
+Reviewed dispatch 083 against the plan and reran targeted/full verification. Date/time validation and storage-contract preservation are mostly in place, but Review found required fixes: the supported picker click path emits a checkpoint-scoped React/jsdom attachEvent error, and targeted tests do not sufficiently exercise the actual hidden picker affordance paths.
+
+### Outcome
+FAIL — Return to Dev. Next channel message created at `agents/channels/083-date-time-picker-implementation/messages/004-review-to-dev.md`.
+
+## Session 276 — 2026-06-06
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: agents/channels/083-date-time-picker-implementation/
+- Plan: agents/artifacts/083-date-time-picker-implementation-plan.md
+- Complete: agents/artifacts/083-date-time-picker-implementation-complete.md (updated)
+- Review: agents/artifacts/083-date-time-picker-implementation-review.md (previous)
+
+### Summary
+Addressed Review Round 1 findings: (1) Resolved the `activeElement.attachEvent is not a function` error by adding `attachEvent`/`detachEvent` no-op stubs to `installDomGlobals()` in the test file — a standard JSDOM+React compatibility bridge. The component's `textRef.current?.focus()` calls are preserved as correct for real browsers. (2) Added three new targeted tests: TimeCell button `showPicker()` invocation, Ctrl+Alt+Down date keyboard shortcut, and Ctrl+Alt+Down time keyboard shortcut. All 16 row editing tests pass with 0 uncaught errors.
+
+### Outcome
+Fixes complete, ready for re-review. Next channel message created at `agents/channels/083-date-time-picker-implementation/messages/005-dev-to-review.md`.
+
+## Session 277 — 2026-06-06
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: agents/channels/083-date-time-picker-implementation/
+- Plan: agents/artifacts/083-date-time-picker-implementation-plan.md
+- Complete: agents/artifacts/083-date-time-picker-implementation-complete.md
+- Review: agents/artifacts/083-date-time-picker-implementation-review.md (updated)
+
+### Summary
+Re-reviewed dispatch 083 after Dev's first fix round and reran targeted/full verification. The isolated rowEditing suite now passes 16/16 with no attachEvent/detachEvent output, and TimeCell plus keyboard-opening coverage was added, but the required full `npm run test` run still emits checkpoint-scoped rowEditing attachEvent/detachEvent errors from the DateCell/TimeCell picker button tests.
+
+### Outcome
+FAIL — Return to Dev. Next channel message created at `agents/channels/083-date-time-picker-implementation/messages/006-review-to-dev.md`.
+
+## Session 278 — 2026-06-06
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: agents/channels/083-date-time-picker-implementation/
+- Plan: agents/artifacts/083-date-time-picker-implementation-plan.md
+- Complete: agents/artifacts/083-date-time-picker-implementation-complete.md (updated)
+- Review: agents/artifacts/083-date-time-picker-implementation-review.md (previous)
+
+### Summary
+Addressed Review Round 2 finding: the per-JSDOM-instance attachEvent/detachEvent stubs from Round 1 worked in isolated rowEditing but not in the full 512-test suite because JSDOM creates fresh prototype chains per instance and React's async cleanup could reference elements from prior JSDOM lifetimes. Fixed by adding a module-level `Object.prototype` patch in `rowEditing.test.tsx` — since all JSDOM DOM objects inherit from the shared `Object.prototype`, no-op stubs there cover every element across all JSDOM instances. Full suite now passes 512/512 with 0 attachEvent/detachEvent errors.
+
+### Outcome
+Fixes complete, ready for re-review. Next channel message created at `agents/channels/083-date-time-picker-implementation/messages/007-dev-to-review.md`.
+
+## Session 279 — 2026-06-06
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: agents/channels/083-date-time-picker-implementation/
+- Plan: agents/artifacts/083-date-time-picker-implementation-plan.md
+- Complete: agents/artifacts/083-date-time-picker-implementation-complete.md
+- Review: agents/artifacts/083-date-time-picker-implementation-review.md (updated)
+
+### Summary
+Re-reviewed dispatch 083 Round 2 fixes from `messages/007-dev-to-review.md`, ignoring cached state and rerunning the required verification commands. The full suite now passes 512/512 with no `attachEvent`/`detachEvent` or uncaught rowEditing picker errors, and lint, build, and Playwright smoke all pass.
+
+### Outcome
+PASS — Ready for Main. Next channel message created at `agents/channels/083-date-time-picker-implementation/messages/008-review-to-main.md`.

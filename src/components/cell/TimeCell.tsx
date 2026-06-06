@@ -1,11 +1,12 @@
-import { useEffect, useState, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { isValidTimeString } from "./date-time-validation.js";
 
-function isValidTimeString(value: string): boolean {
-  if (!value.trim()) {
-    return true;
-  }
-
-  return /^([01]\d|2[0-3]):([0-5]\d)$/.test(value.trim());
+function hasNativePickerSupport(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    typeof window.HTMLInputElement !== "undefined" &&
+    "showPicker" in window.HTMLInputElement.prototype
+  );
 }
 
 export function TimeCell({
@@ -16,6 +17,8 @@ export function TimeCell({
   onCommit: (value: string | null) => void;
 }) {
   const [draft, setDraft] = useState(value ?? "");
+  const textRef = useRef<HTMLInputElement>(null);
+  const pickerRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setDraft(value ?? "");
@@ -31,6 +34,23 @@ export function TimeCell({
     }
   };
 
+  const supportsPicker = hasNativePickerSupport();
+
+  const openPicker = () => {
+    const picker = pickerRef.current;
+    if (!picker || typeof picker.showPicker !== "function") {
+      // Graceful fallback: focus the visible text input
+      textRef.current?.focus();
+      return;
+    }
+    try {
+      picker.showPicker();
+    } catch {
+      // Fallback if showPicker() throws (unsupported state, etc.)
+      textRef.current?.focus();
+    }
+  };
+
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter") {
       event.preventDefault();
@@ -41,22 +61,79 @@ export function TimeCell({
     if (event.key === "Escape") {
       event.preventDefault();
       setDraft(value ?? "");
+      return;
+    }
+
+    // Ctrl+ArrowDown or Alt+ArrowDown opens the native time picker
+    if (
+      supportsPicker &&
+      event.key === "ArrowDown" &&
+      (event.ctrlKey || event.altKey)
+    ) {
+      event.preventDefault();
+      openPicker();
     }
   };
 
   return (
-    <input
-      className={`w-full bg-transparent text-sm outline-none ${
-        invalid ? "border-b border-danger/60 text-danger" : "text-text"
-      }`}
-      data-testid="time-cell-input"
-      onBlur={commit}
-      onChange={(event) => setDraft(event.target.value)}
-      onInput={(event) => setDraft((event.target as HTMLInputElement).value)}
-      onKeyDown={onKeyDown}
-      placeholder="HH:MM"
-      type="text"
-      value={draft}
-    />
+    <div className="flex w-full items-center gap-1 relative">
+      <input
+        ref={textRef}
+        className={`flex-1 min-w-0 bg-transparent text-sm outline-none ${
+          invalid ? "border-b border-danger/60 text-danger" : "text-text"
+        }`}
+        data-testid="time-cell-input"
+        onBlur={commit}
+        onChange={(event) => setDraft(event.target.value)}
+        onInput={(event) => setDraft((event.target as HTMLInputElement).value)}
+        onKeyDown={onKeyDown}
+        placeholder="HH:MM"
+        type="text"
+        value={draft}
+      />
+      {supportsPicker && (
+        <>
+          <input
+            ref={pickerRef}
+            type="time"
+            data-testid="time-cell-picker-input"
+            tabIndex={-1}
+            aria-hidden="true"
+            className="absolute top-0 left-0 opacity-0 pointer-events-none"
+            style={{ width: "1px", height: "1px" }}
+            value={
+              draft.trim().length > 0 && isValidTimeString(draft) ? draft.trim() : ""
+            }
+            onChange={(event) => {
+              const newVal = (event.target as HTMLInputElement).value;
+              if (newVal) {
+                // Write normalized draft (HH:MM) only; do not commit
+                setDraft(newVal);
+                // Refocus the visible text input so Enter/Escape/blur remain anchored
+                textRef.current?.focus();
+              }
+            }}
+          />
+          <button
+            type="button"
+            aria-label="Open time picker"
+            title="Open time picker"
+            data-testid="time-cell-picker-button"
+            className="shrink-0 px-1 text-sm text-textMuted hover:text-text focus:text-text rounded"
+            onMouseDown={(event) => {
+              // Prevent the button from stealing focus and blurring the text input (which would commit prematurely)
+              event.preventDefault();
+            }}
+            onClick={() => {
+              openPicker();
+              // Refocus the visible text input after picker interaction
+              textRef.current?.focus();
+            }}
+          >
+            🕐
+          </button>
+        </>
+      )}
+    </div>
   );
 }
