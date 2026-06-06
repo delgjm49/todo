@@ -5,6 +5,14 @@ import { createColumn } from "../../domain/columns/createColumn.js";
 import type { AppDocumentSnapshot } from "../../types/app.js";
 import { useDocumentStore } from "../../stores/documentStore.js";
 import { useHistoryStore } from "../../stores/historyStore.js";
+import {
+  STOCK_DARK_WORKSPACE_BACKGROUND,
+  STOCK_DARK_WORKSPACE_TEXT_COLOR,
+  STOCK_DARK_WORKSPACE_ACCENT_COLOR,
+  STOCK_LIGHT_WORKSPACE_BACKGROUND,
+  STOCK_LIGHT_WORKSPACE_TEXT_COLOR,
+  STOCK_LIGHT_WORKSPACE_ACCENT_COLOR,
+} from "../../domain/defaults/themeDefaultColors.js";
 
 function wait(ms: number): Promise<void> {
   return new Promise((resolve) => {
@@ -1732,5 +1740,85 @@ describe("document store autosave", () => {
     );
 
     await wait(20);
+  });
+});
+
+describe("light-mode default workspace creation", () => {
+  test("new workspace in light mode with stock dark defaults gets light workspace colors", async () => {
+    const service = await createMemoryStorageService();
+    await useDocumentStore.getState().initializeAppData(service);
+
+    // Switch theme to light
+    useDocumentStore.getState().updateSettings({ theme: "light" }, { service, autosaveDelayMs: 5 });
+
+    // Verify stock dark defaults are still persisted (not auto-rewritten)
+    const settings = useDocumentStore.getState().settings;
+    assert.ok(settings);
+    assert.equal(settings.defaults.workspaceBackground, STOCK_DARK_WORKSPACE_BACKGROUND);
+    assert.equal(settings.defaults.workspaceTextColor, STOCK_DARK_WORKSPACE_TEXT_COLOR);
+    assert.equal(settings.defaults.workspaceAccentColor, STOCK_DARK_WORKSPACE_ACCENT_COLOR);
+
+    // Create a new workspace — should use light effective defaults
+    useDocumentStore.getState().createWorkspace("Light Test", { service, autosaveDelayMs: 5 });
+
+    const newEntry = useDocumentStore
+      .getState()
+      .workspaceIndex.find((entry) => entry.title === "Light Test");
+    assert.ok(newEntry);
+    assert.equal(newEntry.style.background, STOCK_LIGHT_WORKSPACE_BACKGROUND);
+    assert.equal(newEntry.style.textColor, STOCK_LIGHT_WORKSPACE_TEXT_COLOR);
+    assert.equal(newEntry.style.accentStripe?.color, STOCK_LIGHT_WORKSPACE_ACCENT_COLOR);
+  });
+
+  test("new workspace in light mode with custom defaults uses custom colors unchanged", async () => {
+    const service = await createMemoryStorageService();
+    await useDocumentStore.getState().initializeAppData(service);
+
+    const state = useDocumentStore.getState();
+    assert.ok(state.settings);
+
+    useDocumentStore.getState().updateSettings({
+      theme: "light",
+      defaults: {
+        ...state.settings.defaults,
+        workspaceBackground: "#101828",
+        workspaceTextColor: "#F8FAFC",
+        workspaceAccentColor: "#38BDF8",
+      },
+    }, { service, autosaveDelayMs: 5 });
+
+    useDocumentStore.getState().createWorkspace("Custom Light", { service, autosaveDelayMs: 5 });
+
+    const newEntry = useDocumentStore
+      .getState()
+      .workspaceIndex.find((entry) => entry.title === "Custom Light");
+    assert.ok(newEntry);
+    assert.equal(newEntry.style.background, "#101828");
+    assert.equal(newEntry.style.textColor, "#F8FAFC");
+    assert.equal(newEntry.style.accentStripe?.color, "#38BDF8");
+  });
+
+  test("deleting the last workspace in light mode creates a readable light replacement", async () => {
+    const service = await createMemoryStorageService();
+    await useDocumentStore.getState().initializeAppData(service);
+
+    // Switch to light mode
+    useDocumentStore.getState().updateSettings({ theme: "light" }, { service, autosaveDelayMs: 5 });
+
+    // Get the only workspace id
+    const workspaceId = useDocumentStore.getState().workspaceIndex[0]?.id;
+    assert.ok(workspaceId);
+
+    // Delete it — replacement should use light defaults
+    useDocumentStore.getState().deleteWorkspace(workspaceId, { service, autosaveDelayMs: 5 });
+
+    const index = useDocumentStore.getState().workspaceIndex;
+    assert.equal(index.length, 1);
+    const replacement = index[0];
+    assert.ok(replacement);
+    assert.equal(replacement.title, "Home");
+    assert.equal(replacement.style.background, STOCK_LIGHT_WORKSPACE_BACKGROUND);
+    assert.equal(replacement.style.textColor, STOCK_LIGHT_WORKSPACE_TEXT_COLOR);
+    assert.equal(replacement.style.accentStripe?.color, STOCK_LIGHT_WORKSPACE_ACCENT_COLOR);
   });
 });

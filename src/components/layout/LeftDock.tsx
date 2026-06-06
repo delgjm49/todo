@@ -7,6 +7,7 @@ import { MenuPopover } from "../shared/MenuPopover.js";
 export function LeftDock() {
   const workspaceIndex = useDocumentStore((state) => state.workspaceIndex);
   const activeWorkspaceId = useDocumentStore((state) => state.activeWorkspaceId);
+  const theme = useDocumentStore((state) => state.settings?.theme ?? "dark");
   const createWorkspace = useDocumentStore((state) => state.createWorkspace);
   const selectWorkspace = useDocumentStore((state) => state.selectWorkspace);
   const renameWorkspace = useDocumentStore((state) => state.renameWorkspace);
@@ -56,6 +57,7 @@ export function LeftDock() {
               <WorkspaceCard
                 key={entry.id}
                 entry={entry}
+                theme={theme}
                 active={entry.id === activeWorkspaceId}
                 dragging={entry.id === draggingWorkspaceId}
                 dropTarget={entry.id === dropTargetWorkspaceId}

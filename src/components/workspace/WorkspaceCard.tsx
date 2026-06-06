@@ -1,8 +1,11 @@
 import type { DragEvent } from "react";
 import type { WorkspaceIndexEntry, WorkspaceAlertSummary } from "../../types/workspace.js";
+import type { ThemeMode } from "../../types/formatting.js";
+import { resolveThemeAwareWorkspaceStyle } from "../../domain/defaults/themeDefaultColors.js";
 
 export function WorkspaceCard({
   entry,
+  theme = "dark",
   active,
   dragging,
   dropTarget,
@@ -14,6 +17,7 @@ export function WorkspaceCard({
   onDragOver,
 }: {
   entry: WorkspaceIndexEntry;
+  theme?: ThemeMode;
   active: boolean;
   dragging: boolean;
   dropTarget: boolean;
@@ -24,8 +28,9 @@ export function WorkspaceCard({
   onDrop: () => void;
   onDragOver: (event: DragEvent<HTMLDivElement>) => void;
 }) {
-  const workspaceBackground = entry.style.background ?? undefined;
-  const workspaceTextColor = entry.style.textColor ?? undefined;
+  const effectiveStyle = resolveThemeAwareWorkspaceStyle(entry.style, theme);
+  const workspaceBackground = effectiveStyle.background ?? undefined;
+  const workspaceTextColor = effectiveStyle.textColor ?? undefined;
 
   return (
     <div
@@ -67,11 +72,11 @@ export function WorkspaceCard({
     >
       <div
         className={`w-2 shrink-0 ${
-          entry.style.accentStripe?.enabled === false ? "bg-transparent" : "bg-accent"
+          effectiveStyle.accentStripe?.enabled === false ? "bg-transparent" : "bg-accent"
         }`}
         style={{
           backgroundColor:
-            entry.style.accentStripe?.enabled === false ? "transparent" : entry.style.accentStripe?.color,
+            effectiveStyle.accentStripe?.enabled === false ? "transparent" : effectiveStyle.accentStripe?.color,
         }}
       />
       <div className="min-w-0 flex-1 px-4 py-3">
@@ -87,9 +92,9 @@ export function WorkspaceCard({
           ) : null}
         </div>
         <div className="mt-3 flex items-center gap-2 text-xs opacity-70">
-          <span>{entry.style.background ?? "#1F2937"}</span>
+          <span>{effectiveStyle.background ?? "#1F2937"}</span>
           <span>/</span>
-          <span>{entry.style.textColor ?? "#F9FAFB"}</span>
+          <span>{effectiveStyle.textColor ?? "#F9FAFB"}</span>
         </div>
       </div>
     </div>

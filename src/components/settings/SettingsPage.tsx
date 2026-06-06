@@ -2,6 +2,14 @@ import { useState } from "react";
 import { useDocumentStore } from "../../stores/documentStore.js";
 import { useUiStore } from "../../stores/uiStore.js";
 import type { AppDefaults } from "../../types/settings";
+import {
+  STOCK_DARK_TEXT_COLOR,
+  STOCK_DARK_CELL_BACKGROUND,
+  STOCK_DARK_BLOCK_BORDER_COLOR,
+  STOCK_DARK_WORKSPACE_BACKGROUND,
+  STOCK_DARK_WORKSPACE_TEXT_COLOR,
+  STOCK_DARK_WORKSPACE_ACCENT_COLOR,
+} from "../../domain/defaults/themeDefaultColors.js";
 
 export function SettingsPage() {
   const settings = useDocumentStore((state) => state.settings);
@@ -11,16 +19,16 @@ export function SettingsPage() {
   // Local form state for editor defaults inputs
   const [localFontFamily, setLocalFontFamily] = useState(settings?.defaults.fontFamily ?? "Segoe UI");
   const [localFontSize, setLocalFontSize] = useState(String(settings?.defaults.fontSize ?? 14));
-  const [localTextColor, setLocalTextColor] = useState(settings?.defaults.textColor ?? "#F3F4F6");
-  const [localCellBackground, setLocalCellBackground] = useState(settings?.defaults.cellBackground ?? "#111827");
-  const [localBlockBorderColor, setLocalBlockBorderColor] = useState(settings?.defaults.blockBorderColor ?? "#374151");
+  const [localTextColor, setLocalTextColor] = useState(settings?.defaults.textColor ?? STOCK_DARK_TEXT_COLOR);
+  const [localCellBackground, setLocalCellBackground] = useState(settings?.defaults.cellBackground ?? STOCK_DARK_CELL_BACKGROUND);
+  const [localBlockBorderColor, setLocalBlockBorderColor] = useState(settings?.defaults.blockBorderColor ?? STOCK_DARK_BLOCK_BORDER_COLOR);
   const [localBlockBorderWidth, setLocalBlockBorderWidth] = useState(String(settings?.defaults.blockBorderWidth ?? 1));
 
   // Local form state for workspace defaults inputs
-  const [localWsBackground, setLocalWsBackground] = useState(settings?.defaults.workspaceBackground ?? "#1F2937");
-  const [localWsTextColor, setLocalWsTextColor] = useState(settings?.defaults.workspaceTextColor ?? "#F9FAFB");
+  const [localWsBackground, setLocalWsBackground] = useState(settings?.defaults.workspaceBackground ?? STOCK_DARK_WORKSPACE_BACKGROUND);
+  const [localWsTextColor, setLocalWsTextColor] = useState(settings?.defaults.workspaceTextColor ?? STOCK_DARK_WORKSPACE_TEXT_COLOR);
   const [localWsAccentEnabled, setLocalWsAccentEnabled] = useState(settings?.defaults.workspaceAccentEnabled ?? true);
-  const [localWsAccentColor, setLocalWsAccentColor] = useState(settings?.defaults.workspaceAccentColor ?? "#60A5FA");
+  const [localWsAccentColor, setLocalWsAccentColor] = useState(settings?.defaults.workspaceAccentColor ?? STOCK_DARK_WORKSPACE_ACCENT_COLOR);
 
   function saveDefault<K extends keyof AppDefaults>(key: K, value: AppDefaults[K]) {
     if (!settings) return;

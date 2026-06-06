@@ -5,6 +5,14 @@ import { act, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { WorkspaceCard } from "../../components/workspace/WorkspaceCard.js";
 import type { WorkspaceIndexEntry } from "../../types/workspace.js";
+import {
+  STOCK_DARK_WORKSPACE_BACKGROUND,
+  STOCK_DARK_WORKSPACE_TEXT_COLOR,
+  STOCK_DARK_WORKSPACE_ACCENT_COLOR,
+  STOCK_LIGHT_WORKSPACE_BACKGROUND,
+  STOCK_LIGHT_WORKSPACE_TEXT_COLOR,
+  STOCK_LIGHT_WORKSPACE_ACCENT_COLOR,
+} from "../../domain/defaults/themeDefaultColors.js";
 
 // ---------------------------------------------------------------------------
 // JSDOM setup (following rowContextMenu.test.tsx pattern)
@@ -402,5 +410,145 @@ describe("WorkspaceCard alert badge", () => {
     const note = document.querySelector('[data-testid="alert-note"]');
     assert.ok(note);
     assert.equal(note?.textContent, "Overdue");
+  });
+});
+
+describe("WorkspaceCard light-mode rendering", () => {
+  // JSDOM normalizes hex colors to rgb() format when reading back inline styles.
+  function hexToRgb(hex: string): string {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgb(${r}, ${g}, ${b})`;
+  }
+
+  function stockDarkStyle(): WorkspaceIndexEntry["style"] {
+    return {
+      background: STOCK_DARK_WORKSPACE_BACKGROUND,
+      textColor: STOCK_DARK_WORKSPACE_TEXT_COLOR,
+      accentStripe: { enabled: true, color: STOCK_DARK_WORKSPACE_ACCENT_COLOR },
+    };
+  }
+
+  function customDarkStyle(): WorkspaceIndexEntry["style"] {
+    return {
+      background: "#101828",
+      textColor: "#F8FAFC",
+      accentStripe: { enabled: true, color: "#FF3300" },
+    };
+  }
+
+  test("stock dark workspace card in light mode renders with light background and text", async () => {
+    await renderNode(
+      <WorkspaceCard
+        entry={entry({ style: stockDarkStyle() })}
+        theme="light"
+        active={false}
+        dragging={false}
+        dropTarget={false}
+        onOpenMenu={() => {}}
+        onSelect={() => {}}
+        onDragStart={() => {}}
+        onDragEnd={() => {}}
+        onDrop={() => {}}
+        onDragOver={() => {}}
+      />,
+    );
+
+    const button = document.querySelector('[role="button"]') as HTMLElement;
+    assert.ok(button);
+    assert.equal(button.style.backgroundColor, hexToRgb(STOCK_LIGHT_WORKSPACE_BACKGROUND));
+    assert.equal(button.style.color, hexToRgb(STOCK_LIGHT_WORKSPACE_TEXT_COLOR));
+  });
+
+  test("stock dark workspace card in light mode renders light accent color", async () => {
+    await renderNode(
+      <WorkspaceCard
+        entry={entry({ style: stockDarkStyle() })}
+        theme="light"
+        active={false}
+        dragging={false}
+        dropTarget={false}
+        onOpenMenu={() => {}}
+        onSelect={() => {}}
+        onDragStart={() => {}}
+        onDragEnd={() => {}}
+        onDrop={() => {}}
+        onDragOver={() => {}}
+      />,
+    );
+
+    const stripe = document.querySelector('[role="button"] > div') as HTMLElement;
+    assert.ok(stripe);
+    assert.equal(stripe.style.backgroundColor, hexToRgb(STOCK_LIGHT_WORKSPACE_ACCENT_COLOR));
+  });
+
+  test("stock dark workspace card in dark mode renders dark colors unchanged", async () => {
+    await renderNode(
+      <WorkspaceCard
+        entry={entry({ style: stockDarkStyle() })}
+        theme="dark"
+        active={false}
+        dragging={false}
+        dropTarget={false}
+        onOpenMenu={() => {}}
+        onSelect={() => {}}
+        onDragStart={() => {}}
+        onDragEnd={() => {}}
+        onDrop={() => {}}
+        onDragOver={() => {}}
+      />,
+    );
+
+    const button = document.querySelector('[role="button"]') as HTMLElement;
+    assert.ok(button);
+    assert.equal(button.style.backgroundColor, hexToRgb(STOCK_DARK_WORKSPACE_BACKGROUND));
+    assert.equal(button.style.color, hexToRgb(STOCK_DARK_WORKSPACE_TEXT_COLOR));
+  });
+
+  test("custom dark workspace card in light mode preserves custom colors", async () => {
+    await renderNode(
+      <WorkspaceCard
+        entry={entry({ style: customDarkStyle() })}
+        theme="light"
+        active={false}
+        dragging={false}
+        dropTarget={false}
+        onOpenMenu={() => {}}
+        onSelect={() => {}}
+        onDragStart={() => {}}
+        onDragEnd={() => {}}
+        onDrop={() => {}}
+        onDragOver={() => {}}
+      />,
+    );
+
+    const button = document.querySelector('[role="button"]') as HTMLElement;
+    assert.ok(button);
+    assert.equal(button.style.backgroundColor, hexToRgb("#101828"));
+    assert.equal(button.style.color, hexToRgb("#F8FAFC"));
+  });
+
+  test("chip text reflects effective light palette for stock dark style", async () => {
+    await renderNode(
+      <WorkspaceCard
+        entry={entry({ style: stockDarkStyle() })}
+        theme="light"
+        active={false}
+        dragging={false}
+        dropTarget={false}
+        onOpenMenu={() => {}}
+        onSelect={() => {}}
+        onDragStart={() => {}}
+        onDragEnd={() => {}}
+        onDrop={() => {}}
+        onDragOver={() => {}}
+      />,
+    );
+
+    const spans = document.querySelectorAll('[role="button"] span');
+    const chipTexts = Array.from(spans).map((s) => s.textContent ?? "");
+    assert.ok(chipTexts.includes(STOCK_LIGHT_WORKSPACE_BACKGROUND), `Expected ${STOCK_LIGHT_WORKSPACE_BACKGROUND} in chip, got: ${chipTexts.join(", ")}`);
+    assert.ok(chipTexts.includes(STOCK_LIGHT_WORKSPACE_TEXT_COLOR), `Expected ${STOCK_LIGHT_WORKSPACE_TEXT_COLOR} in chip, got: ${chipTexts.join(", ")}`);
   });
 });

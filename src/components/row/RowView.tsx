@@ -4,6 +4,7 @@ import { isRowCompletedByCheckbox } from "../../domain/rows/applyCheckboxRules.j
 import { resolveCellFormatting } from "../../domain/formatting/resolveCellFormatting.js";
 import { formattingToCellStyle } from "../../domain/formatting/formattingToCellStyle.js";
 import { formattingToBorderStyle } from "../../domain/formatting/formattingToBorderStyle.js";
+import { resolveThemeAwareAppDefaults } from "../../domain/defaults/themeDefaultColors.js";
 import { useDocumentStore } from "../../stores/documentStore.js";
 import { useUiStore } from "../../stores/uiStore.js";
 import type { Block } from "../../types/block.js";
@@ -30,6 +31,7 @@ export function RowView({ block, workspaceId }: { block: Block; workspaceId: str
   const selectCell = useUiStore((state) => state.selectCell);
   const openRowMenu = useUiStore((state) => state.openRowMenu);
   const settings = useDocumentStore((state) => state.settings);
+  const effectiveAppDefaults = settings ? resolveThemeAwareAppDefaults(settings) : null;
   const visibleColumns = getVisibleColumnsInDisplayOrder(block.columns);
   const rows = getRowsInDisplayOrder(block.rows);
 
@@ -107,9 +109,9 @@ export function RowView({ block, workspaceId }: { block: Block; workspaceId: str
               </button>
               <div className="grid flex-1 gap-2" style={{ gridTemplateColumns: buildGridTemplate(visibleColumns) }}>
                 {visibleColumns.map((column) => {
-                  const effectiveFormat = settings
+                  const effectiveFormat = effectiveAppDefaults
                     ? resolveCellFormatting(
-                        settings.defaults,
+                        effectiveAppDefaults,
                         block.format,
                         column.format,
                         row.format,

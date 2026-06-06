@@ -13,6 +13,7 @@ import {
   type StorageService,
   StorageOperationError,
 } from "../services/storage/index.js";
+import { resolveThemeAwareAppDefaults } from "../domain/defaults/themeDefaultColors.js";
 import { BLOCK_TEMPLATES, createBlockTemplate, getBlockTemplateLabel } from "../domain/templates/blockTemplates.js";
 import { createRow } from "../domain/rows/createRow.js";
 import { deleteRowById, getRowsInDisplayOrder, insertRowAtIndex, reorderRows } from "../domain/rows/reorderRows.js";
@@ -542,13 +543,14 @@ function createDefaultWorkspaceState(title?: string, settings?: Settings | null)
   const workspaceId = createId("workspace");
   const workspace = createWorkspaceDocument(workspaceId);
 
-  const styleFromDefaults: Partial<WorkspaceStyle> | undefined = settings
+  const effectiveDefaults = settings ? resolveThemeAwareAppDefaults(settings) : null;
+  const styleFromDefaults: Partial<WorkspaceStyle> | undefined = effectiveDefaults
     ? {
-        background: settings.defaults.workspaceBackground,
-        textColor: settings.defaults.workspaceTextColor,
+        background: effectiveDefaults.workspaceBackground,
+        textColor: effectiveDefaults.workspaceTextColor,
         accentStripe: {
-          enabled: settings.defaults.workspaceAccentEnabled,
-          color: settings.defaults.workspaceAccentColor,
+          enabled: effectiveDefaults.workspaceAccentEnabled,
+          color: effectiveDefaults.workspaceAccentColor,
         },
       }
     : undefined;
@@ -1112,7 +1114,7 @@ export const useDocumentStore = create<DocumentStoreState>()((set, get) => {
     let nextActiveWorkspaceId = reconcileActiveWorkspace(state.activeWorkspaceId, nextWorkspaceIndex, nextWorkspacesById);
 
     if (nextWorkspaceIndex.length === 0) {
-      const replacement = createDefaultWorkspaceState("Home");
+      const replacement = createDefaultWorkspaceState("Home", state.settings);
       nextWorkspaceIndex = [replacement.workspaceIndexEntry];
       nextWorkspacesById = replaceWorkspaceDocument({}, replacement.workspace);
       nextActiveWorkspaceId = replacement.workspace.id;

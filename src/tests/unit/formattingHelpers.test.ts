@@ -4,7 +4,8 @@ import { mergeFormatting } from "../../domain/formatting/mergeFormatting.js";
 import { appDefaultsToFormatting } from "../../domain/formatting/appDefaultsToFormatting.js";
 import { resolveCellFormatting } from "../../domain/formatting/resolveCellFormatting.js";
 import { resolveRowStyle } from "../../domain/formatting/resolveRowStyle.js";
-import type { AppDefaults } from "../../types/settings.js";
+import { resolveThemeAwareAppDefaults } from "../../domain/defaults/themeDefaultColors.js";
+import type { AppDefaults, Settings } from "../../types/settings.js";
 
 function makeDefaults(overrides: Partial<AppDefaults> = {}): AppDefaults {
   return {
@@ -179,6 +180,60 @@ describe("resolveCellFormatting", () => {
     assert.equal(result.borderColor, "#f00");
     assert.equal(result.borderWidth, 3);
     assert.deepEqual(result.edges, ["top", "bottom"]);
+  });
+});
+
+describe("theme-aware default resolution with resolveCellFormatting", () => {
+  function makeSettings(theme: Settings["theme"]): Settings {
+    return {
+      theme,
+      defaults: {
+        fontFamily: "Segoe UI",
+        fontSize: 14,
+        textColor: "#F3F4F6",
+        cellBackground: "#111827",
+        blockBorderColor: "#374151",
+        blockBorderWidth: 1,
+        workspaceAccentEnabled: true,
+        workspaceBackground: "#1F2937",
+        workspaceTextColor: "#F9FAFB",
+        workspaceAccentColor: "#60A5FA",
+      },
+    };
+  }
+
+  test("stock-default light-mode settings produce light text and background for empty-format cell", () => {
+    const settings = makeSettings("light");
+    const effectiveDefaults = resolveThemeAwareAppDefaults(settings);
+    const result = resolveCellFormatting(effectiveDefaults, {}, {}, {}, undefined);
+    assert.equal(result.textColor, "#0F172A");
+    assert.equal(result.backgroundColor, "#FFFFFF");
+    assert.equal(result.borderColor, "#E2E8F0");
+  });
+
+  test("stock-default dark-mode settings preserve dark text and background for empty-format cell", () => {
+    const settings = makeSettings("dark");
+    const effectiveDefaults = resolveThemeAwareAppDefaults(settings);
+    const result = resolveCellFormatting(effectiveDefaults, {}, {}, {}, undefined);
+    assert.equal(result.textColor, "#F3F4F6");
+    assert.equal(result.backgroundColor, "#111827");
+    assert.equal(result.borderColor, "#374151");
+  });
+
+  test("explicit cell textColor overrides light stock default", () => {
+    const settings = makeSettings("light");
+    const effectiveDefaults = resolveThemeAwareAppDefaults(settings);
+    const result = resolveCellFormatting(effectiveDefaults, {}, {}, {}, { textColor: "#FF0000" });
+    assert.equal(result.textColor, "#FF0000");
+    assert.equal(result.backgroundColor, "#FFFFFF");
+  });
+
+  test("explicit block backgroundColor overrides light stock default", () => {
+    const settings = makeSettings("light");
+    const effectiveDefaults = resolveThemeAwareAppDefaults(settings);
+    const result = resolveCellFormatting(effectiveDefaults, { backgroundColor: "#AABBCC" }, {}, {}, undefined);
+    assert.equal(result.backgroundColor, "#AABBCC");
+    assert.equal(result.textColor, "#0F172A");
   });
 });
 
