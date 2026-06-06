@@ -95,6 +95,7 @@ Main is the only agent that does a **full close**:
    - Confirm the latest Review message has `State = review-pass`
    - Confirm the Final Verdict is PASS or narrowly justified PASS WITH NOTES with no required fixes
    - Confirm any PASS WITH NOTES items have explicit deferral reasons and are not clear/trivial/helpful in-scope fixes that should have been required
+   - Confirm every PASS WITH NOTES deferred item was actually recorded as an `[open]` entry in `agents/DEFERRED.md` (per agents/workflows/deferred-protocol.md). Do NOT close a PASS-WITH-NOTES dispatch whose deferrals were never written to the ledger — they would be lost. If the ledger entry is missing, route back to Review to record it.
    - If source, test, artifact, or user-facing documentation files changed after Review returned `State = review-pass`, do NOT close — create the next `Main → Review` message file with `State = ready-for-review` so Review can inspect the post-review changes
    - If the latest Review message is `needs-dev-fix` or `needs-main-fix`, do NOT close — route the work to the required fixer (Main re-engages Plan if the plan itself needs revision) and ensure it returns to Review afterward
 

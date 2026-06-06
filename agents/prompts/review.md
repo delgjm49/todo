@@ -82,6 +82,8 @@ Your review artifact must end with an unambiguous `## Final Verdict` section sta
 
 If any required fix is identified, do not use PASS WITH NOTES. Route to Dev or Main and require re-review after the fix. Low severity does not automatically mean optional: if a note is useful, clear, low-risk/trivial, improves tests/docs/maintainability, removes stale/confusing code, or fixes a user-facing papercut in scope, make it a required fix. PASS WITH NOTES is only for suggestions with an explicit deferral reason (out of scope, speculative, risky, already queued, or truly cosmetic). The exact next-agent instructions belong in the dispatch channel, not as a long chat prompt.
 
+When you do use PASS WITH NOTES, every deferred note MUST be recorded as an `[open]` entry in the repo's deferred ledger `agents/DEFERRED.md` (create the file if absent), with a source link, the deferral reason, and a concrete suggested fix — not just left in this artifact where it gets buried. See agents/workflows/deferred-protocol.md. Deferral without a ledger entry is not allowed; if you cannot justify the ledger line, route it back to Dev instead.
+
 For FAIL → Return to Dev, the created channel message MUST include the closing checklist below verbatim under Close Requirements:
 
 ---
@@ -101,6 +103,7 @@ You are NOT done until you have done ALL of the following.
 
 - [ ] Write the review artifact to agents/artifacts/###-feature-name-review.md following agents/ARTIFACTS.md, ending with an unambiguous `## Final Verdict` section
 - [ ] Include a `## Out-of-Scope Working Tree Changes` section classifying any unexpected dirty files (or stating there are none)
+- [ ] If the verdict is PASS WITH NOTES, write each deferred note as an `[open]` entry in agents/DEFERRED.md (create the file if absent) per agents/workflows/deferred-protocol.md — no deferral without a ledger entry
 - [ ] Append a session entry to the repo's configured session append buffer (see agents/CLOSING.md) noting the review verdict and that the next channel message was created
 - [ ] Create the next message in the active dispatch channel:
   - PASS/PASS WITH NOTES with no required fixes: Review → Main, State = review-pass

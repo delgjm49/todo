@@ -84,6 +84,7 @@ pickup agents/channels/###-feature-slug/
 - Review creates the next `Review → Main` message file with `State = review-pass`.
 - Notes must be genuinely optional, intentionally deferred future improvements only.
 - Review should require fixes for actionable low-severity items when they are reasonable within the current dispatch.
+- Every deferred note must be recorded as an `[open]` entry in `agents/DEFERRED.md` (the deferred lane), not just left in the review artifact. Main confirms this at close; the Hub later triages the list. See `workflows/deferred-protocol.md`.
 - If any file must change before completion, this is not PASS WITH NOTES.
 - If any source/test/artifact/user-facing docs change after review-pass and before Main closes, Main routes back to Review for re-review.
 

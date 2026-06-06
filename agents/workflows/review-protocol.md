@@ -94,7 +94,9 @@ A note may remain optional only when Review explicitly documents why it should n
 
 **Important**: Low severity does not automatically mean optional. If an issue is useful, clear, and reasonable to fix now, route it as a required fix even if it is small.
 
-**Next action**: Same as PASS only when every note has a documented deferral reason and no files need to change before completion.
+**Deferral requires a tracked destination.** Every deferred note must be recorded as an `[open]` entry in the repo's deferred ledger `agents/DEFERRED.md` (create the file if it does not exist yet) — not just mentioned in this review artifact. A note you cannot justify writing into the ledger is a note that should have been a required Dev fix. See [`deferred-protocol.md`](deferred-protocol.md) for the ledger format and lifecycle. This is what keeps "PASS WITH NOTES" from quietly becoming "skip and forget."
+
+**Next action**: Same as PASS only when every note has a documented deferral reason **and** has been written to `agents/DEFERRED.md`, and no files need to change before completion.
 
 ### FAIL — Return to Dev
 One or more specific, fixable issues found. The plan is fine; the implementation needs correction.

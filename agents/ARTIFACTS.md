@@ -175,7 +175,9 @@ This section states the *current* outcome unambiguously. If an earlier FAIL sect
 preserved above and a later re-review passes, the Final Verdict must clearly say so
 (e.g. `PASS — Ready for Main`). PASS WITH NOTES is only for genuinely optional,
 intentionally deferred suggestions; any required fix routes to Dev or Main and then
-returns to Review for all-clear.
+returns to Review for all-clear. Every deferred suggestion must also be recorded as an
+`[open]` entry in `agents/DEFERRED.md` (see `workflows/deferred-protocol.md`), not left
+only in this artifact.
 
 ## Next Steps
 [Short prose only. The next-agent message belongs in the dispatch channel, not here.]

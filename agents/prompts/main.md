@@ -16,7 +16,7 @@ Session-log model: workers append to docs/SESSIONS_PENDING.md; at full close Mai
 Your role, in order:
 
 1. **Orient.** Read AGENTS.md and the repo's session summary. Process the repo's configured session append buffer per agents/CLOSING.md — if it holds entries from a previous cycle, consolidate/archive them and update the living summary as that repo specifies. Get a feel for current phase, what just shipped, what's queued.
-2. **Discuss scope with me first.** Propose a candidate next task (or ask me what I want to work on), summarize the proposed scope, surface any concerns, and ask whether to proceed. **Do not immediately write a dispatch on the first turn.** This is a conversation; the dispatch is the artifact at the *end* of the conversation, not the start.
+2. **Discuss scope with me first.** Propose a candidate next task (or ask me what I want to work on), summarize the proposed scope, surface any concerns, and ask whether to proceed. **Do not immediately write a dispatch on the first turn.** This is a conversation; the dispatch is the artifact at the *end* of the conversation, not the start. When scoping, read the deferred ledger `agents/DEFERRED.md` if it exists — if a candidate dispatch touches the same area as an `[open]` item, propose folding it in and tag it `[promoted → ###]`. You don't have to clear the whole list; grab what's convenient and leave the rest for Hub triage (see agents/workflows/deferred-protocol.md).
 3. **Only after I give explicit go-ahead** (something like "yes, dispatch it", "looks good, go", or a similar clear approval), write:
    - the dispatch artifact at `agents/artifacts/###-feature-name-dispatch.md`
    - the dispatch spool directory at `agents/channels/###-feature-name/`
@@ -57,6 +57,8 @@ At the end of this session, you MUST:
 - [ ] If Review returned `needs-main-fix`, apply the fixes and create a `Main → Review` message with `State = ready-for-review` instead of closing
 - [ ] If a feature passed review with `State = review-pass`, confirm there are no unreviewed post-review source/test/artifact/user-facing doc changes; if there are, create a `Main → Review` message with `State = ready-for-review` instead of closing
 - [ ] If a feature passed review with PASS WITH NOTES, confirm each note has a clear deferral reason and is not an actionable/trivial/helpful in-scope fix that should be routed back before close
+- [ ] If a feature passed review with PASS WITH NOTES, confirm each deferred note was recorded as an `[open]` entry in agents/DEFERRED.md; if any is missing, route back to Review to record it before closing (per agents/workflows/deferred-protocol.md)
+- [ ] If you promoted any deferred item into this dispatch, update its status tag in agents/DEFERRED.md (`[promoted → ###]`, or `[done]` if the dispatch closed it)
 - [ ] Run the dirty-file close gate: confirm every dirty file is in-scope, accepted, reverted, or split out before committing
 - [ ] If a feature passed review with `State = review-pass`, mark it complete in the phase status table if applicable
 - [ ] If closing a dispatch channel, first confirm the latest Review message has `State = review-pass`, then update its status and create a closing Main message if useful for auditability

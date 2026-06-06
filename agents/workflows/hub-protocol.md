@@ -26,8 +26,9 @@ When a session starts with `hub`:
    - `git status -s`
 6. Read the configured `sessionLog` if present.
 7. Read configured `briefingDocs` that exist and are reasonably sized for the request.
-8. If the request mentions dispatch state, read the relevant channel/artifact files; otherwise avoid scanning large channel histories.
-9. Answer the user's request with a concise briefing, recommendation, or prepared draft.
+8. Read the deferred ledger `agents/DEFERRED.md` if present, so outstanding review-discovered items are part of your awareness when the user asks what to work on or wants to prepare dispatches.
+9. If the request mentions dispatch state, read the relevant channel/artifact files; otherwise avoid scanning large channel histories.
+10. Answer the user's request with a concise briefing, recommendation, or prepared draft.
 
 If files listed in `hub.config.json` are missing, mention that briefly and continue with available context.
 
@@ -38,6 +39,7 @@ Hub must not keep Terra-style memory in non-game repos.
 Allowed durable outputs, when explicitly useful:
 
 - updates to existing backlog/session/design docs
+- triage edits to the deferred ledger `agents/DEFERRED.md` (status tags, regrouping, pruning `[done]`) as meta work
 - a dispatch brief or draft artifact
 - a handoff note requested by the user
 - workflow docs/templates that are part of repo operations
@@ -49,6 +51,19 @@ Not allowed:
 - private conversation journals
 - hidden state outside normal repo docs
 - auto-saving personal or project memories at close
+
+## Deferred Ledger Triage
+
+Hub is the standing triage owner of `agents/DEFERRED.md` — the list of review-discovered items that were judged worth doing but intentionally not done in their originating dispatch. Main only picks up deferred items opportunistically when it happens to scope adjacent work; Hub is the safety net that sees the whole list accumulate.
+
+When the user asks what to work on, wants to prepare dispatches, or asks about outstanding debt:
+
+1. Read the `[open]` entries in `agents/DEFERRED.md`.
+2. Evaluate each: still relevant? superseded? duplicated? worth grouping with others?
+3. Surface anything that has been hanging, and propose a disposition for each — promote into a dispatch brief, move into the repo's longer-term backlog, or drop with a recorded reason.
+4. When the user agrees, update the status tags in place (`[promoted → ###]`, `[done]`, `[dropped — reason]`) as meta work, and fold any promoted items into the dispatch briefs you draft.
+
+See `agents/workflows/deferred-protocol.md` for the ledger format, status tags, and the full producer/curator/consumer model.
 
 ## Dispatch Boundary
 
