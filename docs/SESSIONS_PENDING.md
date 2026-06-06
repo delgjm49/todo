@@ -6,16 +6,20 @@ Temporary worker append buffer. Main consolidates entries into `docs/SESSIONS_AR
 
 **For Main:** At the start of each session, read this file. If it contains entries, archive them to `docs/SESSIONS_ARCHIVE.md`, update `docs/SESSIONS.md` living summary, then rewrite this file with only this header.
 
-## Session 266 — 2026-06-06
+## Session 271 — 2026-06-06
 
 ### Agent Type
 main
 
 ### Artifacts
-- Session docs: `docs/SESSIONS.md`, `docs/SESSIONS_ARCHIVE.md`, `docs/SESSIONS_PENDING.md`
+- Channel: agents/channels/082-richer-date-time-picker-planning/
+- Dispatch: agents/artifacts/082-richer-date-time-picker-planning-dispatch.md
+- Plan: agents/artifacts/082-richer-date-time-picker-planning-plan.md
+- Complete: agents/artifacts/082-richer-date-time-picker-planning-complete.md
+- Review: agents/artifacts/082-richer-date-time-picker-planning-review.md
 
 ### Summary
-Consolidated queue sessions 256–265 into the archive, updated the living summary to mark dispatches 079–081 complete, and confirmed the next recommended direction is a new post-MVP bundle. Recommended a three-dispatch sequence focused on date/time picker planning, date/time picker implementation, and archive/completed-view planning.
+Closed dispatch 082 after Review PASS and consolidated Sessions 266–270 into the archive. The planning dispatch produced a concrete, reviewed recommendation for dispatch 083: keep visible date/time text inputs, add compact native picker affordances, preserve the `string | null` persisted value contract, and tighten DateCell validation to strict `YYYY-MM-DD`.
 
 ### Outcome
-No dispatch was framed yet. Awaiting user approval for the next queue list and automation flags before registering/framing another dispatch-auto bundle.
+Dispatch 082 closed via `agents/channels/082-richer-date-time-picker-planning/messages/005-main-to-main.md`. Ready to continue the approved queue with dispatch 083 date/time picker implementation.

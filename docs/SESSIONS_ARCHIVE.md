@@ -4190,3 +4190,83 @@ Reviewed the sortable-header polish follow-up against dispatch 081 and the defer
 
 ### Outcome
 PASS. Next channel message created: `agents/channels/081-sortable-header-polish-follow-up/messages/003-review-to-main.md`. Ready for Main to run the dirty-file close gate, consolidate sessions, commit, push, and advance the queue.
+
+## Session 266 — 2026-06-06
+
+### Agent Type
+main
+
+### Artifacts
+- Session docs: `docs/SESSIONS.md`, `docs/SESSIONS_ARCHIVE.md`, `docs/SESSIONS_PENDING.md`
+
+### Summary
+Consolidated queue sessions 256–265 into the archive, updated the living summary to mark dispatches 079–081 complete, and confirmed the next recommended direction is a new post-MVP bundle. Recommended a three-dispatch sequence focused on date/time picker planning, date/time picker implementation, and archive/completed-view planning.
+
+### Outcome
+No dispatch was framed yet. Awaiting user approval for the next queue list and automation flags before registering/framing another dispatch-auto bundle.
+
+## Session 267 — 2026-06-06
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: agents/channels/082-richer-date-time-picker-planning/
+- Dispatch: agents/artifacts/082-richer-date-time-picker-planning-dispatch.md
+
+### Summary
+Committed and pushed the consolidated session/deferred-ledger docs after user approval, then registered the next three-item dispatch-auto queue with auto-close and auto-advance enabled. Framed queue item #1 as a Plan → Dev → Review planning/audit dispatch for richer date/time picker UX while preserving the existing date/time `string | null` persisted storage contract.
+
+### Outcome
+Dispatch 082 is ready for Plan via `agents/channels/082-richer-date-time-picker-planning/messages/001-main-to-plan.md`. Queue automation remains authorized to auto-close review-passing work and advance to dispatches 083 and 084 in sequence.
+
+## Session 268 — 2026-06-06
+
+### Agent Type
+plan
+
+### Artifacts
+- Channel: `agents/channels/082-richer-date-time-picker-planning/`
+- Dispatch: `agents/artifacts/082-richer-date-time-picker-planning-dispatch.md`
+- Plan: `agents/artifacts/082-richer-date-time-picker-planning-plan.md`
+
+### Summary
+Created the dispatch 082 planning artifact after reconnoitering current date/time cell editing, storage, sorting, alert, search, clipboard, and test behavior. The plan keeps this dispatch audit-only and directs Dev to produce a concrete dispatch 083 picker UX/technical recommendation while preserving the existing date/time `string | null` storage contract.
+
+### Outcome
+Plan is ready for Dev via `agents/channels/082-richer-date-time-picker-planning/messages/002-plan-to-dev.md`. Do not commit; Main handles git operations after Review passes.
+
+## Session 269 — 2026-06-06
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: `agents/channels/082-richer-date-time-picker-planning/`
+- Complete: `agents/artifacts/082-richer-date-time-picker-planning-complete.md`
+- Plan: `agents/artifacts/082-richer-date-time-picker-planning-plan.md`
+- Dispatch: `agents/artifacts/082-richer-date-time-picker-planning-dispatch.md`
+
+### Summary
+Executed the planning/audit plan: verified all plan claims against current disk state by reading DateCell, TimeCell, CellRenderer, RowView, documentStore, storageSchemas, sorting, alerts, search, clipboard, createRow, types, and all relevant tests (rowEditing, rowCellEditing integration, blockRowSorting, alertEvaluation, searchDocuments, rowClipboard). No product source was changed. Produced the complete artifact recommending a narrow dispatch 083 picker UX that adds a compact native picker affordance alongside the existing text inputs, preserves the `string | null` storage contract without schema migration, tightens DateCell validation to strict `YYYY-MM-DD`, and defines concrete open/select/commit/cancel/clear/invalid/focus/keyboard/mouse behavior. Identified one inconsistency: DateCell's lenient `new Date()` validation accepts values that sorting/alerts treat as empty.
+
+### Outcome
+Complete artifact is ready for Review via `agents/channels/082-richer-date-time-picker-planning/messages/003-dev-to-review.md`. Lint and 502 tests pass. Do not commit; Main handles git operations after Review passes.
+
+## Session 270 — 2026-06-06
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: `agents/channels/082-richer-date-time-picker-planning/`
+- Dispatch: `agents/artifacts/082-richer-date-time-picker-planning-dispatch.md`
+- Plan: `agents/artifacts/082-richer-date-time-picker-planning-plan.md`
+- Complete: `agents/artifacts/082-richer-date-time-picker-planning-complete.md`
+- Review: `agents/artifacts/082-richer-date-time-picker-planning-review.md`
+
+### Summary
+Reviewed the dispatch 082 complete artifact against the dispatch/plan artifacts and current source/test disk state. Verified the recommendation is audit-only, concrete enough for dispatch 083, preserves the existing date/time `string | null` storage contract, and identifies implementation files, tests, risks, and acceptance criteria. Reran lint, unit/integration tests, and build successfully.
+
+### Outcome
+PASS. Created `agents/channels/082-richer-date-time-picker-planning/messages/004-review-to-main.md` with `State = review-pass`. Do not commit; Main handles git operations after Review passes.

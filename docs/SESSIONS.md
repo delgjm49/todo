@@ -49,27 +49,27 @@ Last updated: 2026-06-06
 | GitHub Actions Rust dependency resilience | Complete | Dispatch 079 adds Cargo retry/multiplexing hardening and Rust cache; pushed CI run passed |
 | Light-mode default color cleanup | Complete | Dispatch 080 adds theme-aware default color mapping for fresh light-mode workspace/card/cell rendering while preserving explicit colors |
 | Sortable-header polish follow-up | Complete | Dispatch 081 fixes active-sort aria-label spacing and empty-label sortable-header fallback text; pushed CI run passed |
+| Richer date/time picker planning | Complete | Dispatch 082 recommends compact native picker affordances alongside existing text inputs, preserving `string | null` storage |
 | Phase 3 spool channels | Complete | Validated end-to-end |
 | Windows subprocess dispatch-auto | Complete | Validated on Windows 11 |
 
 ## Last Sessions
 
+- **Session 271 — Main close** (2026-06-06): Closed dispatch 082 after Review PASS, consolidated Sessions 266–270, and prepared the date/time picker planning artifacts for commit/push before continuing the queue.
+- **Session 270 — Review PASS** (2026-06-06): Verified dispatch 082 planning output is grounded, audit-only, preserves the `string | null` date/time storage contract, and is concrete enough for dispatch 083; lint/test/build passed.
+- **Session 269 — Dev** (2026-06-06): Produced the dispatch 082 planning/audit complete artifact recommending compact native picker affordances, visible text-input fallback, strict DateCell validation alignment, and dispatch 083 acceptance criteria.
+- **Session 268 — Plan** (2026-06-06): Planned dispatch 082 after reconnoitering current date/time editing, storage, sorting, alerts, search, clipboard, and tests.
+- **Session 267 — Main dispatch** (2026-06-06): Framed dispatch 082 as the first item in the next auto-close/auto-advance bundle.
+- **Session 266 — Main docs** (2026-06-06): Consolidated dispatches 079–081 and recommended the next post-MVP bundle.
 - **Session 265 — Review PASS** (2026-06-06): Confirmed dispatch 081 sortable-header polish fixed active-sort aria-label spacing and empty-label fallback text; full tests, lint, and build passed.
 - **Session 264 — Dev** (2026-06-06): Implemented dispatch 081 by cleaning `BlockColumnHeaderRow` aria-label construction, extending sortable fallback text, and adding targeted tests.
-- **Session 263 — Main dispatch** (2026-06-06): Framed dispatch 081 as the final queue item for sortable-header polish follow-up.
-- **Session 262 — Review PASS** (2026-06-06): Confirmed dispatch 080 light-mode default color cleanup maps only exact stock dark values in light mode, preserves explicit colors, and passes test/lint/build.
-- **Session 261 — Dev** (2026-06-06): Implemented dispatch 080 theme-aware default color helpers, fresh workspace/card/cell render behavior, SettingsPage fallback centralization, and tests.
-- **Session 260 — Plan** (2026-06-06): Planned dispatch 080 after verifying bootstrap, validation, workspace creation, rendering, and existing tests.
-- **Session 259 — Main dispatch** (2026-06-06): Framed dispatch 080 as queue item #2 for light-mode default color cleanup.
-- **Session 258 — Review PASS** (2026-06-06): Confirmed dispatch 079 CI hardening was scoped and preserved all Windows release gates.
 
 ## Next Recommended
 
-**Recommended next work: choose the next post-MVP bundle.** Dispatches 079–081 are complete and the final pushed Windows CI run passed. Good next candidates are:
+**Recommended next work: continue the approved post-MVP bundle.** Dispatch 082 is complete. Remaining queued work:
 
-1. **Richer date/time picker planning** — decide and plan a narrow picker UX while preserving the existing string/null storage contract.
-2. **Date/time picker implementation** — implement the planned picker flow with validation/commit/cancel behavior and alert/sort compatibility tests.
-3. **Archive/completed views planning** — define row lifecycle semantics before any persistence/UI implementation to avoid conflating checkbox-completed state with archive state.
+1. **Date/time picker implementation** — implement the planned picker flow with validation/commit/cancel behavior and alert/sort compatibility tests.
+2. **Archive/completed views planning** — define row lifecycle semantics before any persistence/UI implementation to avoid conflating checkbox-completed state with archive state.
 
 Remaining in the broader v1 backlog:
 - None.
@@ -94,6 +94,7 @@ Remaining in the broader v1 backlog:
 - GitHub Actions Rust dependency resilience: complete — Cargo retry/multiplexing hardening and Rust cache; follow-up CI green
 - Light-mode default color cleanup: complete — theme-aware defaults for fresh light-mode rendering while preserving explicit colors
 - Sortable-header polish follow-up: complete — aria-label spacing and empty-header fallback fixes; follow-up CI green
+- Richer date/time picker planning: complete — reviewed recommendation for compact picker affordances with unchanged `string | null` storage
 - Autosave UX (063): complete
 - Manual QA (065): complete — no critical defects found
 
