@@ -15,11 +15,11 @@ This complements (but is separate from) the stricter `deferred-protocol.md` used
 
 Do **not** use this for:
 - Required fixes from a Review (use the review artifact + `DEFERRED.md` if deferred).
-- Planned v1 work (use the implementation backlog).
+- Planned v1 work (use the repo's implementation backlog).
 
 ## File Location & Format
 
-See `agents/OBSERVATIONS.md` for the current structure.
+See `agents/OBSERVATIONS.md` for the current structure. If it does not exist yet, Hub creates it on first use with an `[open]` section.
 
 Entries are intentionally lightweight. Hub may later add status tags (`[promoted]`, `[backlogged]`, `[dropped]`) during triage.
 
@@ -39,12 +39,12 @@ Hub may edit `agents/OBSERVATIONS.md` directly as meta work (status changes, pru
 
 ## Relationship to Other Artifacts
 
-| Artifact                        | Purpose                                      | Owner     | When an item moves here                  |
-|---------------------------------|----------------------------------------------|-----------|------------------------------------------|
-| `agents/DEFERRED.md`            | Review-discovered items intentionally deferred | Hub (triage) | From Review PASS WITH NOTES             |
-| `agents/OBSERVATIONS.md`        | General usage notes & ideas                  | Hub       | From live use / manual testing           |
-| `docs/TODO_APP_IMPLEMENTATION_BACKLOG.md` | Planned v1 (and later) work            | Main/Plan | When an observation becomes a real ticket |
-| `docs/SESSIONS.md`              | Session history                              | Main      | Historical record only                   |
+| Artifact                   | Purpose                                        | Owner        | When an item moves here                   |
+|----------------------------|------------------------------------------------|--------------|-------------------------------------------|
+| `agents/DEFERRED.md`       | Review-discovered items intentionally deferred | Hub (triage) | From Review PASS WITH NOTES               |
+| `agents/OBSERVATIONS.md`   | General usage notes & ideas                    | Hub          | From live use / manual testing            |
+| The repo's implementation backlog | Planned v1 (and later) work             | Main/Plan    | When an observation becomes a real ticket |
+| The repo's session history | Session record                                 | Main         | Historical record only                    |
 
 ## Lifecycle
 
