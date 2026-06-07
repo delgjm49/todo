@@ -1372,14 +1372,48 @@ The broader planned v1 is done when MVP Core is complete and all of the followin
 - in-app alerts work while the app is open
 - workspace alert indicators work
 
-## Post-MVP Backlog Seeds
+## Completed Post-MVP Work
 
-Natural next items after v1:
+Work completed after the v1 ticket backlog (001–065):
+
+| Dispatch | Work | Status |
+|----------|------|--------|
+| 064 | Packaging assets and Windows build config | ✅ Complete |
+| 065 | Manual QA and release blockers | ✅ Complete |
+| 066–067 | Unit test CI fixes, test warning cleanup | ✅ Complete |
+| 068 | Windows CI Tauri unit fixes | ✅ Complete |
+| 069–070 | Playwright e2e CI provisioning | ✅ Complete |
+| 071–072 | Windows CI triage and green confirmation | ✅ Complete |
+| 073 | Post-MVP backlog planning (recommended Search first) | ✅ Complete |
+| 074 | Search MVP (top-bar search, grouped results, navigation/highlight) | ✅ Complete |
+| 075 | Search test hardening (exclusion/order coverage) | ✅ Complete |
+| 076 | Search navigation timer hygiene | ✅ Complete |
+| 077 | Left dock and top-bar polish (scrolling, settings gear, icon undo/redo, persistent templates, drag reorder) | ✅ Complete |
+| 078 | Viewport-safe menus and sortable block headers | ✅ Complete |
+| 079 | GitHub Actions Rust dependency resilience | ✅ Complete |
+| 080 | Light-mode default color cleanup | ✅ Complete |
+| 081 | Sortable-header polish follow-up | ✅ Complete |
+| 082 | Richer date/time picker planning | ✅ Complete |
+| 083 | Date/time picker implementation (compact native pickers, strict DateCell validation) | ✅ Complete |
+| 084 | Archive/completed views planning (recommends derived hide-completed rows filter) | ✅ Complete |
+
+## Post-MVP Backlog
+
+### In Progress
+
+- **Hide completed rows** — per-block `Block.hideCompletedRows: boolean` preference with a derived completed-row filter. Plan approved (dispatch 084); ready for implementation dispatch.
+
+### Remaining Seeds
+
+Natural next items after v1, not yet started:
 
 - inline partial rich text in cells
-- better date/time pickers
 - recurring reminders
-- archive/completed views
-- search
 - macOS packaging
 - import/export
+
+### Completed Seeds
+
+- ~~search~~ → dispatch 074
+- ~~better date/time pickers~~ → dispatch 083
+- ~~archive/completed views (planning)~~ → dispatch 084 (implementation pending above)
