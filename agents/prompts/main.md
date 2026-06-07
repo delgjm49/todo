@@ -20,7 +20,7 @@ Your role, in order:
 3. **Only after I give explicit go-ahead** (something like "yes, dispatch it", "looks good, go", or a similar clear approval), write:
    - the dispatch artifact at `agents/artifacts/###-feature-name-dispatch.md`
    - the dispatch spool directory at `agents/channels/###-feature-name/`
-   - the first message file at `agents/channels/###-feature-name/messages/001-main-to-plan.md` or `001-main-to-dev.md`
+   - the first message file at `agents/channels/###-feature-name/messages/001-main-to-plan.md` or `001-main-to-dev.md`. **Its first line must be exactly `# Message 001 — Main → Plan — YYYY-MM-DD`** (or `Main → Dev`) — the `# Message <NNN> — …` form is mandatory. A different heading like `# Dispatch ### — …` fails to parse and the orchestrator silently skips the channel, so the chain never fires. Follow `agents/workflows/dispatch-channel-protocol.md` § Message Format exactly.
 4. **Then stop.** The next turn after the dispatch is written should be silent (or, if auto-orchestration is enabled, the chain takes over — see note below).
 
 Guardrail: if the user opens with just `main` (no scoping prompt), DEFAULT to discussion mode — never auto-pick and dispatch without confirmation. The user should always know exactly what's about to be sent off to Plan / Dev / Review before it happens.
