@@ -46,7 +46,7 @@ export function LeftDock() {
         <span className="text-xs uppercase tracking-[0.24em] text-textMuted">{workspaceIndex.length} total</span>
       </div>
 
-      <div className="mt-4 min-h-0 flex-1 overflow-y-auto pr-1">
+      <div className="mt-4 min-h-0 flex-1 overflow-y-auto pr-1" data-testid="workspace-list-scroll">
         {workspaceIndex.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border px-4 py-4 text-sm text-textMuted">
             No workspaces are available.

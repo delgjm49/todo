@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { BlockCard } from "../block/BlockCard.js";
 import { BlockContextMenu } from "../block/BlockContextMenu.js";
+import { BlockSortMenu } from "../block/BlockSortMenu.js";
 import { ColumnContextMenu } from "../block/ColumnContextMenu.js";
 import { RowContextMenu } from "../row/RowContextMenu.js";
 import { MenuPopover } from "../shared/MenuPopover.js";
@@ -9,7 +10,7 @@ import { useDocumentStore } from "../../stores/documentStore.js";
 import { useUiStore } from "../../stores/uiStore.js";
 import { getVisibleColumnsInDisplayOrder } from "../../domain/columns/createColumn.js";
 import { mapClipboardRowsToBlock } from "../../domain/clipboard/index.js";
-import type { BlockSort, BlockType } from "../../types/block.js";
+import type { BlockType } from "../../types/block.js";
 import type { ColumnId } from "../../domain/ids.js";
 
 function AddBlockTemplateButtons({
@@ -80,6 +81,11 @@ export function MainPane() {
   const selectBlock = useUiStore((state) => state.selectBlock);
   const clearSelection = useUiStore((state) => state.clearSelection);
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
+  const [sortMenuState, setSortMenuState] = useState<{
+    blockId: string;
+    x: number;
+    y: number;
+  } | null>(null);
 
   const workspaceDocument = activeWorkspace ? workspaceById[activeWorkspace.id] ?? null : null;
   const blocks = [...(workspaceDocument?.blocks ?? [])].sort((left, right) => left.order - right.order);
@@ -114,6 +120,7 @@ export function MainPane() {
     closeColumnMenu();
     closeRowMenu();
     setEditingBlockId(null);
+    setSortMenuState(null);
     setBlockDragState(null);
     resetRowInteractionState();
     clearSelection();
@@ -124,7 +131,7 @@ export function MainPane() {
 
   return (
     <section className="min-h-0 min-w-0 overflow-y-auto bg-canvas px-5 py-5">
-      <div className="h-full rounded-3xl border border-border bg-panel/80 px-6 py-6 shadow-soft">
+      <div className="min-h-full rounded-3xl border border-border bg-panel/80 px-6 py-6 shadow-soft">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.28em] text-textMuted">Workspace canvas</p>
@@ -186,6 +193,11 @@ export function MainPane() {
                 onOpenMenu={(x, y) => {
                   setEditingBlockId(null);
                   openBlockMenu(block.workspaceId, block.id, x, y);
+                }}
+                onOpenSortMenu={(x, y) => {
+                  setEditingBlockId(null);
+                  closeBlockMenu();
+                  setSortMenuState({ blockId: block.id, x, y });
                 }}
                 onSelectBlock={() => {
                   if (activeWorkspace) {
@@ -258,11 +270,6 @@ export function MainPane() {
               setEditingBlockId(activeBlockMenuBlock.id);
               closeBlockMenu();
             }}
-            onSort={(columnId: ColumnId, direction: BlockSort["direction"]) => {
-              void sortBlockRows(activeBlockMenuBlock.workspaceId, activeBlockMenuBlock.id, columnId, direction);
-              setEditingBlockId(null);
-              closeBlockMenu();
-            }}
             onToggleCollapsed={() => {
               void toggleBlockCollapsed(activeBlockMenuBlock.workspaceId, activeBlockMenuBlock.id);
               setEditingBlockId(null);
@@ -270,6 +277,30 @@ export function MainPane() {
             }}
             workspaces={workspaceIndex}
           />
+        </MenuPopover>
+      ) : null}
+
+      {sortMenuState ? (
+        <MenuPopover
+          backdropTestId="block-sort-backdrop"
+          onDismiss={() => setSortMenuState(null)}
+          x={sortMenuState.x}
+          y={sortMenuState.y}
+        >
+          {(() => {
+            const sortBlock = blocks.find((b) => b.id === sortMenuState.blockId);
+            if (!sortBlock) return null;
+            return (
+              <BlockSortMenu
+                block={sortBlock}
+                onSort={(columnId, direction) => {
+                  void sortBlockRows(sortBlock.workspaceId, sortBlock.id, columnId, direction);
+                  setEditingBlockId(null);
+                  setSortMenuState(null);
+                }}
+              />
+            );
+          })()}
         </MenuPopover>
       ) : null}
 

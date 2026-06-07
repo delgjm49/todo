@@ -16,6 +16,7 @@ export function BlockCard({
   onToggleCollapsed,
   onAddRow,
   onOpenMenu,
+  onOpenSortMenu,
   onOpenColumnMenu,
   onOpenRowMenu,
   onSortColumn,
@@ -36,6 +37,7 @@ export function BlockCard({
   onToggleCollapsed: () => void;
   onAddRow: () => void;
   onOpenMenu: (x: number, y: number) => void;
+  onOpenSortMenu?: (x: number, y: number) => void;
   onOpenColumnMenu?: (columnId: ColumnId, x: number, y: number) => void;
   onOpenRowMenu?: (rowId: RowId | null, x: number, y: number) => void;
   onSortColumn?: (columnId: ColumnId, direction: BlockSort["direction"]) => void;
@@ -136,7 +138,7 @@ export function BlockCard({
           <button
             className="rounded-lg border border-border px-3 py-2 text-xs font-medium text-text transition hover:border-accent/40 hover:bg-panelMuted"
             data-testid={`sort-menu-${block.id}`}
-            onClick={(event) => onOpenMenu(event.clientX, event.clientY)}
+            onClick={(event) => onOpenSortMenu?.(event.clientX, event.clientY)}
             type="button"
           >
             Sort

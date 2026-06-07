@@ -16,7 +16,7 @@ export function AppShell() {
   return (
     <main className="grid h-screen overflow-hidden grid-cols-[280px_minmax(0,1fr)] bg-canvas text-text">
       <LeftDock />
-      <div className="flex min-w-0 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-col">
         <TopBar />
         <div
           className={`grid min-h-0 flex-1 min-w-0 ${

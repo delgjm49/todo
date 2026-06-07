@@ -541,13 +541,15 @@ describe("selection model ui", () => {
     ) as HTMLButtonElement | null;
     assert.ok(dragHandle);
 
+    // Row drag-and-drop now uses @dnd-kit instead of native HTML5 DnD.
+    // Dispatching a native dragstart event should not set uiStore drag state.
     const dragStart = new Event("dragstart", { bubbles: true }) as DragEvent;
     Object.defineProperty(dragStart, "target", { value: dragHandle, configurable: true });
     await act(async () => {
       dragHandle.dispatchEvent(dragStart);
     });
 
-    assert.equal(useUiStore.getState().draggingRowBlockId, "block_home");
-    assert.equal(useUiStore.getState().draggingRowId, rowId);
+    assert.equal(useUiStore.getState().draggingRowBlockId, null);
+    assert.equal(useUiStore.getState().draggingRowId, null);
   });
 });

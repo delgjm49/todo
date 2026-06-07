@@ -4,6 +4,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { createColumn } from "../../domain/columns/createColumn.js";
 import { BlockCard } from "../../components/block/BlockCard.js";
 import { BlockContextMenu } from "../../components/block/BlockContextMenu.js";
+import { BlockSortMenu } from "../../components/block/BlockSortMenu.js";
 import type { Block } from "../../types/block.js";
 
 function createBlockFixture(): Block {
@@ -95,18 +96,12 @@ describe("block grid render", () => {
   test("renders sort menu choices for visible sortable columns and excludes numbered columns", () => {
     const block = createBlockFixture();
     const html = renderToStaticMarkup(
-      <BlockContextMenu
+      <BlockSortMenu
         block={block}
-        onDelete={() => {}}
-        onMoveToWorkspace={() => {}}
-        onRename={() => {}}
         onSort={() => {}}
-        onToggleCollapsed={() => {}}
-        workspaces={[{ id: "ws_1", title: "Home", order: 0, style: { background: "#fff", textColor: "#111", accentStripe: { enabled: true, color: "#60A5FA" } } }]}
       />
     );
 
-    assert.ok(html.includes('data-testid="block-sort-section"'));
     assert.ok(html.includes('data-testid="sort-block_1-col_text_b-asc"'));
     assert.ok(html.includes('data-testid="sort-block_1-col_text_b-desc"'));
     assert.ok(html.includes('data-testid="sort-block_1-col_check-asc"'));
@@ -122,14 +117,9 @@ describe("block grid render", () => {
     };
 
     const html = renderToStaticMarkup(
-      <BlockContextMenu
+      <BlockSortMenu
         block={numberedOnlyBlock}
-        onDelete={() => {}}
-        onMoveToWorkspace={() => {}}
-        onRename={() => {}}
         onSort={() => {}}
-        onToggleCollapsed={() => {}}
-        workspaces={[]}
       />
     );
 

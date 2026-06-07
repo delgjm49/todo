@@ -235,6 +235,427 @@ describe("context menu dismissal", () => {
     assert.equal(document.querySelector('[data-testid="block-menu-backdrop"]'), null);
   });
 
+  test("workspace menu rename action renames the workspace and closes the menu", async () => {
+    const service = await createMemoryStorageService();
+    await useDocumentStore.getState().initializeAppData(service);
+
+    useDocumentStore.setState({
+      settings: {
+        theme: "dark",
+        defaults: {
+          fontFamily: "Segoe UI",
+          fontSize: 14,
+          textColor: "#F3F4F6",
+          cellBackground: "#111827",
+          blockBorderColor: "#374151",
+          blockBorderWidth: 1,
+          workspaceAccentEnabled: true,
+          workspaceBackground: "#1F2937",
+          workspaceTextColor: "#F9FAFB",
+          workspaceAccentColor: "#60A5FA",
+        },
+      },
+      workspaceIndex: [
+        {
+          id: "ws_home",
+          title: "Home",
+          order: 0,
+          style: {
+            background: "#1F2937",
+            textColor: "#F9FAFB",
+            accentStripe: { enabled: true, color: "#60A5FA" },
+          },
+        },
+        {
+          id: "ws_work",
+          title: "Work",
+          order: 1,
+          style: {
+            background: "#111827",
+            textColor: "#F9FAFB",
+            accentStripe: { enabled: true, color: "#34D399" },
+          },
+        },
+      ],
+      workspacesById: {
+        ws_home: { id: "ws_home", blocks: [] },
+        ws_work: { id: "ws_work", blocks: [] },
+      },
+      loadedWorkspaceIds: ["ws_home", "ws_work"],
+      activeWorkspaceId: "ws_home",
+    });
+    useUiStore.setState({
+      workspaceMenu: {
+        workspaceId: "ws_home",
+        x: 24,
+        y: 24,
+      },
+      blockMenu: null,
+      draggingWorkspaceId: null,
+      dropTargetWorkspaceId: null,
+      draggingBlockId: null,
+      dropTargetBlockId: null,
+      screen: "main",
+      inspectorOpen: false,
+    });
+
+    const originalPrompt = window.prompt;
+    window.prompt = () => "Renamed Home";
+
+    await renderNode(<LeftDock />);
+
+    const renameButton = Array.from(document.querySelectorAll("button")).find(
+      (btn) => btn.textContent === "Rename workspace"
+    );
+    assert.ok(renameButton);
+
+    await dispatchClick(renameButton);
+
+    const state = useDocumentStore.getState();
+    const renamed = state.workspaceIndex.find((entry) => entry.id === "ws_home");
+    assert.ok(renamed);
+    assert.equal(renamed.title, "Renamed Home");
+    assert.equal(useUiStore.getState().workspaceMenu, null);
+
+    window.prompt = originalPrompt;
+  });
+
+  test("workspace menu delete action removes the workspace and closes the menu", async () => {
+    const service = await createMemoryStorageService();
+    await useDocumentStore.getState().initializeAppData(service);
+
+    useDocumentStore.setState({
+      settings: {
+        theme: "dark",
+        defaults: {
+          fontFamily: "Segoe UI",
+          fontSize: 14,
+          textColor: "#F3F4F6",
+          cellBackground: "#111827",
+          blockBorderColor: "#374151",
+          blockBorderWidth: 1,
+          workspaceAccentEnabled: true,
+          workspaceBackground: "#1F2937",
+          workspaceTextColor: "#F9FAFB",
+          workspaceAccentColor: "#60A5FA",
+        },
+      },
+      workspaceIndex: [
+        {
+          id: "ws_home",
+          title: "Home",
+          order: 0,
+          style: {
+            background: "#1F2937",
+            textColor: "#F9FAFB",
+            accentStripe: { enabled: true, color: "#60A5FA" },
+          },
+        },
+        {
+          id: "ws_work",
+          title: "Work",
+          order: 1,
+          style: {
+            background: "#111827",
+            textColor: "#F9FAFB",
+            accentStripe: { enabled: true, color: "#34D399" },
+          },
+        },
+      ],
+      workspacesById: {
+        ws_home: { id: "ws_home", blocks: [] },
+        ws_work: { id: "ws_work", blocks: [] },
+      },
+      loadedWorkspaceIds: ["ws_home", "ws_work"],
+      activeWorkspaceId: "ws_home",
+    });
+    useUiStore.setState({
+      workspaceMenu: {
+        workspaceId: "ws_home",
+        x: 24,
+        y: 24,
+      },
+      blockMenu: null,
+      draggingWorkspaceId: null,
+      dropTargetWorkspaceId: null,
+      draggingBlockId: null,
+      dropTargetBlockId: null,
+      screen: "main",
+      inspectorOpen: false,
+    });
+
+    const originalConfirm = window.confirm;
+    window.confirm = () => true;
+
+    await renderNode(<LeftDock />);
+
+    const deleteButton = Array.from(document.querySelectorAll("button")).find(
+      (btn) => btn.textContent === "Delete workspace"
+    );
+    assert.ok(deleteButton);
+
+    await dispatchClick(deleteButton);
+
+    const state = useDocumentStore.getState();
+    assert.equal(state.workspaceIndex.some((entry) => entry.id === "ws_home"), false);
+    assert.equal(useUiStore.getState().workspaceMenu, null);
+
+    window.confirm = originalConfirm;
+  });
+
+  test("workspace menu delete does not remove workspace when confirm returns false", async () => {
+    const service = await createMemoryStorageService();
+    await useDocumentStore.getState().initializeAppData(service);
+
+    useDocumentStore.setState({
+      settings: {
+        theme: "dark",
+        defaults: {
+          fontFamily: "Segoe UI",
+          fontSize: 14,
+          textColor: "#F3F4F6",
+          cellBackground: "#111827",
+          blockBorderColor: "#374151",
+          blockBorderWidth: 1,
+          workspaceAccentEnabled: true,
+          workspaceBackground: "#1F2937",
+          workspaceTextColor: "#F9FAFB",
+          workspaceAccentColor: "#60A5FA",
+        },
+      },
+      workspaceIndex: [
+        {
+          id: "ws_home",
+          title: "Home",
+          order: 0,
+          style: {
+            background: "#1F2937",
+            textColor: "#F9FAFB",
+            accentStripe: { enabled: true, color: "#60A5FA" },
+          },
+        },
+        {
+          id: "ws_work",
+          title: "Work",
+          order: 1,
+          style: {
+            background: "#111827",
+            textColor: "#F9FAFB",
+            accentStripe: { enabled: true, color: "#34D399" },
+          },
+        },
+      ],
+      workspacesById: {
+        ws_home: { id: "ws_home", blocks: [] },
+        ws_work: { id: "ws_work", blocks: [] },
+      },
+      loadedWorkspaceIds: ["ws_home", "ws_work"],
+      activeWorkspaceId: "ws_home",
+    });
+    useUiStore.setState({
+      workspaceMenu: {
+        workspaceId: "ws_home",
+        x: 24,
+        y: 24,
+      },
+      blockMenu: null,
+      draggingWorkspaceId: null,
+      dropTargetWorkspaceId: null,
+      draggingBlockId: null,
+      dropTargetBlockId: null,
+      screen: "main",
+      inspectorOpen: false,
+    });
+
+    const originalConfirm = window.confirm;
+    window.confirm = () => false;
+
+    await renderNode(<LeftDock />);
+
+    const deleteButton = Array.from(document.querySelectorAll("button")).find(
+      (btn) => btn.textContent === "Delete workspace"
+    );
+    assert.ok(deleteButton);
+
+    await dispatchClick(deleteButton);
+
+    const state = useDocumentStore.getState();
+    assert.equal(state.workspaceIndex.some((entry) => entry.id === "ws_home"), true);
+    assert.equal(useUiStore.getState().workspaceMenu, null);
+
+    window.confirm = originalConfirm;
+  });
+
+  test("block menu delete action removes the block and closes the menu", async () => {
+    const service = await createMemoryStorageService();
+    await useDocumentStore.getState().initializeAppData(service);
+
+    const checklist = createBlockTemplate("basic_checklist", "ws_home", {
+      blockId: "block_home",
+      title: "Today",
+      order: 0,
+    });
+    const bullets = createBlockTemplate("bulleted_list", "ws_home", {
+      blockId: "block_notes",
+      title: "Notes",
+      order: 1,
+    });
+
+    useDocumentStore.setState({
+      settings: {
+        theme: "dark",
+        defaults: {
+          fontFamily: "Segoe UI",
+          fontSize: 14,
+          textColor: "#F3F4F6",
+          cellBackground: "#111827",
+          blockBorderColor: "#374151",
+          blockBorderWidth: 1,
+          workspaceAccentEnabled: true,
+          workspaceBackground: "#1F2937",
+          workspaceTextColor: "#F9FAFB",
+          workspaceAccentColor: "#60A5FA",
+        },
+      },
+      workspaceIndex: [
+        {
+          id: "ws_home",
+          title: "Home",
+          order: 0,
+          style: {
+            background: "#1F2937",
+            textColor: "#F9FAFB",
+            accentStripe: { enabled: true, color: "#60A5FA" },
+          },
+        },
+      ],
+      workspacesById: {
+        ws_home: {
+          id: "ws_home",
+          blocks: [checklist, bullets],
+        },
+      },
+      loadedWorkspaceIds: ["ws_home"],
+      activeWorkspaceId: "ws_home",
+    });
+    useUiStore.setState({
+      workspaceMenu: null,
+      blockMenu: null,
+      draggingWorkspaceId: null,
+      dropTargetWorkspaceId: null,
+      draggingBlockId: null,
+      dropTargetBlockId: null,
+      screen: "main",
+      inspectorOpen: false,
+    });
+
+    const originalConfirm = window.confirm;
+    window.confirm = () => true;
+
+    await renderNode(<MainPane />);
+
+    await act(async () => {
+      useUiStore.getState().openBlockMenu("ws_home", "block_home", 36, 36);
+    });
+
+    const deleteButton = Array.from(document.querySelectorAll("button")).find(
+      (btn) => btn.textContent === "Delete block"
+    );
+    assert.ok(deleteButton);
+
+    await dispatchClick(deleteButton);
+
+    const state = useDocumentStore.getState();
+    const blocks = state.workspacesById.ws_home?.blocks ?? [];
+    assert.equal(blocks.some((block) => block.id === "block_home"), false);
+    assert.equal(blocks.some((block) => block.id === "block_notes"), true);
+    assert.equal(useUiStore.getState().blockMenu, null);
+
+    window.confirm = originalConfirm;
+  });
+
+  test("block menu delete does not remove block when confirm returns false", async () => {
+    const service = await createMemoryStorageService();
+    await useDocumentStore.getState().initializeAppData(service);
+
+    const checklist = createBlockTemplate("basic_checklist", "ws_home", {
+      blockId: "block_home",
+      title: "Today",
+      order: 0,
+    });
+
+    useDocumentStore.setState({
+      settings: {
+        theme: "dark",
+        defaults: {
+          fontFamily: "Segoe UI",
+          fontSize: 14,
+          textColor: "#F3F4F6",
+          cellBackground: "#111827",
+          blockBorderColor: "#374151",
+          blockBorderWidth: 1,
+          workspaceAccentEnabled: true,
+          workspaceBackground: "#1F2937",
+          workspaceTextColor: "#F9FAFB",
+          workspaceAccentColor: "#60A5FA",
+        },
+      },
+      workspaceIndex: [
+        {
+          id: "ws_home",
+          title: "Home",
+          order: 0,
+          style: {
+            background: "#1F2937",
+            textColor: "#F9FAFB",
+            accentStripe: { enabled: true, color: "#60A5FA" },
+          },
+        },
+      ],
+      workspacesById: {
+        ws_home: {
+          id: "ws_home",
+          blocks: [checklist],
+        },
+      },
+      loadedWorkspaceIds: ["ws_home"],
+      activeWorkspaceId: "ws_home",
+    });
+    useUiStore.setState({
+      workspaceMenu: null,
+      blockMenu: null,
+      draggingWorkspaceId: null,
+      dropTargetWorkspaceId: null,
+      draggingBlockId: null,
+      dropTargetBlockId: null,
+      screen: "main",
+      inspectorOpen: false,
+    });
+
+    const originalConfirm = window.confirm;
+    window.confirm = () => false;
+
+    await renderNode(<MainPane />);
+
+    await act(async () => {
+      useUiStore.getState().openBlockMenu("ws_home", "block_home", 36, 36);
+    });
+
+    const deleteButton = Array.from(document.querySelectorAll("button")).find(
+      (btn) => btn.textContent === "Delete block"
+    );
+    assert.ok(deleteButton);
+
+    await dispatchClick(deleteButton);
+
+    const state = useDocumentStore.getState();
+    const blocks = state.workspacesById.ws_home?.blocks ?? [];
+    assert.equal(blocks.some((block) => block.id === "block_home"), true);
+    assert.equal(useUiStore.getState().blockMenu, null);
+
+    window.confirm = originalConfirm;
+  });
+
   test("block sort menu action sorts rows and closes the menu", async () => {
     const service = await createMemoryStorageService();
     await useDocumentStore.getState().initializeAppData(service);
