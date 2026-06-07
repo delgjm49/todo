@@ -2,7 +2,7 @@
   "$comment": "Presence of this file enables the dispatch-auto Pi extension in this repo. This is the committed baseline shared across active repos. Per-machine overrides (accounts, profile paths, temporary model routing) belong in agents/orchestration.local.json (gitignored).",
   "$schema_notes": {
     "workerMode": "Worker runner: interactive (visible cmux panes — current committed default after Phase 4 validation 2026-05-18) or subprocess (fallback for machines without cmux; opt back in via agents/orchestration.local.json setting workerMode='subprocess'). Channel format for new dispatches is Phase 3 spool directories under agents/channels/<slug>/messages/.",
-    "timeoutMinutes": "Wall-clock cap per subprocess. Env DISPATCH_AUTO_TIMEOUT_MS=<ms> wins over both root and per-role for one-off use.",
+    "timeoutMinutes": "Wall-clock cap per worker turn. Env DISPATCH_AUTO_TIMEOUT_MS=<ms> wins over both root and per-role for one-off use. Dev defaults higher because implementation often continues productively past 30 minutes.",
     "defaultPiProvider": "Token value substituted for $defaultPiProvider in model preset args. Swap this single field to globally re-route non-Codex models such as DeepSeek/GLM.",
     "roles.<Role>.binary": "pi (default) or claude. Claude uses --session-id on first call, --resume on subsequent calls; Pi uses --session-dir + --continue.",
     "roles.<Role>.configDir": "Sets CLAUDE_CONFIG_DIR (claude) or PI_CODING_AGENT_DIR (pi). Use only in agents/orchestration.local.json unless all machines share the same profile layout.",
@@ -12,5 +12,9 @@
   "workerMode": "interactive",
   "timeoutMinutes": 30,
   "defaultPiProvider": "opencode-go",
-  "roles": {}
+  "roles": {
+    "Dev": {
+      "timeoutMinutes": 60
+    }
+  }
 }
