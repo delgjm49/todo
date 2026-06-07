@@ -31,6 +31,7 @@ describe("storage schemas", () => {
           blockType: "basic_checklist",
           order: 0,
           collapsed: false,
+          hideCompletedRows: false,
           border: {},
           sort: null,
           format: {},
@@ -87,6 +88,88 @@ describe("storage schemas", () => {
     assert.deepEqual(row.cells.col_check, { value: false, format: {} });
     assert.deepEqual(row.cells.col_text, { value: "Task one", format: {} });
     assert.equal("type" in row.cells.col_check, false);
+  });
+
+  test("normalizes absent hideCompletedRows to false", () => {
+    // Simulate a legacy document without hideCompletedRows
+    const raw = {
+      schemaVersion: STORAGE_SCHEMA_VERSION,
+      id: "ws_test",
+      blocks: [
+        {
+          id: "block_test",
+          workspaceId: "ws_test",
+          title: "Test",
+          blockType: "basic_checklist",
+          order: 0,
+          collapsed: false,
+          border: {},
+          sort: null,
+          format: {},
+          columns: [],
+          rows: [],
+        },
+      ],
+    };
+
+    const legacyValidated = validateWorkspaceFile(raw);
+    const normalized = legacyValidated.value.blocks[0];
+    assert.ok(normalized);
+    assert.equal(normalized.hideCompletedRows, false);
+  });
+
+  test("normalizes hideCompletedRows: true correctly", () => {
+    const validated = validateWorkspaceFile({
+      schemaVersion: STORAGE_SCHEMA_VERSION,
+      id: "ws_test",
+      blocks: [
+        {
+          id: "block_test",
+          workspaceId: "ws_test",
+          title: "Test",
+          blockType: "basic_checklist",
+          order: 0,
+          collapsed: false,
+          hideCompletedRows: true,
+          border: {},
+          sort: null,
+          format: {},
+          columns: [],
+          rows: [],
+        },
+      ],
+    });
+
+    const normalized = validated.value.blocks[0];
+    assert.ok(normalized);
+    assert.equal(normalized.hideCompletedRows, true);
+  });
+
+  test("normalizes invalid hideCompletedRows to false", () => {
+    const validated = validateWorkspaceFile({
+      schemaVersion: STORAGE_SCHEMA_VERSION,
+      id: "ws_test",
+      blocks: [
+        {
+          id: "block_test",
+          workspaceId: "ws_test",
+          title: "Test",
+          blockType: "basic_checklist",
+          order: 0,
+          collapsed: false,
+          hideCompletedRows: "not-a-boolean",
+          border: {},
+          sort: null,
+          format: {},
+          columns: [],
+          rows: [],
+        },
+      ],
+    });
+
+    const normalized = validated.value.blocks[0];
+    assert.ok(normalized);
+    assert.equal(normalized.hideCompletedRows, false);
   });
 
   test("accepts a valid settings document", () => {
@@ -354,6 +437,7 @@ describe("formatting coercion", () => {
           blockType: "basic_checklist",
           order: 0,
           collapsed: false,
+          hideCompletedRows: false,
           border: {},
           sort: null,
           format: {
@@ -460,6 +544,7 @@ describe("formatting coercion", () => {
           blockType: "basic_checklist",
           order: 0,
           collapsed: false,
+          hideCompletedRows: false,
           border: {},
           sort: null,
           format: {

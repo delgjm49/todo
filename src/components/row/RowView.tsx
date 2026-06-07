@@ -4,6 +4,7 @@ import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-
 import { CSS } from "@dnd-kit/utilities";
 import { getVisibleColumnsInDisplayOrder } from "../../domain/columns/createColumn.js";
 import { getRowsInDisplayOrder } from "../../domain/rows/reorderRows.js";
+import { filterCompletedRows } from "../../domain/rows/completedRowFilter.js";
 import { isRowCompletedByCheckbox } from "../../domain/rows/applyCheckboxRules.js";
 import { resolveCellFormatting } from "../../domain/formatting/resolveCellFormatting.js";
 import { formattingToCellStyle } from "../../domain/formatting/formattingToCellStyle.js";
@@ -16,10 +17,9 @@ import { CellRenderer } from "../cell/CellRenderer.js";
 
 export function RowView({ block, workspaceId }: { block: Block; workspaceId: string }) {
   const reorderRows = useDocumentStore((state) => state.reorderRows);
-  const alertFlashRowId = useUiStore((state) => state.alertFlashRowId);
-  const searchFlashRowId = useUiStore((state) => state.searchFlashRowId);
 
-  const rows = getRowsInDisplayOrder(block.rows);
+  const orderedRows = getRowsInDisplayOrder(block.rows);
+  const rows = filterCompletedRows(orderedRows, block.columns, block.hideCompletedRows);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -39,15 +39,21 @@ export function RowView({ block, workspaceId }: { block: Block; workspaceId: str
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <SortableContext items={rows.map((r) => r.id)} strategy={verticalListSortingStrategy}>
         <div className="divide-y divide-border">
-          {rows.map((row) => (
-            <SortableRow
-              key={row.id}
-              block={block}
-              row={row}
-              rowIndex={rows.indexOf(row)}
-              workspaceId={workspaceId}
-            />
-          ))}
+          {rows.length === 0 && block.hideCompletedRows && orderedRows.length > 0 ? (
+            <div className="px-3 py-6 text-center text-sm text-textMuted">
+              All completed rows are hidden. Use <span className="font-medium text-text">Show completed</span> to reveal them.
+            </div>
+          ) : (
+            rows.map((row) => (
+              <SortableRow
+                key={row.id}
+                block={block}
+                row={row}
+                rowIndex={rows.indexOf(row)}
+                workspaceId={workspaceId}
+              />
+            ))
+          )}
         </div>
       </SortableContext>
     </DndContext>

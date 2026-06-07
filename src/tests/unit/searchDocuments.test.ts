@@ -13,7 +13,7 @@ function row(id: string, order: number, cells: Row["cells"]): Row {
   return { id, order, cells, format: {} };
 }
 function block(id: string, order: number, columns: ColumnDefinition[], rows: Row[], title = "Block"): Block {
-  return { id, workspaceId: "ws1", title, order, columns, rows, blockType: "basic_checklist", collapsed: false, border: {}, sort: null, format: {} };
+  return { id, workspaceId: "ws1", title, order, columns, rows, blockType: "basic_checklist", collapsed: false, hideCompletedRows: false, border: {}, sort: null, format: {} };
 }
 const workspaceIndex: WorkspaceIndexEntry[] = [
   { id: "ws1", title: "Planning", order: 0, style: {} },

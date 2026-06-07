@@ -26,6 +26,7 @@ function createFixture(): {
     blockType: "basic_checklist",
     order: 0,
     collapsed: false,
+    hideCompletedRows: false,
     border: {},
     sort: null,
     format: {},

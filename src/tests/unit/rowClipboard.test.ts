@@ -34,6 +34,7 @@ function block(overrides: Partial<Block> & Pick<Block, "columns" | "rows">): Blo
     blockType: "basic_checklist",
     order: 0,
     collapsed: false,
+    hideCompletedRows: false,
     border: {},
     sort: null,
     format: {},

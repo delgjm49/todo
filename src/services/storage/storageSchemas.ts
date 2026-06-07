@@ -427,6 +427,7 @@ function normalizeBlock(rawValue: unknown, workspaceId: string, path: string, is
     blockType,
     order: toNumber(rawValue.order, 0, 0),
     collapsed: toBoolean(rawValue.collapsed, false),
+    hideCompletedRows: toBoolean(rawValue.hideCompletedRows, false),
     border: {
       ...normalizeBorderFormatting(rawValue.border),
     },

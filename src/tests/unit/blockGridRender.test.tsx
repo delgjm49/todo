@@ -3,7 +3,6 @@ import { describe, test } from "node:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createColumn } from "../../domain/columns/createColumn.js";
 import { BlockCard } from "../../components/block/BlockCard.js";
-import { BlockContextMenu } from "../../components/block/BlockContextMenu.js";
 import { BlockSortMenu } from "../../components/block/BlockSortMenu.js";
 import type { Block } from "../../types/block.js";
 
@@ -19,6 +18,7 @@ function createBlockFixture(): Block {
     blockType: "basic_checklist",
     order: 0,
     collapsed: false,
+    hideCompletedRows: false,
     border: {
       borderWidth: 1,
       borderColor: "#374151",
@@ -74,6 +74,7 @@ describe("block grid render", () => {
         onSelectBlock={() => {}}
         onStartEditing={() => {}}
         onToggleCollapsed={() => {}}
+        onToggleHideCompletedRows={() => {}}
         onAddRow={() => {}}
       />
     );

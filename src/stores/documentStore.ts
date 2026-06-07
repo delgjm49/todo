@@ -114,6 +114,11 @@ export interface DocumentStoreState {
     blockId: BlockId,
     options?: DocumentMutationOptions
   ) => boolean;
+  toggleBlockHideCompletedRows: (
+    workspaceId: WorkspaceId,
+    blockId: BlockId,
+    options?: DocumentMutationOptions
+  ) => boolean;
   reorderBlocks: (
     workspaceId: WorkspaceId,
     sourceBlockId: BlockId,
@@ -1323,6 +1328,44 @@ export const useDocumentStore = create<DocumentStoreState>()((set, get) => {
       return {
         ...structuredClone(block),
         collapsed: !block.collapsed,
+      };
+    });
+
+    if (!found) {
+      return false;
+    }
+
+    const nextSnapshot: AppDocumentSnapshot = {
+      settings: structuredClone(state.settings),
+      workspaceIndex: structuredClone(state.workspaceIndex),
+      workspacesById: replaceWorkspaceDocument(state.workspacesById, replaceWorkspaceBlocks(workspace, nextBlocks)),
+      activeWorkspaceId: state.activeWorkspaceId,
+      loadedWorkspaceIds: structuredClone(state.loadedWorkspaceIds),
+    };
+
+    return commitSnapshot(set, get, nextSnapshot, "formatting", options);
+  },
+  toggleBlockHideCompletedRows: (workspaceId, blockId, options) => {
+    const state = get();
+    if (!state.settings) {
+      return false;
+    }
+
+    const workspace = state.workspacesById[workspaceId];
+    if (!workspace) {
+      return false;
+    }
+
+    let found = false;
+    const nextBlocks = workspace.blocks.map((block) => {
+      if (block.id !== blockId) {
+        return structuredClone(block);
+      }
+
+      found = true;
+      return {
+        ...structuredClone(block),
+        hideCompletedRows: !block.hideCompletedRows,
       };
     });
 

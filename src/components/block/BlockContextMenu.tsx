@@ -7,6 +7,7 @@ export function BlockContextMenu({
   workspaces,
   onRename,
   onToggleCollapsed,
+  onToggleHideCompletedRows,
   onMoveToWorkspace,
   onDelete,
 }: {
@@ -14,6 +15,7 @@ export function BlockContextMenu({
   workspaces: WorkspaceIndexEntry[];
   onRename: () => void;
   onToggleCollapsed: () => void;
+  onToggleHideCompletedRows: () => void;
   onMoveToWorkspace: (workspaceId: WorkspaceId) => void;
   onDelete: () => void;
 }) {
@@ -26,6 +28,10 @@ export function BlockContextMenu({
       <MenuButton
         label={block.collapsed ? "Expand block" : "Collapse block"}
         onClick={onToggleCollapsed}
+      />
+      <MenuButton
+        label={block.hideCompletedRows ? "Show completed rows" : "Hide completed rows"}
+        onClick={onToggleHideCompletedRows}
       />
       <div className="mt-2 border-t border-border pt-2">
         <div className="px-3 py-2 text-[11px] uppercase tracking-[0.22em] text-textMuted">Move to workspace</div>

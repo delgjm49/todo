@@ -41,6 +41,23 @@ User authorized completion of all 7 observations + hide-completed rows implement
 ### Outcome
 First dispatch (085) framed and bound. Repo handed off to autonomous Plan→Dev→Review chain with auto-commit/push. Next Main turn will occur after 086 completes or if intervention is required.
 
+## Session 291 — 2026-06-07 (auto)
+
+### Agent Type
+main
+
+### Artifacts
+- Dispatch 085 auto-closed + pushed (commit 1cf8f53)
+- Dispatch artifact: agents/artifacts/086-hide-completed-rows-dispatch.md
+- Channel: agents/channels/086-hide-completed-rows/
+- First message: agents/channels/086-hide-completed-rows/messages/001-main-to-plan.md
+
+### Summary
+Queue item #2 (086-hide-completed-rows) framed from the reviewed plan in dispatch 084. Auto-close + auto-advance still enabled.
+
+### Outcome
+086 bound; chain will run autonomously and auto-close/push on Review PASS. Queue now 2/2.
+
 ## Session 291 — 2026-06-07
 
 ### Agent Type
@@ -88,3 +105,50 @@ Reviewed all seven UX fix implementations against the plan artifact. Verified sc
 
 ### Outcome
 PASS — Review passed. Next channel message created at `agents/channels/085-core-ux-fixes/messages/004-review-to-main.md` with State = review-pass.
+
+## Session 294 — 2026-06-07
+
+### Agent Type
+plan
+
+### Artifacts
+- Channel: agents/channels/086-hide-completed-rows/
+- Dispatch: agents/artifacts/086-hide-completed-rows-dispatch.md
+- Plan: agents/artifacts/086-hide-completed-rows-plan.md
+
+### Summary
+Created the implementation plan for dispatch 086 after verifying the current Block type, checkbox-derived completion helper, row rendering/filtering path, block header/context-menu UI, storage normalization, store mutation patterns, and adjacent tests from disk. The plan scopes the work to a derived view filter plus one backward-compatible `Block.hideCompletedRows` preference and explicitly excludes row archive/lifecycle state.
+
+### Outcome
+Plan ready for Dev. Next channel message created at `agents/channels/086-hide-completed-rows/messages/002-plan-to-dev.md`.
+
+## Session 295 — 2026-06-07
+
+### Agent Type
+dev
+
+### Artifacts
+- Complete: agents/artifacts/086-hide-completed-rows-complete.md
+- Channel: agents/channels/086-hide-completed-rows/
+- Next message: agents/channels/086-hide-completed-rows/messages/003-dev-to-review.md
+
+### Summary
+Implemented the hide-completed-rows feature per the plan artifact: added `Block.hideCompletedRows: boolean` to the type/model, persisted through storage normalization, with a derived view filter in `RowView`. The toggle is reachable from the block header (with completed-row count badge) and the block context menu. All new tests pass; verification commands (test, lint, build, e2e smoke) pass with only pre-existing failures unrelated to this dispatch.
+
+### Outcome
+Implementation complete and ready for Review. Next channel message created at `agents/channels/086-hide-completed-rows/messages/003-dev-to-review.md`.
+
+## Session 296 — 2026-06-07
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: agents/channels/086-hide-completed-rows/
+- Review: agents/artifacts/086-hide-completed-rows-review.md
+
+### Summary
+Reviewed the hide-completed-rows implementation against the plan artifact. All verification commands pass (533 test pass with 1 pre-existing failure; build/lint clean; e2e smoke passes). The implementation is correct — derived view filter, backward-compatible boolean preference, accessible toggle on block header and context menu. Three plan-recommended test additions were deferred as low-severity notes in `agents/DEFERRED.md` (behavior verified through other test layers).
+
+### Outcome
+PASS WITH NOTES — Ready for Main. Three deferred notes recorded in `agents/DEFERRED.md`. Next channel message created at `agents/channels/086-hide-completed-rows/messages/004-review-to-main.md`.

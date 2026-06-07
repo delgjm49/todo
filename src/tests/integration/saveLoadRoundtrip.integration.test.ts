@@ -262,4 +262,31 @@ describe("save/load round-trip integration", () => {
     // The workspace should still have its original title (the partial save didn't corrupt)
     assert.equal(entry.title, originalTitle);
   });
+
+  test("hideCompletedRows: true survives save/reload round-trip", async () => {
+    const wsId = getActiveWorkspaceId();
+    const { blockId } = getStarterBlockInfo(wsId);
+
+    // Toggle hide completed rows on
+    useDocumentStore.getState().toggleBlockHideCompletedRows(wsId, blockId);
+
+    await flushAutosave();
+    await reloadFromBackend(backend);
+
+    const reloaded = useDocumentStore.getState();
+    const block = reloaded.workspacesById[wsId]?.blocks.find((b) => b.id === blockId);
+    assert.ok(block);
+    assert.equal(block.hideCompletedRows, true);
+
+    // Toggle it back off and verify the reverse round-trip
+    useDocumentStore.getState().toggleBlockHideCompletedRows(wsId, blockId);
+
+    await flushAutosave();
+    await reloadFromBackend(backend);
+
+    const reloadedAgain = useDocumentStore.getState();
+    const reloadedBlock = reloadedAgain.workspacesById[wsId]?.blocks.find((b) => b.id === blockId);
+    assert.ok(reloadedBlock);
+    assert.equal(reloadedBlock.hideCompletedRows, false);
+  });
 });

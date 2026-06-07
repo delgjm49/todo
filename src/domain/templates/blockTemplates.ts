@@ -142,6 +142,7 @@ export function createBlockTemplate(
     blockType,
     order: options.order ?? 0,
     collapsed: false,
+    hideCompletedRows: false,
     border: {
       borderWidth: 1,
       borderColor: "#374151",

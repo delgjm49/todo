@@ -11,7 +11,6 @@ import { useUiStore } from "../../stores/uiStore.js";
 import { getVisibleColumnsInDisplayOrder } from "../../domain/columns/createColumn.js";
 import { mapClipboardRowsToBlock } from "../../domain/clipboard/index.js";
 import type { BlockType } from "../../types/block.js";
-import type { ColumnId } from "../../domain/ids.js";
 
 function AddBlockTemplateButtons({
   onSelectTemplate,
@@ -43,6 +42,7 @@ export function MainPane() {
   const createBlockFromTemplate = useDocumentStore((state) => state.createBlockFromTemplate);
   const updateBlockTitle = useDocumentStore((state) => state.updateBlockTitle);
   const toggleBlockCollapsed = useDocumentStore((state) => state.toggleBlockCollapsed);
+  const toggleBlockHideCompletedRows = useDocumentStore((state) => state.toggleBlockHideCompletedRows);
   const reorderBlocks = useDocumentStore((state) => state.reorderBlocks);
   const moveBlockToWorkspace = useDocumentStore((state) => state.moveBlockToWorkspace);
   const deleteBlock = useDocumentStore((state) => state.deleteBlock);
@@ -212,6 +212,10 @@ export function MainPane() {
                   setEditingBlockId(null);
                   void toggleBlockCollapsed(block.workspaceId, block.id);
                 }}
+                onToggleHideCompletedRows={() => {
+                  setEditingBlockId(null);
+                  void toggleBlockHideCompletedRows(block.workspaceId, block.id);
+                }}
                 onAddRow={() => {
                   void appendRowToBlock(block.workspaceId, block.id);
                 }}
@@ -272,6 +276,11 @@ export function MainPane() {
             }}
             onToggleCollapsed={() => {
               void toggleBlockCollapsed(activeBlockMenuBlock.workspaceId, activeBlockMenuBlock.id);
+              setEditingBlockId(null);
+              closeBlockMenu();
+            }}
+            onToggleHideCompletedRows={() => {
+              void toggleBlockHideCompletedRows(activeBlockMenuBlock.workspaceId, activeBlockMenuBlock.id);
               setEditingBlockId(null);
               closeBlockMenu();
             }}

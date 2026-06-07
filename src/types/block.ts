@@ -19,6 +19,7 @@ export interface Block {
   blockType: BlockType;
   order: number;
   collapsed: boolean;
+  hideCompletedRows: boolean;
   border: BlockBorder;
   sort: BlockSort | null;
   format: BlockFormatting;

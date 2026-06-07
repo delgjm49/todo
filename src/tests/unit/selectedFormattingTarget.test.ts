@@ -57,6 +57,7 @@ function block(overrides: Partial<Block> & { id: string; columns: ColumnDefiniti
     blockType: "basic_checklist",
     order: 0,
     collapsed: false,
+    hideCompletedRows: false,
     border: {},
     sort: null,
     format: {},

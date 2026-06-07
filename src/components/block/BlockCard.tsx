@@ -3,6 +3,7 @@ import type { Block, BlockSort } from "../../types/block.js";
 import type { ColumnId, RowId } from "../../domain/ids.js";
 import { BlockColumnHeaderRow } from "./BlockColumnHeaderRow.js";
 import { RowView } from "../row/RowView.js";
+import { countCompletedRows } from "../../domain/rows/completedRowFilter.js";
 
 export function BlockCard({
   block,
@@ -14,6 +15,7 @@ export function BlockCard({
   onCommitTitle,
   onCancelEditing,
   onToggleCollapsed,
+  onToggleHideCompletedRows,
   onAddRow,
   onOpenMenu,
   onOpenSortMenu,
@@ -35,6 +37,7 @@ export function BlockCard({
   onCommitTitle: (title: string) => void;
   onCancelEditing: () => void;
   onToggleCollapsed: () => void;
+  onToggleHideCompletedRows: () => void;
   onAddRow: () => void;
   onOpenMenu: (x: number, y: number) => void;
   onOpenSortMenu?: (x: number, y: number) => void;
@@ -135,6 +138,21 @@ export function BlockCard({
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            className={`rounded-lg border px-3 py-2 text-xs font-medium transition ${
+              block.hideCompletedRows
+                ? "border-accent/60 bg-accent/10 text-accent"
+                : "border-border text-text hover:border-accent/40 hover:bg-panelMuted"
+            }`}
+            data-testid={`hide-completed-toggle-${block.id}`}
+            aria-pressed={block.hideCompletedRows}
+            onClick={onToggleHideCompletedRows}
+            type="button"
+          >
+            {block.hideCompletedRows
+              ? `Show completed${countCompletedRows(block.rows, block.columns) > 0 ? ` (${countCompletedRows(block.rows, block.columns)})` : ""}`
+              : `Hide completed${countCompletedRows(block.rows, block.columns) > 0 ? ` (${countCompletedRows(block.rows, block.columns)})` : ""}`}
+          </button>
           <button
             className="rounded-lg border border-border px-3 py-2 text-xs font-medium text-text transition hover:border-accent/40 hover:bg-panelMuted"
             data-testid={`sort-menu-${block.id}`}

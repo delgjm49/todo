@@ -1821,4 +1821,49 @@ describe("light-mode default workspace creation", () => {
     assert.equal(replacement.style.textColor, STOCK_LIGHT_WORKSPACE_TEXT_COLOR);
     assert.equal(replacement.style.accentStripe?.color, STOCK_LIGHT_WORKSPACE_ACCENT_COLOR);
   });
+
+  test("toggleBlockHideCompletedRows toggles the block preference and autosaves", async () => {
+    const service = await createMemoryStorageService();
+    await useDocumentStore.getState().initializeAppData(service);
+
+    const workspaceId = useDocumentStore.getState().activeWorkspaceId;
+    assert.ok(workspaceId);
+
+    const workspace = useDocumentStore.getState().workspacesById[workspaceId];
+    assert.ok(workspace);
+    const blockId = workspace.blocks[0]?.id;
+    assert.ok(blockId);
+
+    // Default should be false
+    assert.equal(
+      useDocumentStore.getState().workspacesById[workspaceId]?.blocks.find((b) => b.id === blockId)?.hideCompletedRows,
+      false
+    );
+
+    // Toggle on
+    const toggledOn = useDocumentStore
+      .getState()
+      .toggleBlockHideCompletedRows(workspaceId, blockId, { service, autosaveDelayMs: 5 });
+    assert.equal(toggledOn, true);
+    assert.equal(
+      useDocumentStore.getState().workspacesById[workspaceId]?.blocks.find((b) => b.id === blockId)?.hideCompletedRows,
+      true
+    );
+
+    // Toggle back off
+    const toggledOff = useDocumentStore
+      .getState()
+      .toggleBlockHideCompletedRows(workspaceId, blockId, { service, autosaveDelayMs: 5 });
+    assert.equal(toggledOff, true);
+    assert.equal(
+      useDocumentStore.getState().workspacesById[workspaceId]?.blocks.find((b) => b.id === blockId)?.hideCompletedRows,
+      false
+    );
+
+    // Missing block returns false
+    const missing = useDocumentStore
+      .getState()
+      .toggleBlockHideCompletedRows(workspaceId, "nonexistent", { service, autosaveDelayMs: 5 });
+    assert.equal(missing, false);
+  });
 });
