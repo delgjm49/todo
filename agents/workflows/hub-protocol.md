@@ -65,6 +65,19 @@ When the user asks what to work on, wants to prepare dispatches, or asks about o
 
 See `agents/workflows/deferred-protocol.md` for the ledger format, status tags, and the full producer/curator/consumer model.
 
+## Observations Triage
+
+Hub is also the primary curator of `agents/OBSERVATIONS.md` — a lighter-weight list of notes and ideas discovered during live app usage (not limited to review findings). This is the natural place for UX friction, polish ideas, minor bugs noticed in passing, and future feature sparks.
+
+When the user shares observations or asks Hub to help organize "things to work on later":
+
+1. Read the `[open]` section of `agents/OBSERVATIONS.md`.
+2. Triage: group duplicates, promote promising items into dispatch briefs or the main backlog, or drop low-value items with a short reason.
+3. Update status tags in place as meta work.
+4. When drafting future dispatch context, surface any observations that overlap with the proposed scope.
+
+See `agents/workflows/observations-protocol.md` for the format and lifecycle.
+
 ## Dispatch Boundary
 
 Hub can recommend and prepare dispatch, but it is not part of the dispatch lane table.

@@ -23,6 +23,7 @@
   "hubNotes": [
     "Hub should help choose or shape the next app slice, not launch dispatch on its own.",
     "Workers do not need docs/SESSIONS.md unless their dispatch explicitly asks for it.",
-    "Shipping target is Windows 11; macOS is a development convenience."
+    "Shipping target is Windows 11; macOS is a development convenience.",
+    "Use agents/OBSERVATIONS.md for general usage notes and ideas; triage via observations-protocol.md."
   ]
 }
