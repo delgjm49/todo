@@ -1,4 +1,3 @@
-import type { DragEvent } from "react";
 import type { WorkspaceIndexEntry, WorkspaceAlertSummary } from "../../types/workspace.js";
 import type { ThemeMode } from "../../types/formatting.js";
 import { resolveThemeAwareWorkspaceStyle } from "../../domain/defaults/themeDefaultColors.js";
@@ -7,26 +6,14 @@ export function WorkspaceCard({
   entry,
   theme = "dark",
   active,
-  dragging,
-  dropTarget,
   onOpenMenu,
   onSelect,
-  onDragStart,
-  onDragEnd,
-  onDrop,
-  onDragOver,
 }: {
   entry: WorkspaceIndexEntry;
   theme?: ThemeMode;
   active: boolean;
-  dragging: boolean;
-  dropTarget: boolean;
   onOpenMenu: (x: number, y: number) => void;
   onSelect: () => void;
-  onDragStart: () => void;
-  onDragEnd: () => void;
-  onDrop: () => void;
-  onDragOver: (event: DragEvent<HTMLDivElement>) => void;
 }) {
   const effectiveStyle = resolveThemeAwareWorkspaceStyle(entry.style, theme);
   const workspaceBackground = effectiveStyle.background ?? undefined;
@@ -39,23 +26,11 @@ export function WorkspaceCard({
         active
           ? "border-accent/70 shadow-soft ring-1 ring-accent/40"
           : "border-border bg-panelMuted/60 hover:border-accent/40"
-      } ${dragging ? "opacity-50" : ""} ${dropTarget ? "ring-2 ring-accent/60" : ""}`}
-      draggable
+      }`}
       onClick={onSelect}
       onContextMenu={(event) => {
         event.preventDefault();
         onOpenMenu(event.clientX, event.clientY);
-      }}
-      onDragEnd={onDragEnd}
-      onDragOver={onDragOver}
-      onDragStart={(event) => {
-        event.dataTransfer.effectAllowed = "move";
-        event.dataTransfer.setData("text/plain", entry.id);
-        onDragStart();
-      }}
-      onDrop={(event) => {
-        event.preventDefault();
-        onDrop();
       }}
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {

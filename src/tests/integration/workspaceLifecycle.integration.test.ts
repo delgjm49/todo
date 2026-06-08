@@ -90,6 +90,44 @@ describe("workspace lifecycle integration", () => {
     assert.equal(reloaded.workspaceIndex[0]?.id, secondId);
   });
 
+  test("downward reorder persists after insert-before-target fix", async () => {
+    const state = useDocumentStore.getState();
+    const firstId = state.workspaceIndex[0]?.id;
+    assert.ok(firstId);
+
+    // Create two more workspaces: [Home, Second, Third]
+    const createdSecond = useDocumentStore.getState().createWorkspace("Second");
+    assert.equal(createdSecond, true);
+
+    const state2 = useDocumentStore.getState();
+    const secondId = state2.workspaceIndex.find((w) => w.title === "Second")?.id;
+    assert.ok(secondId);
+
+    const createdThird = useDocumentStore.getState().createWorkspace("Third");
+    assert.equal(createdThird, true);
+
+    const state3 = useDocumentStore.getState();
+    const thirdId = state3.workspaceIndex.find((w) => w.title === "Third")?.id;
+    assert.ok(thirdId);
+    assert.equal(state3.workspaceIndex[0]?.id, firstId);
+    assert.equal(state3.workspaceIndex[1]?.id, secondId);
+    assert.equal(state3.workspaceIndex[2]?.id, thirdId);
+
+    // Downward: drag Home before Third → sourceIndex=0, targetIndex=2
+    // insert-before-target: remove at 0 → [Second, Third], insertIndex = 0 < 2 ? 1 : 2 → 1 → [Second, Home, Third]
+    const reordered = useDocumentStore.getState().reorderWorkspaces(firstId, thirdId);
+    assert.equal(reordered, true);
+    assert.equal(useDocumentStore.getState().workspaceIndex[1]?.id, firstId);
+
+    await flushAutosave();
+    await reloadFromBackend(backend);
+
+    const reloaded = useDocumentStore.getState();
+    assert.equal(reloaded.workspaceIndex[1]?.id, firstId, "Home should remain at index 1 after reload");
+    assert.equal(reloaded.workspaceIndex[0]?.id, secondId, "Second should be at index 0 after reload");
+    assert.equal(reloaded.workspaceIndex[2]?.id, thirdId, "Third should be at index 2 after reload");
+  });
+
   test("style update persists across reload", async () => {
     const state = useDocumentStore.getState();
     const wsId = state.workspaceIndex[0]?.id;

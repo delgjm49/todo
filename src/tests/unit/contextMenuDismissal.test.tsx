@@ -299,25 +299,34 @@ describe("context menu dismissal", () => {
       inspectorOpen: false,
     });
 
-    const originalPrompt = window.prompt;
-    window.prompt = () => "Renamed Home";
-
     await renderNode(<LeftDock />);
 
+    // Click "Rename workspace" to open the inline rename input
     const renameButton = Array.from(document.querySelectorAll("button")).find(
       (btn) => btn.textContent === "Rename workspace"
     );
     assert.ok(renameButton);
-
     await dispatchClick(renameButton);
+
+    // The inline rename view should show an input and a Save button
+    const renameInput = document.querySelector('input[aria-label="Workspace name"]') as HTMLInputElement | null;
+    assert.ok(renameInput, "Expected rename input to appear after clicking Rename");
+
+    // Set the input value directly (uncontrolled input via ref)
+    renameInput.value = "Renamed Home";
+
+    // Click Save
+    const saveButton = Array.from(document.querySelectorAll("button")).find(
+      (btn) => btn.textContent === "Save"
+    );
+    assert.ok(saveButton);
+    await dispatchClick(saveButton);
 
     const state = useDocumentStore.getState();
     const renamed = state.workspaceIndex.find((entry) => entry.id === "ws_home");
     assert.ok(renamed);
     assert.equal(renamed.title, "Renamed Home");
     assert.equal(useUiStore.getState().workspaceMenu, null);
-
-    window.prompt = originalPrompt;
   });
 
   test("workspace menu delete action removes the workspace and closes the menu", async () => {
@@ -384,23 +393,25 @@ describe("context menu dismissal", () => {
       inspectorOpen: false,
     });
 
-    const originalConfirm = window.confirm;
-    window.confirm = () => true;
-
     await renderNode(<LeftDock />);
 
+    // Click "Delete workspace" to open inline confirm
     const deleteButton = Array.from(document.querySelectorAll("button")).find(
       (btn) => btn.textContent === "Delete workspace"
     );
     assert.ok(deleteButton);
-
     await dispatchClick(deleteButton);
+
+    // Click the confirm "Delete" button in the inline confirmation
+    const confirmDeleteButton = Array.from(document.querySelectorAll("button")).find(
+      (btn) => btn.textContent === "Delete"
+    );
+    assert.ok(confirmDeleteButton, "Expected confirm Delete button to appear");
+    await dispatchClick(confirmDeleteButton);
 
     const state = useDocumentStore.getState();
     assert.equal(state.workspaceIndex.some((entry) => entry.id === "ws_home"), false);
     assert.equal(useUiStore.getState().workspaceMenu, null);
-
-    window.confirm = originalConfirm;
   });
 
   test("workspace menu delete does not remove workspace when confirm returns false", async () => {
@@ -467,23 +478,26 @@ describe("context menu dismissal", () => {
       inspectorOpen: false,
     });
 
-    const originalConfirm = window.confirm;
-    window.confirm = () => false;
-
     await renderNode(<LeftDock />);
 
+    // Click "Delete workspace" to open inline confirm
     const deleteButton = Array.from(document.querySelectorAll("button")).find(
       (btn) => btn.textContent === "Delete workspace"
     );
     assert.ok(deleteButton);
-
     await dispatchClick(deleteButton);
+
+    // Click "Keep" to cancel deletion
+    const keepButton = Array.from(document.querySelectorAll("button")).find(
+      (btn) => btn.textContent === "Keep"
+    );
+    assert.ok(keepButton, "Expected Keep button to appear");
+    await dispatchClick(keepButton);
 
     const state = useDocumentStore.getState();
     assert.equal(state.workspaceIndex.some((entry) => entry.id === "ws_home"), true);
+    // After clicking Keep, menu should close
     assert.equal(useUiStore.getState().workspaceMenu, null);
-
-    window.confirm = originalConfirm;
   });
 
   test("block menu delete action removes the block and closes the menu", async () => {
@@ -818,5 +832,309 @@ describe("context menu dismissal", () => {
     const columns = useDocumentStore.getState().workspacesById.ws_home?.blocks[0]?.columns ?? [];
     assert.equal(columns.find((c) => c.id === "col_custom")?.label, "Custom");
     assert.equal(document.querySelector('[data-testid="column-menu-backdrop"]'), null);
+  });
+
+  test("workspace menu move up reorders the workspace up one position and closes the menu", async () => {
+    const service = await createMemoryStorageService();
+    await useDocumentStore.getState().initializeAppData(service);
+
+    useDocumentStore.setState({
+      settings: {
+        theme: "dark",
+        defaults: {
+          fontFamily: "Segoe UI",
+          fontSize: 14,
+          textColor: "#F3F4F6",
+          cellBackground: "#111827",
+          blockBorderColor: "#374151",
+          blockBorderWidth: 1,
+          workspaceAccentEnabled: true,
+          workspaceBackground: "#1F2937",
+          workspaceTextColor: "#F9FAFB",
+          workspaceAccentColor: "#60A5FA",
+        },
+      },
+      workspaceIndex: [
+        {
+          id: "ws_home",
+          title: "Home",
+          order: 0,
+          style: {
+            background: "#1F2937",
+            textColor: "#F9FAFB",
+            accentStripe: { enabled: true, color: "#60A5FA" },
+          },
+        },
+        {
+          id: "ws_work",
+          title: "Work",
+          order: 1,
+          style: {
+            background: "#111827",
+            textColor: "#F9FAFB",
+            accentStripe: { enabled: true, color: "#34D399" },
+          },
+        },
+        {
+          id: "ws_projects",
+          title: "Projects",
+          order: 2,
+          style: {
+            background: "#111827",
+            textColor: "#F9FAFB",
+            accentStripe: { enabled: true, color: "#F59E0B" },
+          },
+        },
+      ],
+      workspacesById: {
+        ws_home: { id: "ws_home", blocks: [] },
+        ws_work: { id: "ws_work", blocks: [] },
+        ws_projects: { id: "ws_projects", blocks: [] },
+      },
+      loadedWorkspaceIds: ["ws_home", "ws_work", "ws_projects"],
+      activeWorkspaceId: "ws_home",
+    });
+    useUiStore.setState({
+      workspaceMenu: {
+        workspaceId: "ws_work",
+        x: 24,
+        y: 24,
+      },
+      blockMenu: null,
+      draggingWorkspaceId: null,
+      dropTargetWorkspaceId: null,
+      draggingBlockId: null,
+      dropTargetBlockId: null,
+      screen: "main",
+      inspectorOpen: false,
+    });
+
+    await renderNode(<LeftDock />);
+
+    const moveUpButton = Array.from(document.querySelectorAll("button")).find(
+      (btn) => btn.textContent === "Move up"
+    );
+    assert.ok(moveUpButton);
+    assert.equal(moveUpButton.hasAttribute("disabled"), false);
+
+    await dispatchClick(moveUpButton);
+
+    const state = useDocumentStore.getState();
+    assert.deepEqual(
+      state.workspaceIndex.map((ws) => ws.id),
+      ["ws_work", "ws_home", "ws_projects"]
+    );
+    assert.deepEqual(
+      state.workspaceIndex.map((ws) => ws.order),
+      [0, 1, 2]
+    );
+    assert.equal(useUiStore.getState().workspaceMenu, null);
+  });
+
+  test("workspace menu move down reorders the workspace down one position and closes the menu", async () => {
+    const service = await createMemoryStorageService();
+    await useDocumentStore.getState().initializeAppData(service);
+
+    useDocumentStore.setState({
+      settings: {
+        theme: "dark",
+        defaults: {
+          fontFamily: "Segoe UI",
+          fontSize: 14,
+          textColor: "#F3F4F6",
+          cellBackground: "#111827",
+          blockBorderColor: "#374151",
+          blockBorderWidth: 1,
+          workspaceAccentEnabled: true,
+          workspaceBackground: "#1F2937",
+          workspaceTextColor: "#F9FAFB",
+          workspaceAccentColor: "#60A5FA",
+        },
+      },
+      workspaceIndex: [
+        {
+          id: "ws_home",
+          title: "Home",
+          order: 0,
+          style: {
+            background: "#1F2937",
+            textColor: "#F9FAFB",
+            accentStripe: { enabled: true, color: "#60A5FA" },
+          },
+        },
+        {
+          id: "ws_work",
+          title: "Work",
+          order: 1,
+          style: {
+            background: "#111827",
+            textColor: "#F9FAFB",
+            accentStripe: { enabled: true, color: "#34D399" },
+          },
+        },
+        {
+          id: "ws_projects",
+          title: "Projects",
+          order: 2,
+          style: {
+            background: "#111827",
+            textColor: "#F9FAFB",
+            accentStripe: { enabled: true, color: "#F59E0B" },
+          },
+        },
+      ],
+      workspacesById: {
+        ws_home: { id: "ws_home", blocks: [] },
+        ws_work: { id: "ws_work", blocks: [] },
+        ws_projects: { id: "ws_projects", blocks: [] },
+      },
+      loadedWorkspaceIds: ["ws_home", "ws_work", "ws_projects"],
+      activeWorkspaceId: "ws_home",
+    });
+    useUiStore.setState({
+      workspaceMenu: {
+        workspaceId: "ws_work",
+        x: 24,
+        y: 24,
+      },
+      blockMenu: null,
+      draggingWorkspaceId: null,
+      dropTargetWorkspaceId: null,
+      draggingBlockId: null,
+      dropTargetBlockId: null,
+      screen: "main",
+      inspectorOpen: false,
+    });
+
+    await renderNode(<LeftDock />);
+
+    const moveDownButton = Array.from(document.querySelectorAll("button")).find(
+      (btn) => btn.textContent === "Move down"
+    );
+    assert.ok(moveDownButton);
+    assert.equal(moveDownButton.hasAttribute("disabled"), false);
+
+    await dispatchClick(moveDownButton);
+
+    const state = useDocumentStore.getState();
+    assert.deepEqual(
+      state.workspaceIndex.map((ws) => ws.id),
+      ["ws_home", "ws_projects", "ws_work"]
+    );
+    assert.deepEqual(
+      state.workspaceIndex.map((ws) => ws.order),
+      [0, 1, 2]
+    );
+    assert.equal(useUiStore.getState().workspaceMenu, null);
+  });
+
+  test("workspace menu move up is disabled for the first workspace", async () => {
+    useDocumentStore.setState({
+      workspaceIndex: [
+        {
+          id: "ws_home",
+          title: "Home",
+          order: 0,
+          style: {
+            background: "#1F2937",
+            textColor: "#F9FAFB",
+            accentStripe: { enabled: true, color: "#60A5FA" },
+          },
+        },
+        {
+          id: "ws_work",
+          title: "Work",
+          order: 1,
+          style: {
+            background: "#111827",
+            textColor: "#F9FAFB",
+            accentStripe: { enabled: true, color: "#34D399" },
+          },
+        },
+      ],
+      workspacesById: {
+        ws_home: { id: "ws_home", blocks: [] },
+        ws_work: { id: "ws_work", blocks: [] },
+      },
+      loadedWorkspaceIds: ["ws_home", "ws_work"],
+      activeWorkspaceId: "ws_home",
+    });
+    useUiStore.setState({
+      workspaceMenu: {
+        workspaceId: "ws_home",
+        x: 24,
+        y: 24,
+      },
+      blockMenu: null,
+      draggingWorkspaceId: null,
+      dropTargetWorkspaceId: null,
+      draggingBlockId: null,
+      dropTargetBlockId: null,
+      screen: "main",
+      inspectorOpen: false,
+    });
+
+    await renderNode(<LeftDock />);
+
+    const moveUpButton = Array.from(document.querySelectorAll("button")).find(
+      (btn) => btn.textContent === "Move up"
+    );
+    assert.ok(moveUpButton);
+    assert.equal(moveUpButton.hasAttribute("disabled"), true);
+  });
+
+  test("workspace menu move down is disabled for the last workspace", async () => {
+    useDocumentStore.setState({
+      workspaceIndex: [
+        {
+          id: "ws_home",
+          title: "Home",
+          order: 0,
+          style: {
+            background: "#1F2937",
+            textColor: "#F9FAFB",
+            accentStripe: { enabled: true, color: "#60A5FA" },
+          },
+        },
+        {
+          id: "ws_work",
+          title: "Work",
+          order: 1,
+          style: {
+            background: "#111827",
+            textColor: "#F9FAFB",
+            accentStripe: { enabled: true, color: "#34D399" },
+          },
+        },
+      ],
+      workspacesById: {
+        ws_home: { id: "ws_home", blocks: [] },
+        ws_work: { id: "ws_work", blocks: [] },
+      },
+      loadedWorkspaceIds: ["ws_home", "ws_work"],
+      activeWorkspaceId: "ws_home",
+    });
+    useUiStore.setState({
+      workspaceMenu: {
+        workspaceId: "ws_work",
+        x: 24,
+        y: 24,
+      },
+      blockMenu: null,
+      draggingWorkspaceId: null,
+      dropTargetWorkspaceId: null,
+      draggingBlockId: null,
+      dropTargetBlockId: null,
+      screen: "main",
+      inspectorOpen: false,
+    });
+
+    await renderNode(<LeftDock />);
+
+    const moveDownButton = Array.from(document.querySelectorAll("button")).find(
+      (btn) => btn.textContent === "Move down"
+    );
+    assert.ok(moveDownButton);
+    assert.equal(moveDownButton.hasAttribute("disabled"), true);
   });
 });

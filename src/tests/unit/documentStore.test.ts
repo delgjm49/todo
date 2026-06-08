@@ -162,7 +162,7 @@ describe("document store autosave", () => {
 
     const reordered = useDocumentStore
       .getState()
-      .reorderWorkspaces(baseWorkspaceId, createdWorkspaceId, { service, autosaveDelayMs: 5 });
+      .reorderWorkspaces(createdWorkspaceId, baseWorkspaceId, { service, autosaveDelayMs: 5 });
     assert.equal(reordered, true);
     assert.equal(useDocumentStore.getState().workspaceIndex[0]?.id, createdWorkspaceId);
     assert.equal(useDocumentStore.getState().workspaceIndex[1]?.id, baseWorkspaceId);
@@ -216,6 +216,91 @@ describe("document store autosave", () => {
     );
     assert.deepEqual(
       useDocumentStore.getState().workspaceIndex.map((workspace) => workspace.order),
+      [0, 1, 2]
+    );
+  });
+
+  test("reorders workspaces upward and downward with insert-before-target semantics and persists order", async () => {
+    // --- Upward reorder ---
+    const upwardService = await createMemoryStorageService();
+    await useDocumentStore.getState().initializeAppData(upwardService);
+    const firstId = useDocumentStore.getState().activeWorkspaceId;
+    assert.ok(firstId);
+
+    assert.equal(useDocumentStore.getState().createWorkspace("Second", { service: upwardService, autosaveDelayMs: 5 }), true);
+    const secondId = useDocumentStore.getState().activeWorkspaceId;
+    assert.ok(secondId);
+    assert.equal(useDocumentStore.getState().createWorkspace("Third", { service: upwardService, autosaveDelayMs: 5 }), true);
+    const thirdId = useDocumentStore.getState().activeWorkspaceId;
+    assert.ok(thirdId);
+
+    // Initial: [Home(0), Second(1), Third(2)]
+    // Upward: drag Third before Home → sourceIndex=2, targetIndex=0, no adjustment → [Third, Home, Second]
+    const upwardOk = useDocumentStore
+      .getState()
+      .reorderWorkspaces(thirdId, firstId, { service: upwardService, autosaveDelayMs: 5 });
+    assert.equal(upwardOk, true);
+    assert.deepEqual(
+      useDocumentStore.getState().workspaceIndex.map((ws) => ws.id),
+      [thirdId, firstId, secondId]
+    );
+    assert.deepEqual(
+      useDocumentStore.getState().workspaceIndex.map((ws) => ws.order),
+      [0, 1, 2]
+    );
+
+    // Verify persistence of upward reorder
+    await wait(20);
+    assert.equal(useDocumentStore.getState().saveStatus, "saved");
+    await useDocumentStore.getState().initializeAppData(upwardService);
+    assert.deepEqual(
+      useDocumentStore.getState().workspaceIndex.map((ws) => ws.id),
+      [thirdId, firstId, secondId]
+    );
+    assert.deepEqual(
+      useDocumentStore.getState().workspaceIndex.map((ws) => ws.order),
+      [0, 1, 2]
+    );
+
+    // --- Downward reorder (fresh service to start from [Home, Second, Third]) ---
+    const downwardService = await createMemoryStorageService();
+    await useDocumentStore.getState().initializeAppData(downwardService);
+    const homeId = useDocumentStore.getState().activeWorkspaceId;
+    assert.ok(homeId);
+
+    assert.equal(useDocumentStore.getState().createWorkspace("Second", { service: downwardService, autosaveDelayMs: 5 }), true);
+    const secondReloadedId = useDocumentStore.getState().activeWorkspaceId;
+    assert.ok(secondReloadedId);
+    assert.equal(useDocumentStore.getState().createWorkspace("Third", { service: downwardService, autosaveDelayMs: 5 }), true);
+    const thirdReloadedId = useDocumentStore.getState().activeWorkspaceId;
+    assert.ok(thirdReloadedId);
+
+    // Initial: [Home(0), Second(1), Third(2)]
+    // Downward: drag Home before Third → sourceIndex=0, targetIndex=2
+    //   insert-before-target: insertIndex = 0<2 ? 2-1 : 2 → 1 → [Second, Home, Third]
+    const downwardOk = useDocumentStore
+      .getState()
+      .reorderWorkspaces(homeId, thirdReloadedId, { service: downwardService, autosaveDelayMs: 5 });
+    assert.equal(downwardOk, true);
+    assert.deepEqual(
+      useDocumentStore.getState().workspaceIndex.map((ws) => ws.id),
+      [secondReloadedId, homeId, thirdReloadedId]
+    );
+    assert.deepEqual(
+      useDocumentStore.getState().workspaceIndex.map((ws) => ws.order),
+      [0, 1, 2]
+    );
+
+    // Verify persistence
+    await wait(20);
+    assert.equal(useDocumentStore.getState().saveStatus, "saved");
+    await useDocumentStore.getState().initializeAppData(downwardService);
+    assert.deepEqual(
+      useDocumentStore.getState().workspaceIndex.map((ws) => ws.id),
+      [secondReloadedId, homeId, thirdReloadedId]
+    );
+    assert.deepEqual(
+      useDocumentStore.getState().workspaceIndex.map((ws) => ws.order),
       [0, 1, 2]
     );
   });

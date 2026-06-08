@@ -97,70 +97,14 @@ function entry(overrides: Partial<WorkspaceIndexEntry> = {}): WorkspaceIndexEntr
   };
 }
 
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
-
-describe("WorkspaceCard drag contract", () => {
-  test("sets drag data before notifying drag start", async () => {
-    let started = false;
-    const calls: Array<[string, string]> = [];
-    const dataTransfer = {
-      effectAllowed: "uninitialized",
-      setData: (format: string, value: string) => {
-        calls.push([format, value]);
-      },
-    };
-
-    await renderNode(
-      <WorkspaceCard
-        entry={entry({ id: "ws_drag" as WorkspaceIndexEntry["id"] })}
-        active={false}
-        dragging={false}
-        dropTarget={false}
-        onOpenMenu={() => {}}
-        onSelect={() => {}}
-        onDragStart={() => {
-          started = true;
-        }}
-        onDragEnd={() => {}}
-        onDrop={() => {}}
-        onDragOver={() => {}}
-      />,
-    );
-
-    const button = document.querySelector('[role="button"]');
-    assert.ok(button);
-    const event = new dom.window.Event("dragstart", { bubbles: true, cancelable: true });
-    Object.defineProperty(event, "dataTransfer", {
-      configurable: true,
-      value: dataTransfer,
-    });
-
-    await act(async () => {
-      button.dispatchEvent(event);
-    });
-
-    assert.equal(dataTransfer.effectAllowed, "move");
-    assert.deepEqual(calls, [["text/plain", "ws_drag"]]);
-    assert.equal(started, true);
-  });
-});
-
 describe("WorkspaceCard alert badge", () => {
   test("hides badge when alertSummary is null", async () => {
     await renderNode(
       <WorkspaceCard
         entry={entry({ alertSummary: null })}
         active={false}
-        dragging={false}
-        dropTarget={false}
         onOpenMenu={() => {}}
         onSelect={() => {}}
-        onDragStart={() => {}}
-        onDragEnd={() => {}}
-        onDrop={() => {}}
-        onDragOver={() => {}}
       />,
     );
 
@@ -173,14 +117,8 @@ describe("WorkspaceCard alert badge", () => {
       <WorkspaceCard
         entry={entry({ alertSummary: undefined })}
         active={false}
-        dragging={false}
-        dropTarget={false}
         onOpenMenu={() => {}}
         onSelect={() => {}}
-        onDragStart={() => {}}
-        onDragEnd={() => {}}
-        onDrop={() => {}}
-        onDragOver={() => {}}
       />,
     );
 
@@ -193,14 +131,8 @@ describe("WorkspaceCard alert badge", () => {
       <WorkspaceCard
         entry={entry({ alertSummary: { count: 0 } })}
         active={false}
-        dragging={false}
-        dropTarget={false}
         onOpenMenu={() => {}}
         onSelect={() => {}}
-        onDragStart={() => {}}
-        onDragEnd={() => {}}
-        onDrop={() => {}}
-        onDragOver={() => {}}
       />,
     );
 
@@ -213,14 +145,8 @@ describe("WorkspaceCard alert badge", () => {
       <WorkspaceCard
         entry={entry({ alertSummary: { count: 1 } })}
         active={false}
-        dragging={false}
-        dropTarget={false}
         onOpenMenu={() => {}}
         onSelect={() => {}}
-        onDragStart={() => {}}
-        onDragEnd={() => {}}
-        onDrop={() => {}}
-        onDragOver={() => {}}
       />,
     );
 
@@ -237,14 +163,8 @@ describe("WorkspaceCard alert badge", () => {
       <WorkspaceCard
         entry={entry({ alertSummary: { count: 5 } })}
         active={false}
-        dragging={false}
-        dropTarget={false}
         onOpenMenu={() => {}}
         onSelect={() => {}}
-        onDragStart={() => {}}
-        onDragEnd={() => {}}
-        onDrop={() => {}}
-        onDragOver={() => {}}
       />,
     );
 
@@ -258,14 +178,8 @@ describe("WorkspaceCard alert badge", () => {
       <WorkspaceCard
         entry={entry({ alertSummary: { count: 150 } })}
         active={false}
-        dragging={false}
-        dropTarget={false}
         onOpenMenu={() => {}}
         onSelect={() => {}}
-        onDragStart={() => {}}
-        onDragEnd={() => {}}
-        onDrop={() => {}}
-        onDragOver={() => {}}
       />,
     );
 
@@ -279,14 +193,8 @@ describe("WorkspaceCard alert badge", () => {
       <WorkspaceCard
         entry={entry({ alertSummary: { count: 3, note: "Due today" } })}
         active={false}
-        dragging={false}
-        dropTarget={false}
         onOpenMenu={() => {}}
         onSelect={() => {}}
-        onDragStart={() => {}}
-        onDragEnd={() => {}}
-        onDrop={() => {}}
-        onDragOver={() => {}}
       />,
     );
 
@@ -300,14 +208,8 @@ describe("WorkspaceCard alert badge", () => {
       <WorkspaceCard
         entry={entry({ alertSummary: { count: 2 } })}
         active={false}
-        dragging={false}
-        dropTarget={false}
         onOpenMenu={() => {}}
         onSelect={() => {}}
-        onDragStart={() => {}}
-        onDragEnd={() => {}}
-        onDrop={() => {}}
-        onDragOver={() => {}}
       />,
     );
 
@@ -320,14 +222,8 @@ describe("WorkspaceCard alert badge", () => {
       <WorkspaceCard
         entry={entry({ alertSummary: { count: 1 } })}
         active={false}
-        dragging={false}
-        dropTarget={false}
         onOpenMenu={() => {}}
         onSelect={() => {}}
-        onDragStart={() => {}}
-        onDragEnd={() => {}}
-        onDrop={() => {}}
-        onDragOver={() => {}}
       />,
     );
 
@@ -341,14 +237,8 @@ describe("WorkspaceCard alert badge", () => {
       <WorkspaceCard
         entry={entry({ alertSummary: { count: 3 } })}
         active={false}
-        dragging={false}
-        dropTarget={false}
         onOpenMenu={() => {}}
         onSelect={() => {}}
-        onDragStart={() => {}}
-        onDragEnd={() => {}}
-        onDrop={() => {}}
-        onDragOver={() => {}}
       />,
     );
 
@@ -362,14 +252,8 @@ describe("WorkspaceCard alert badge", () => {
       <WorkspaceCard
         entry={entry({ alertSummary: { count: 1, note: "Overdue" } })}
         active={false}
-        dragging={false}
-        dropTarget={false}
         onOpenMenu={() => {}}
         onSelect={() => {}}
-        onDragStart={() => {}}
-        onDragEnd={() => {}}
-        onDrop={() => {}}
-        onDragOver={() => {}}
       />,
     );
 
@@ -386,14 +270,8 @@ describe("WorkspaceCard alert badge", () => {
           alertSummary: { count: 2, note: "Overdue" },
         })}
         active={false}
-        dragging={false}
-        dropTarget={false}
         onOpenMenu={() => {}}
         onSelect={() => {}}
-        onDragStart={() => {}}
-        onDragEnd={() => {}}
-        onDrop={() => {}}
-        onDragOver={() => {}}
       />,
     );
 
@@ -444,14 +322,8 @@ describe("WorkspaceCard light-mode rendering", () => {
         entry={entry({ style: stockDarkStyle() })}
         theme="light"
         active={false}
-        dragging={false}
-        dropTarget={false}
         onOpenMenu={() => {}}
         onSelect={() => {}}
-        onDragStart={() => {}}
-        onDragEnd={() => {}}
-        onDrop={() => {}}
-        onDragOver={() => {}}
       />,
     );
 
@@ -467,14 +339,8 @@ describe("WorkspaceCard light-mode rendering", () => {
         entry={entry({ style: stockDarkStyle() })}
         theme="light"
         active={false}
-        dragging={false}
-        dropTarget={false}
         onOpenMenu={() => {}}
         onSelect={() => {}}
-        onDragStart={() => {}}
-        onDragEnd={() => {}}
-        onDrop={() => {}}
-        onDragOver={() => {}}
       />,
     );
 
@@ -489,14 +355,8 @@ describe("WorkspaceCard light-mode rendering", () => {
         entry={entry({ style: stockDarkStyle() })}
         theme="dark"
         active={false}
-        dragging={false}
-        dropTarget={false}
         onOpenMenu={() => {}}
         onSelect={() => {}}
-        onDragStart={() => {}}
-        onDragEnd={() => {}}
-        onDrop={() => {}}
-        onDragOver={() => {}}
       />,
     );
 
@@ -512,14 +372,8 @@ describe("WorkspaceCard light-mode rendering", () => {
         entry={entry({ style: customDarkStyle() })}
         theme="light"
         active={false}
-        dragging={false}
-        dropTarget={false}
         onOpenMenu={() => {}}
         onSelect={() => {}}
-        onDragStart={() => {}}
-        onDragEnd={() => {}}
-        onDrop={() => {}}
-        onDragOver={() => {}}
       />,
     );
 
@@ -535,14 +389,8 @@ describe("WorkspaceCard light-mode rendering", () => {
         entry={entry({ style: stockDarkStyle() })}
         theme="light"
         active={false}
-        dragging={false}
-        dropTarget={false}
         onOpenMenu={() => {}}
         onSelect={() => {}}
-        onDragStart={() => {}}
-        onDragEnd={() => {}}
-        onDrop={() => {}}
-        onDragOver={() => {}}
       />,
     );
 

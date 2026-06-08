@@ -1198,7 +1198,8 @@ export const useDocumentStore = create<DocumentStoreState>()((set, get) => {
       return false;
     }
 
-    nextWorkspaceIndex.splice(targetIndex, 0, moved);
+    const insertIndex = sourceIndex < targetIndex ? targetIndex - 1 : targetIndex;
+    nextWorkspaceIndex.splice(insertIndex, 0, moved);
 
     const nextSnapshot: AppDocumentSnapshot = {
       settings: structuredClone(state.settings),

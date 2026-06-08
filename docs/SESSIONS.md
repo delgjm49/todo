@@ -54,6 +54,7 @@ Last updated: 2026-06-08
 | Archive/completed views planning | Complete | Dispatch 084 recommends a derived hide-completed rows filter with one backward-compatible `Block.hideCompletedRows` preference and defers persisted row archive state
 | Core UX fixes (7 observations) | Complete | Dispatch 085 fixes workspace scrolling, block content scrolling, context menus, block delete, row DnD, Sort/Menu behavior, and text flash
 | Hide-completed rows implementation | Complete | Dispatch 086 implements the reviewed derived filter + `Block.hideCompletedRows` preference (PASS WITH NOTES; 3 low-severity test notes deferred) |
+| Workspace scroll/reorder regression | Complete | Dispatch 088 fixes dock/main scrolling, menu layering, in-app rename/delete, reliable Move up/down reorder, stale UX-fixes coverage, and removes misleading native drag pending pointer-drag follow-up |
 | Phase 3 spool channels | Complete | Validated end-to-end |
 | Windows subprocess dispatch-auto | Complete | Validated on Windows 11 |
 
@@ -61,6 +62,7 @@ Last updated: 2026-06-08
 
 - **Session 289 — Main close** (2026-06-06): Closed dispatch 084 after Review PASS, consolidated Sessions 280–288, and prepared archive/completed views planning for commit/push.
 - **Session 290–296 (auto queue)**: Dispatches 085 (core UX fixes) and 086 (hide-completed rows) completed end-to-end via auto-queue with autoClose/autoAdvance. Both pushed (commits 1cf8f53, b5d1cb3). Queue 2/2 succeeded.
+- **Sessions 297–305 — Dispatch 088** (2026-06-08): Closed workspace scroll/reorder regression after two user-tested fix rounds: scrolling works, context menu is portaled, rename/delete use in-app UI, Move up/down reorder works, stale UX-fixes tests refreshed, and native drag affordance removed for a pointer-drag follow-up.
 - **Session 087 (auto queue)**: Dispatch 087 (test cleanup for three deferred 086 items) completed end-to-end via auto-queue. All three open test items resolved; review-pass. Pushed (commit c67fc2f). Queue 1/1 succeeded.
 - **Session 288 — Review PASS** (2026-06-06): Confirmed dispatch 084's final planning artifact is internally consistent, non-destructive, and concrete enough for future implementation scoping.
 - **Session 287 — Dev fix** (2026-06-06): Split insert vs paste semantics in the future acceptance criteria so compatible pasted checkbox values can remain completed/hidden.
@@ -72,7 +74,7 @@ Last updated: 2026-06-08
 
 ## Next Recommended
 
-**Queue complete.** Dispatch 087 (deferred test cleanup) finished successfully with auto-close + push. No further recommended work at this time.
+**Next:** Dispatch 089 for reliable pointer-based workspace drag reorder. Preserve 088's Move up/down context-menu reorder as the accessible fallback and avoid native HTML5 drag/drop in Tauri/WebView.
 
 **Completed:**
 - Alerts epic (053–056): complete
@@ -100,12 +102,13 @@ Last updated: 2026-06-08
 - Core UX fixes (dispatch 085): complete — all 7 observations resolved (workspace/block scrolling, menus, DnD, Sort/Menu, color flash)
 - Hide-completed rows (dispatch 086): complete — derived filter + `hideCompletedRows` preference shipped (PASS WITH NOTES)
 - Deferred test cleanup (dispatch 087): complete — three low-severity test additions from 086 review-pass now implemented
+- Workspace scroll/reorder regression (dispatch 088): complete — dock/main scrolling, context-menu layering, in-app workspace rename/delete, Move up/down reorder, and refreshed UX-fixes coverage
 - Autosave UX (063): complete
 - Manual QA (065): complete — no critical defects found
 
 ## Blockers / Open Questions
 
-None.
+Workspace native HTML5 drag/drop was removed in dispatch 088 because it was unreliable in Tauri/WebView. Dispatch 089 should implement pointer-based workspace drag reorder if drag-and-drop remains required.
 
 ## Full Archive
 

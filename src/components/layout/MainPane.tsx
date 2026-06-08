@@ -130,7 +130,7 @@ export function MainPane() {
   useEffect(() => () => resetRowInteractionState(), [resetRowInteractionState]);
 
   return (
-    <section className="min-h-0 min-w-0 overflow-y-auto bg-canvas px-5 py-5">
+    <section className="min-h-0 min-w-0 overflow-y-auto bg-canvas px-5 py-5" data-testid="main-canvas-scroll">
       <div className="min-h-full rounded-3xl border border-border bg-panel/80 px-6 py-6 shadow-soft">
         <div className="flex items-start justify-between gap-4">
           <div>

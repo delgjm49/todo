@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useDocumentStore } from "../../stores/documentStore.js";
 import { useUiStore } from "../../stores/uiStore.js";
 import { WorkspaceCard } from "../workspace/WorkspaceCard.js";
@@ -17,21 +18,83 @@ export function LeftDock() {
   const workspaceMenu = useUiStore((state) => state.workspaceMenu);
   const openWorkspaceMenu = useUiStore((state) => state.openWorkspaceMenu);
   const closeWorkspaceMenu = useUiStore((state) => state.closeWorkspaceMenu);
-  const draggingWorkspaceId = useUiStore((state) => state.draggingWorkspaceId);
-  const dropTargetWorkspaceId = useUiStore((state) => state.dropTargetWorkspaceId);
-  const setWorkspaceDragState = useUiStore((state) => state.setWorkspaceDragState);
   const resetWorkspaceInteractionState = useUiStore((state) => state.resetWorkspaceInteractionState);
   const showSettingsScreen = useUiStore((state) => state.showSettingsScreen);
 
+  const [renaming, setRenaming] = useState(false);
+  const [renameValue, setRenameValue] = useState("");
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const renameInputRef = useRef<HTMLInputElement>(null);
+
+  // Reset inline states whenever the menu opens or closes
+  useEffect(() => {
+    if (!workspaceMenu) {
+      setRenaming(false);
+      setConfirmingDelete(false);
+    }
+  }, [workspaceMenu]);
+
   useEffect(() => () => resetWorkspaceInteractionState(), [resetWorkspaceInteractionState]);
 
+  const currentEntry = workspaceMenu
+    ? workspaceIndex.find((item) => item.id === workspaceMenu.workspaceId) ?? null
+    : null;
+  const currentIndex = currentEntry
+    ? workspaceIndex.findIndex((item) => item.id === currentEntry.id)
+    : -1;
+
+  function handleStartRename() {
+    if (!currentEntry) {
+      closeWorkspaceMenu();
+      return;
+    }
+    setRenameValue(currentEntry.title);
+    setRenaming(true);
+    setConfirmingDelete(false);
+  }
+
+  function handleCommitRename() {
+    if (!currentEntry) {
+      closeWorkspaceMenu();
+      return;
+    }
+    const inputValue = renameInputRef.current?.value ?? "";
+    const trimmed = inputValue.trim();
+    if (trimmed) {
+      void renameWorkspace(currentEntry.id, trimmed);
+    }
+    closeWorkspaceMenu();
+  }
+
+  function handleCancelRename() {
+    setRenaming(false);
+  }
+
+  function handleStartDelete() {
+    setConfirmingDelete(true);
+    setRenaming(false);
+  }
+
+  function handleConfirmDelete() {
+    if (!currentEntry) {
+      closeWorkspaceMenu();
+      return;
+    }
+    void deleteWorkspace(currentEntry.id);
+    closeWorkspaceMenu();
+  }
+
+  function handleCancelDelete() {
+    closeWorkspaceMenu();
+  }
+
   return (
-    <aside className="flex h-full w-[280px] flex-col border-r border-border bg-panel/90 px-4 py-4 backdrop-blur">
+    <aside className="flex h-full w-[280px] min-h-0 max-h-screen overflow-hidden flex-col border-r border-border bg-panel/90 px-4 py-4 backdrop-blur">
       <div className="shrink-0 rounded-2xl border border-border bg-panelMuted/70 px-4 py-4 shadow-soft">
         <div className="text-xs uppercase tracking-[0.28em] text-textMuted">Todo</div>
         <div className="mt-1 text-lg font-semibold">Workspace Dock</div>
         <p className="mt-2 text-sm leading-6 text-textMuted">
-          Switch workspaces, open the menu, and reorder the dock.
+          Switch workspaces, open the context menu to rename, reorder, or delete.
         </p>
       </div>
 
@@ -59,24 +122,8 @@ export function LeftDock() {
                 entry={entry}
                 theme={theme}
                 active={entry.id === activeWorkspaceId}
-                dragging={entry.id === draggingWorkspaceId}
-                dropTarget={entry.id === dropTargetWorkspaceId}
                 onOpenMenu={(x, y) => openWorkspaceMenu(entry.id, x, y)}
                 onSelect={() => selectWorkspace(entry.id)}
-                onDragStart={() => setWorkspaceDragState(entry.id)}
-                onDragEnd={() => setWorkspaceDragState(null)}
-                onDrop={() => {
-                  if (draggingWorkspaceId && draggingWorkspaceId !== entry.id) {
-                    void reorderWorkspaces(draggingWorkspaceId, entry.id);
-                  }
-                  setWorkspaceDragState(null);
-                }}
-                onDragOver={(event) => {
-                  event.preventDefault();
-                  if (draggingWorkspaceId && draggingWorkspaceId !== entry.id) {
-                    setWorkspaceDragState(draggingWorkspaceId, entry.id);
-                  }
-                }}
               />
             ))}
           </div>
@@ -100,66 +147,144 @@ export function LeftDock() {
         <p className="mt-3 text-xs leading-5 text-textMuted">Workspace-level styling is edited in the inspector.</p>
       </div>
 
-      {workspaceMenu ? (
+      {/* Portal workspace menu to body so it escapes the aside's backdrop-blur stacking context */}
+      {workspaceMenu ? createPortal(
         <MenuPopover backdropTestId="workspace-menu-backdrop" onDismiss={() => closeWorkspaceMenu()} x={workspaceMenu.x} y={workspaceMenu.y}>
-          <div
-            className="w-56 rounded-xl border border-border bg-panel px-2 py-2 shadow-soft"
-          >
-            <MenuButton label="Rename workspace" onClick={() => {
-              const entry = workspaceIndex.find((item) => item.id === workspaceMenu.workspaceId);
-              if (!entry) {
-                closeWorkspaceMenu();
-                return;
-              }
-              const nextTitle = window.prompt("Rename workspace", entry.title);
-              if (nextTitle !== null) {
-                void renameWorkspace(entry.id, nextTitle);
-              }
-              closeWorkspaceMenu();
-            }} />
-            <MenuButton label="Toggle accent stripe" onClick={() => {
-              const entry = workspaceIndex.find((item) => item.id === workspaceMenu.workspaceId);
-              if (entry) {
-                void updateWorkspaceStyle(entry.id, {
-                  accentStripe: { enabled: !entry.style.accentStripe?.enabled },
-                });
-              }
-              closeWorkspaceMenu();
-            }} />
-            <div className="flex items-center justify-between gap-3 px-3 py-2">
-              <span className="text-sm text-text">Accent color</span>
+          {renaming ? (
+            <div className="w-56 rounded-xl border border-border bg-panel px-3 py-3 shadow-soft">
+              <label className="block text-xs font-medium text-textMuted mb-1.5">Rename workspace</label>
               <input
-                aria-label="Accent color"
-                className="h-9 w-14 rounded-md border border-border bg-transparent p-1"
-                defaultValue={
-                  workspaceIndex.find((item) => item.id === workspaceMenu.workspaceId)?.style.accentStripe?.color ??
-                  "#60A5FA"
-                }
-                onChange={(event) => {
-                  const entry = workspaceIndex.find((item) => item.id === workspaceMenu.workspaceId);
-                  if (entry) {
-                    void updateWorkspaceStyle(entry.id, {
-                      accentStripe: { color: event.target.value },
-                    });
+                ref={renameInputRef}
+                aria-label="Workspace name"
+                className="w-full rounded-lg border border-border bg-panelMuted px-3 py-2 text-sm text-text placeholder-textMuted outline-none transition focus:border-accent/60 focus:ring-1 focus:ring-accent/40"
+                defaultValue={renameValue}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleCommitRename();
+                  } else if (e.key === "Escape") {
+                    handleCancelRename();
                   }
                 }}
-                type="color"
+                placeholder="Workspace name"
+              />
+              <div className="mt-3 flex items-center justify-end gap-2">
+                <button
+                  className="rounded-lg px-3 py-1.5 text-sm text-textMuted transition hover:text-text"
+                  onClick={handleCancelRename}
+                  type="button"
+                >
+                  Cancel
+                </button>
+                <button
+                  className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-white transition hover:bg-accent/90"
+                  onClick={handleCommitRename}
+                  type="button"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          ) : confirmingDelete ? (
+            <div className="w-56 rounded-xl border border-border bg-panel px-3 py-3 shadow-soft">
+              <p className="text-sm font-medium text-text">
+                Delete "{currentEntry?.title ?? "workspace"}"?
+              </p>
+              <p className="mt-1 text-xs leading-5 text-textMuted">
+                This cannot be undone.
+              </p>
+              <div className="mt-3 flex items-center justify-end gap-2">
+                <button
+                  className="rounded-lg px-3 py-1.5 text-sm text-textMuted transition hover:text-text"
+                  onClick={handleCancelDelete}
+                  type="button"
+                >
+                  Keep
+                </button>
+                <button
+                  className="rounded-lg bg-danger px-3 py-1.5 text-sm font-medium text-white transition hover:bg-danger/90"
+                  onClick={handleConfirmDelete}
+                  type="button"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="w-56 rounded-xl border border-border bg-panel px-2 py-2 shadow-soft">
+              <MenuButton label="Rename workspace" onClick={handleStartRename} />
+              <MenuButton
+                label="Move up"
+                disabled={currentIndex <= 0}
+                onClick={() => {
+                  if (!currentEntry) {
+                    closeWorkspaceMenu();
+                    return;
+                  }
+                  if (currentIndex > 0) {
+                    const targetId = workspaceIndex[currentIndex - 1]?.id;
+                    if (targetId) {
+                      void reorderWorkspaces(currentEntry.id, targetId);
+                    }
+                  }
+                  closeWorkspaceMenu();
+                }}
+              />
+              <MenuButton
+                label="Move down"
+                disabled={currentIndex >= workspaceIndex.length - 1}
+                onClick={() => {
+                  if (!currentEntry) {
+                    closeWorkspaceMenu();
+                    return;
+                  }
+                  if (currentIndex < workspaceIndex.length - 1) {
+                    const nextItemId = workspaceIndex[currentIndex + 1]?.id;
+                    if (nextItemId) {
+                      // Move the item below BEFORE our item, effectively pushing ours down
+                      void reorderWorkspaces(nextItemId, currentEntry.id);
+                    }
+                  }
+                  closeWorkspaceMenu();
+                }}
+              />
+              <MenuButton label="Toggle accent stripe" onClick={() => {
+                if (!currentEntry) {
+                  closeWorkspaceMenu();
+                  return;
+                }
+                void updateWorkspaceStyle(currentEntry.id, {
+                  accentStripe: { enabled: !currentEntry.style.accentStripe?.enabled },
+                });
+                closeWorkspaceMenu();
+              }} />
+              <div className="flex items-center justify-between gap-3 px-3 py-2">
+                <span className="text-sm text-text">Accent color</span>
+                <input
+                  aria-label="Accent color"
+                  className="h-9 w-14 rounded-md border border-border bg-transparent p-1"
+                  defaultValue={
+                    currentEntry?.style.accentStripe?.color ?? "#60A5FA"
+                  }
+                  onChange={(event) => {
+                    if (currentEntry) {
+                      void updateWorkspaceStyle(currentEntry.id, {
+                        accentStripe: { color: event.target.value },
+                      });
+                    }
+                  }}
+                  type="color"
+                />
+              </div>
+              <hr className="my-2 border-border" />
+              <MenuButton
+                label="Delete workspace"
+                danger
+                onClick={handleStartDelete}
               />
             </div>
-            <hr className="my-2 border-border" />
-            <MenuButton
-              label="Delete workspace"
-              danger
-              onClick={() => {
-                const entry = workspaceIndex.find((item) => item.id === workspaceMenu.workspaceId);
-                if (entry && window.confirm(`Delete workspace "${entry.title}"?`)) {
-                  void deleteWorkspace(entry.id);
-                }
-                closeWorkspaceMenu();
-              }}
-            />
-          </div>
-        </MenuPopover>
+          )}
+        </MenuPopover>,
+        document.body
       ) : null}
     </aside>
   );
@@ -169,17 +294,24 @@ function MenuButton({
   label,
   onClick,
   danger = false,
+  disabled = false,
 }: {
   label: string;
   onClick: () => void;
   danger?: boolean;
+  disabled?: boolean;
 }) {
   return (
     <button
       className={`block w-full rounded-lg px-3 py-2 text-left text-sm transition ${
-        danger ? "text-danger hover:bg-danger/10" : "text-text hover:bg-panelMuted"
+        disabled
+          ? "cursor-not-allowed text-textMuted/40"
+          : danger
+            ? "text-danger hover:bg-danger/10"
+            : "text-text hover:bg-panelMuted"
       }`}
-      onClick={onClick}
+      disabled={disabled}
+      onClick={disabled ? undefined : onClick}
       type="button"
     >
       {label}

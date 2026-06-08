@@ -4771,3 +4771,173 @@ Reviewed the three deferred test additions against the plan. All three tests are
 
 ### Outcome
 Verdict PASS — Ready for Main. Next channel message created at `agents/channels/087-test-cleanup-deferred-086/messages/004-review-to-main.md`. Do not commit; Main handles git operations.
+
+
+## Session 297 — 2026-06-08
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: agents/channels/088-workspace-scroll-reorder-regression/
+- Dispatch: agents/artifacts/088-workspace-scroll-reorder-regression-dispatch.md
+
+### Summary
+Framed dispatch 088 from live app triage of workspace dock scrolling, workspace context-menu actions, workspace drag/reorder behavior, main canvas scrolling, and stale UX-fixes Playwright coverage. The dispatch asks Plan to ground a targeted fix in current files and preserve already-working delete/rename and main canvas behavior.
+
+### Outcome
+Dispatch artifact and first Main → Plan channel message created; ready for Plan pickup.
+
+## Session 298 — 2026-06-08
+
+### Agent Type
+plan
+
+### Artifacts
+- Channel: agents/channels/088-workspace-scroll-reorder-regression/
+- Dispatch: agents/artifacts/088-workspace-scroll-reorder-regression-dispatch.md
+- Plan: agents/artifacts/088-workspace-scroll-reorder-regression-plan.md
+
+### Summary
+Created the implementation plan for dispatch 088 after reading the channel handoff, dispatch artifact, observations, relevant layout/store/test files, and artifact/closing guidance. The plan grounds the dock scroll fix, workspace reorder semantics/coverage, and refreshed UX-fixes Playwright coverage in current source and tests.
+
+### Outcome
+Plan artifact created; next channel message `002-plan-to-dev.md` created for Dev pickup.
+
+## Session 299 — 2026-06-08
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: agents/channels/088-workspace-scroll-reorder-regression/
+- Execution: agents/artifacts/088-workspace-scroll-reorder-regression-complete.md
+
+### Summary
+Implemented the dispatch 088 plan: constrained LeftDock to viewport with `min-h-0 max-h-screen overflow-hidden`, aligned `reorderWorkspaces` with `reorderBlocks` insert-before-target semantics, added dedicated upward/downward reorder tests with persistence coverage, added `data-testid="main-canvas-scroll"` to MainPane, and refreshed the UX-fixes Playwright spec with dimension-based scroll assertions and stable selectors.
+
+### Outcome
+All 52 targeted JS tests and all 5 E2E tests pass. Completion artifact written; next channel message `003-dev-to-review.md` created for Review pickup.
+
+## Session 300 — 2026-06-08
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: agents/channels/088-workspace-scroll-reorder-regression/
+- Review: agents/artifacts/088-workspace-scroll-reorder-regression-review.md
+
+### Summary
+Reviewed dispatch 088 implementation: left dock viewport constraint, workspace reorder insert-before-target semantics, dedicated upward/downward reorder tests with persistence, main-canvas testid, and refreshed UX-fixes E2E spec. All three verification commands pass cleanly (test:build, 52/52 targeted tests, 5/5 Playwright).
+
+### Outcome
+PASS — Ready for Main. Review artifact written; next channel message `004-review-to-main.md` created with State = review-pass. No required fixes, no deferred notes.
+
+## Session 301 — 2026-06-08
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: agents/channels/088-workspace-scroll-reorder-regression/
+- Dispatch: agents/artifacts/088-workspace-scroll-reorder-regression-dispatch.md
+
+### Summary
+User-tested the reviewed dispatch in Tauri before close and confirmed dock/main scrolling works but workspace delete and workspace reorganization still do not. The user also identified a blocking workspace context-menu layering issue: the right-click menu falls behind the main workspace/block area instead of staying in front.
+
+### Outcome
+Did not close or commit dispatch 088. Created `005-main-to-dev.md` routing the dispatch back to Dev for context-menu overlay/layering and workspace UI reorder fixes, with Review required afterward.
+
+## Session 302 — 2026-06-08
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: agents/channels/088-workspace-scroll-reorder-regression/
+- Execution: agents/artifacts/088-workspace-scroll-reorder-regression-complete.md (updated)
+
+### Summary
+Follow-up fix round per message 005: portaled workspace context menu to `document.body` via `createPortal` to escape the aside's `backdrop-blur` stacking context, fixing the menu layering/delete issue. Added "Move up" and "Move down" context menu items as a reliable workspace reorder fallback alongside HTML5 drag/drop, with disabled state at boundary positions. Added 4 unit tests + 2 E2E tests for the new menu items. Preserved all prior scrolling fixes.
+
+### Outcome
+All 56 targeted JS tests and all 7 E2E tests pass. Completion artifact updated; next channel message `006-dev-to-review.md` created for Review pickup.
+
+## Session 303 — 2026-06-08
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: agents/channels/088-workspace-scroll-reorder-regression/
+- Execution: agents/artifacts/088-workspace-scroll-reorder-regression-complete.md (updated)
+
+### Summary
+Second follow-up fix round per message 008: Replaced `window.prompt`/`window.confirm` with inline rename input (uncontrolled ref-based) and inline delete confirmation rendered inside the portaled context menu, fixing workspace rename and delete in Tauri WebView2 where native dialogs are blocked. Removed `draggable` attribute and all HTML5 drag/drop handlers from WorkspaceCard since drag-to-reposition is unreliable in Tauri; dock copy updated to direct users to the context menu for reorder.
+
+### Outcome
+All 73 targeted JS tests and all 7 E2E tests pass. Completion artifact updated; next channel message `009-dev-to-review.md` created for Review pickup.
+
+## Session 302 — 2026-06-08
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: agents/channels/088-workspace-scroll-reorder-regression/
+- Review: agents/artifacts/088-workspace-scroll-reorder-regression-review.md (updated with re-review)
+
+### Summary
+Re-reviewed the Main-directed fix round (message 005 → 006). Verified: workspace context menu is portaled to document.body, escaping the aside's backdrop-blur stacking context and overflow-hidden; move up/down context menu buttons provide reliable workspace reorder; disabled states at boundary positions; 4 new unit tests + 2 new E2E tests. All three verification commands pass cleanly: test:build, 56/56 targeted JS tests, 7/7 Playwright.
+
+### Outcome
+PASS — Ready for Main (re-review). Review artifact updated; next channel message `007-review-to-main.md` created with State = review-pass. No required fixes, no deferred notes.
+
+## Session 303 — 2026-06-08
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: agents/channels/088-workspace-scroll-reorder-regression/
+- Dispatch: agents/artifacts/088-workspace-scroll-reorder-regression-dispatch.md
+
+### Summary
+User reset local Tauri app data/cache and retested dispatch 088. The reset did not fix workspace rename/delete: context-menu color changes, accent stripe toggle, and Move up/down work, but Rename and Delete still fail; drag-to-reposition also still fails. This points to native `window.prompt` / `window.confirm` being unreliable in Tauri for workspace actions, plus unresolved drag UX.
+
+### Outcome
+Did not close or commit dispatch 088. Created `008-main-to-dev.md` routing back to Dev to replace native workspace rename/delete dialogs with reliable in-app UI and address the remaining drag/reorder UX.
+
+## Session 304 — 2026-06-08
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: agents/channels/088-workspace-scroll-reorder-regression/
+- Review: agents/artifacts/088-workspace-scroll-reorder-regression-review.md (updated with second re-review)
+
+### Summary
+Second re-review of dispatch 088 fix round (message 008 → 009). Verified: inline rename input + Save replaces `window.prompt`, inline Delete/Keep confirmation replaces `window.confirm`, `draggable` and all drag handlers removed from WorkspaceCard, dock copy updated. All three verification commands pass cleanly: test:build, 73/73 targeted JS tests, 7/7 Playwright.
+
+### Outcome
+PASS — Ready for Main (second re-review). Review artifact updated; next channel message `010-review-to-main.md` created with State = review-pass. No required fixes, no deferred notes.
+
+## Session 305 — 2026-06-08
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: agents/channels/088-workspace-scroll-reorder-regression/
+- Dispatch: agents/artifacts/088-workspace-scroll-reorder-regression-dispatch.md
+- Plan: agents/artifacts/088-workspace-scroll-reorder-regression-plan.md
+- Complete: agents/artifacts/088-workspace-scroll-reorder-regression-complete.md
+- Review: agents/artifacts/088-workspace-scroll-reorder-regression-review.md
+
+### Summary
+Closed dispatch 088 after second re-review PASS. The final change set fixes workspace dock/main scrolling, ports the workspace context menu above the main pane, replaces native prompt/confirm workspace rename/delete with in-app menu flows, keeps Move up/Move down as reliable reorder controls, refreshes UX-fixes Playwright coverage, and removes misleading native drag affordance pending a future pointer-drag dispatch.
+
+### Outcome
+Dispatch 088 closed with message `011-main-to-main.md`; committed and pushed by Main after dirty-file close gate.
