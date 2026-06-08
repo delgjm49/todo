@@ -17,6 +17,7 @@ import ssl
 import subprocess
 import sys
 import textwrap
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -32,6 +33,7 @@ except Exception:  # pragma: no cover - optional dependency varies by Python ins
 DEFAULT_LLMGATEWAY_MODEL = "grok-imagine-image"
 DEFAULT_OPENROUTER_CHAT_MODEL = "openai/gpt-5.5"
 DEFAULT_OPENROUTER_IMAGE_MODEL = "openai/gpt-5.4-image-2"
+DEFAULT_ATLASCLOUD_IMAGE_MODEL = "bytedance/seedream-v4"
 
 IMAGE_URL_KEYS = {"image_url", "imageUrl", "url", "uri"}
 BASE64_KEYS = {"b64_json", "base64", "image_base64", "data"}
@@ -92,6 +94,69 @@ def openrouter_config() -> tuple[str, str]:
     return "https://openrouter.ai/api/v1", resolve_secret(api_key, "openrouter key")
 
 
+def load_optional_json(path: Path) -> Any | None:
+    try:
+        with path.open("r", encoding="utf-8") as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
+
+
+def keychain_secret(service: str, account: str) -> str | None:
+    if process_platform() != "darwin":
+        return None
+    try:
+        secret = subprocess.check_output(
+            ["security", "find-generic-password", "-s", service, "-a", account, "-w"],
+            text=True,
+            stderr=subprocess.DEVNULL,
+        ).strip()
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        return None
+    return secret or None
+
+
+def process_platform() -> str:
+    # Tiny wrapper to keep platform checks easy to patch/test without importing platform.
+    return sys.platform
+
+
+def atlascloud_api_key_optional() -> str | None:
+    env_key = os.environ.get("ATLASCLOUD_API_KEY")
+    if env_key:
+        return resolve_secret(env_key, "ATLASCLOUD_API_KEY")
+    env_cmd = os.environ.get("ATLASCLOUD_API_KEY_CMD")
+    if env_cmd:
+        return resolve_secret(f"!{env_cmd}", "ATLASCLOUD_API_KEY_CMD")
+
+    auth = load_optional_json(Path.home() / ".pi" / "agent" / "auth.json")
+    if isinstance(auth, dict) and isinstance(auth.get("atlascloud"), dict):
+        provider = auth["atlascloud"]
+        api_key = provider.get("key") or provider.get("apiKey") or provider.get("token")
+        if api_key:
+            return resolve_secret(api_key, "atlascloud key")
+
+    models = load_optional_json(Path.home() / ".pi" / "agent" / "models.json")
+    provider = models.get("providers", {}).get("atlascloud") if isinstance(models, dict) else None
+    if isinstance(provider, dict):
+        api_key = provider.get("apiKey") or provider.get("key") or provider.get("token")
+        if api_key:
+            return resolve_secret(api_key, "atlascloud apiKey")
+
+    return keychain_secret("atlascloud.ai", "api-key")
+
+
+def atlascloud_config() -> tuple[str, str]:
+    api_key = atlascloud_api_key_optional()
+    if not api_key:
+        raise ConfigError(
+            "No Atlas Cloud API key found. Set ATLASCLOUD_API_KEY, set ATLASCLOUD_API_KEY_CMD, "
+            "add ~/.pi/agent/auth.json atlascloud.key, or store it in macOS Keychain as "
+            "service=atlascloud.ai account=api-key."
+        )
+    return "https://api.atlascloud.ai/api/v1", api_key
+
+
 def ssl_context() -> ssl.SSLContext:
     if certifi is not None:
         return ssl.create_default_context(cafile=certifi.where())
@@ -99,16 +164,28 @@ def ssl_context() -> ssl.SSLContext:
 
 
 def request_json(url: str, api_key: str, body: dict[str, Any], timeout: int) -> dict[str, Any]:
+    return json_request("POST", url, api_key, body, timeout)
+
+
+def get_json(url: str, api_key: str, timeout: int) -> dict[str, Any]:
+    return json_request("GET", url, api_key, None, timeout)
+
+
+def json_request(method: str, url: str, api_key: str | None, body: dict[str, Any] | None, timeout: int) -> dict[str, Any]:
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "User-Agent": "meta-workflow-ai-image/1.0",
+        "HTTP-Referer": "https://github.com/delgjm49/meta-workflow",
+        "X-Title": "meta-workflow ai-image CLI",
+    }
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
     req = urllib.request.Request(
         url,
-        data=json.dumps(body).encode("utf-8"),
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-            "HTTP-Referer": "https://github.com/delgjm49/meta-workflow",
-            "X-Title": "meta-workflow ai-image CLI",
-        },
-        method="POST",
+        data=json.dumps(body).encode("utf-8") if body is not None else None,
+        headers=headers,
+        method=method,
     )
     try:
         with urllib.request.urlopen(req, timeout=timeout, context=ssl_context()) as response:
@@ -127,7 +204,39 @@ def request_json(url: str, api_key: str, body: dict[str, Any], timeout: int) -> 
         raise RuntimeError(f"Provider request failed: {exc}") from exc
 
 
+def parse_provider_params(values: list[str] | None) -> dict[str, Any]:
+    params: dict[str, Any] = {}
+    for raw in values or []:
+        if "=" not in raw:
+            raise ConfigError(f"Invalid --param {raw!r}; expected KEY=VALUE")
+        key, value = raw.split("=", 1)
+        key = key.strip()
+        if not key:
+            raise ConfigError(f"Invalid --param {raw!r}; parameter key is empty")
+        try:
+            params[key] = json.loads(value)
+        except json.JSONDecodeError:
+            params[key] = value
+    return params
+
+
 def body_for(args: argparse.Namespace) -> tuple[str, str, dict[str, Any]]:
+    if args.provider == "atlascloud":
+        base_url, api_key = atlascloud_config()
+        model = args.model or args.image_model or DEFAULT_ATLASCLOUD_IMAGE_MODEL
+        body: dict[str, Any] = {"model": model, "prompt": args.prompt}
+        for key in ["quality", "size", "aspect_ratio", "background", "output_format", "moderation"]:
+            val = getattr(args, key)
+            if val is not None:
+                body[key] = val
+        if args.output_compression is not None:
+            body["output_compression"] = args.output_compression
+        for key, value in parse_provider_params(args.param).items():
+            if key in {"model", "prompt"}:
+                raise ConfigError(f"--param must not override Atlas Cloud {key!r}; use --model/prompt instead")
+            body[key] = value
+        return f"{base_url}/model/generateImage", api_key, body
+
     if args.provider == "llmgateway":
         base_url, api_key = llmgateway_config()
         model = args.model or DEFAULT_LLMGATEWAY_MODEL
@@ -139,6 +248,7 @@ def body_for(args: argparse.Namespace) -> tuple[str, str, dict[str, Any]]:
         # image-output models advertise text->image or text->text+image capabilities.
         if not args.no_modalities:
             body["modalities"] = ["text", "image"]
+        body.update(parse_provider_params(args.param))
         return f"{base_url}/chat/completions", api_key, body
 
     base_url, api_key = openrouter_config()
@@ -151,6 +261,7 @@ def body_for(args: argparse.Namespace) -> tuple[str, str, dict[str, Any]]:
             parameters[key] = val
     if args.output_compression is not None:
         parameters["output_compression"] = args.output_compression
+    parameters.update(parse_provider_params(args.param))
     tool = {"type": "openrouter:image_generation", "parameters": parameters}
     if args.openrouter_api == "chat":
         body = {
@@ -172,8 +283,24 @@ def safe_slug(text: str, max_len: int = 48) -> str:
     return (slug[:max_len].strip("-") or "image")
 
 
+def current_repo_root() -> Path | None:
+    try:
+        raw = subprocess.check_output(
+            ["git", "rev-parse", "--show-toplevel"],
+            text=True,
+            stderr=subprocess.DEVNULL,
+        ).strip()
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        return None
+    return Path(raw) if raw else None
+
+
 def default_output_dir() -> Path:
-    return Path.home() / "Pictures" / "ai-generated" / dt.date.today().isoformat()
+    date = dt.date.today().isoformat()
+    repo = current_repo_root()
+    if repo:
+        return Path.home() / "Pictures" / "ai-generated" / "by-repo" / safe_slug(repo.name, 40) / "adhoc" / date
+    return Path.home() / "Pictures" / "ai-generated" / "adhoc" / date
 
 
 def extension_for_mime(mime: str | None, fallback: str = ".png") -> str:
@@ -232,6 +359,9 @@ def extract_images(obj: Any) -> list[dict[str, str]]:
             m = DATA_URI_RE.match(value)
             if m:
                 add_b64(m.group(2), m.group(1))
+            elif value.startswith("http") and parent_key and parent_key.lower() in {"output", "outputs", "image", "images"}:
+                # Atlas Cloud prediction outputs are often plain URL strings under data.outputs.
+                add_url(value.rstrip(".,"))
             else:
                 for url in URL_IMAGE_RE.findall(value):
                     if looks_like_image_url(url):
@@ -249,6 +379,38 @@ def download_url(url: str, path: Path, timeout: int) -> None:
     if path.suffix == ".img":
         path = path.with_suffix(extension_for_mime(content_type))
     path.write_bytes(data)
+
+
+def atlascloud_prediction_id(submission: dict[str, Any]) -> str:
+    data = submission.get("data")
+    if isinstance(data, dict) and data.get("id"):
+        return str(data["id"])
+    if submission.get("id"):
+        return str(submission["id"])
+    raise RuntimeError(f"Atlas Cloud did not return a prediction id: {json.dumps(submission)[:500]}")
+
+
+def atlascloud_generate(url: str, api_key: str, body: dict[str, Any], args: argparse.Namespace) -> dict[str, Any]:
+    submission = request_json(url, api_key, body, args.timeout)
+    prediction_id = atlascloud_prediction_id(submission)
+    base_url = url.rsplit("/model/", 1)[0]
+    result_url = f"{base_url}/model/prediction/{urllib.parse.quote(prediction_id, safe='')}"
+    deadline = time.monotonic() + args.timeout
+    while True:
+        if time.monotonic() >= deadline:
+            raise RuntimeError(f"Atlas Cloud prediction {prediction_id} did not complete within {args.timeout}s")
+        time.sleep(max(1, args.poll_interval))
+        result = get_json(result_url, api_key, args.timeout)
+        data = result.get("data") if isinstance(result.get("data"), dict) else result
+        status = str(data.get("status", "")).lower() if isinstance(data, dict) else ""
+        if status in {"completed", "succeeded", "success"}:
+            return {"provider": "atlascloud", "submission": submission, "result": result}
+        if status in {"failed", "error", "cancelled", "canceled"}:
+            error = data.get("error") if isinstance(data, dict) else None
+            raise RuntimeError(f"Atlas Cloud prediction {prediction_id} failed: {error or json.dumps(result)[:500]}")
+        if not status and extract_images(result):
+            return {"provider": "atlascloud", "submission": submission, "result": result}
+        print(f"Atlas Cloud prediction {prediction_id} status={status or 'unknown'} ...", file=sys.stderr)
 
 
 def emit_kitty_image(path: Path, chunk_size: int = 4096) -> None:
@@ -311,26 +473,76 @@ def save_outputs(response: dict[str, Any], args: argparse.Namespace, body: dict[
     return [raw_path, meta_path, *saved]
 
 
+def compact_description(text: Any, max_len: int = 220) -> str:
+    if not isinstance(text, str):
+        return ""
+    desc = re.sub(r"\s+", " ", text).strip()
+    if len(desc) > max_len:
+        return desc[: max_len - 1].rstrip() + "…"
+    return desc
+
+
 def list_models(args: argparse.Namespace) -> int:
     if args.provider == "llmgateway":
         base_url, api_key = llmgateway_config()
         url = f"{base_url}/models"
+        headers = {"Authorization": f"Bearer {api_key}"}
+    elif args.provider == "atlascloud":
+        base_url = "https://api.atlascloud.ai/api/v1"
+        api_key = atlascloud_api_key_optional()
+        url = f"{base_url}/models"
+        headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
     else:
         base_url, api_key = openrouter_config()
         url = f"{base_url}/models"
-    req = urllib.request.Request(url, headers={"Authorization": f"Bearer {api_key}"})
+        headers = {"Authorization": f"Bearer {api_key}"}
+    headers.setdefault("User-Agent", "meta-workflow-ai-image/1.0")
+    req = urllib.request.Request(url, headers=headers)
     try:
         with urllib.request.urlopen(req, timeout=args.timeout, context=ssl_context()) as response:
             data = json.load(response)
     except Exception as exc:  # noqa: BLE001 - CLI should show concise provider failures.
         print(f"Failed to list models: {exc}", file=sys.stderr)
         return 1
-    for model in data.get("data", []):
-        arch = model.get("architecture", {})
-        out = arch.get("output_modalities") or []
-        if args.images_only and "image" not in out:
+
+    models = data.get("data", []) if isinstance(data, dict) else data
+    if not isinstance(models, list):
+        print(f"Failed to list models: unexpected response shape {type(data).__name__}", file=sys.stderr)
+        return 1
+
+    for model in models:
+        if not isinstance(model, dict):
             continue
-        print(f"{model.get('id')}\t{model.get('name', '')}\tout={','.join(out)}")
+        if args.provider == "atlascloud":
+            model_id = model.get("model") or model.get("id")
+            kind = str(model.get("type") or "")
+            tags = model.get("tags") or []
+            in_modalities = model.get("input_modalities") or []
+            out_modalities = model.get("output_modalities") or []
+            is_image = kind.lower() == "image" or "image" in out_modalities
+            if args.images_only and not is_image:
+                continue
+            line = (
+                f"{model_id}\t{model.get('displayName', '')}\t"
+                f"type={kind}\tin={','.join(map(str, in_modalities))}\tout={','.join(map(str, out_modalities))}\t"
+                f"tags={','.join(map(str, tags))}"
+            )
+            if args.descriptions:
+                desc = compact_description(model.get("profile"))
+                if desc:
+                    line += f"\tdesc={desc}"
+            print(line)
+        else:
+            arch = model.get("architecture", {})
+            out = arch.get("output_modalities") or []
+            if args.images_only and "image" not in out:
+                continue
+            line = f"{model.get('id')}\t{model.get('name', '')}\tout={','.join(out)}"
+            if args.descriptions:
+                desc = compact_description(model.get("description") or model.get("profile"))
+                if desc:
+                    line += f"\tdesc={desc}"
+            print(line)
     return 0
 
 
@@ -350,6 +562,7 @@ def parse_args() -> argparse.Namespace:
             """
             Examples:
               tools/ai-image.py 'a tiny robot painting a sunset' --dry-run
+              tools/ai-image.py 'a tiny robot painting a sunset' --provider atlascloud --model bytedance/seedream-v4
               tools/ai-image.py 'a tiny robot painting a sunset' --provider llmgateway --model grok-imagine-image
               tools/ai-image.py 'a futuristic city' --provider openrouter --image-model openai/gpt-5-image --aspect-ratio 16:9
               tools/ai-image.py 'a logo' --provider openrouter --openrouter-api chat
@@ -357,9 +570,9 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument("prompt", nargs="?", help="Image prompt. If omitted with --list-models, no prompt is needed.")
-    parser.add_argument("--provider", choices=["llmgateway", "openrouter"], default="openrouter")
-    parser.add_argument("--model", help="For llmgateway: image model. For openrouter: chat/planning model.")
-    parser.add_argument("--image-model", help="OpenRouter server-tool image model")
+    parser.add_argument("--provider", choices=["atlascloud", "llmgateway", "openrouter"], default="openrouter")
+    parser.add_argument("--model", help="For atlascloud/llmgateway: image model. For openrouter: chat/planning model.")
+    parser.add_argument("--image-model", help="OpenRouter server-tool image model; alias for --model on Atlas Cloud")
     parser.add_argument("--openrouter-api", choices=["responses", "chat"], default="responses", help="OpenRouter endpoint for server tools")
     parser.add_argument("--quality")
     parser.add_argument("--size")
@@ -368,8 +581,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-format", dest="output_format")
     parser.add_argument("--output-compression", type=int)
     parser.add_argument("--moderation")
+    parser.add_argument("--param", action="append", default=[], metavar="KEY=VALUE", help="Extra provider parameter; VALUE may be JSON. Repeatable.")
     parser.add_argument("--output-dir")
     parser.add_argument("--timeout", type=int, default=180)
+    parser.add_argument("--poll-interval", type=int, default=2, help="Atlas Cloud prediction polling interval in seconds")
     parser.add_argument("--dry-run", action="store_true", help="Print the redacted request and exit without calling provider")
     parser.add_argument("--open", action="store_true", help="Open saved image(s) with macOS open")
     parser.add_argument("--terminal-preview", action="store_true", help="Try to render saved image(s) inline using Kitty/Ghostty graphics")
@@ -377,6 +592,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--osc8-links", action="store_true", help="Print OSC 8 terminal hyperlinks for saved images")
     parser.add_argument("--list-models", action="store_true")
     parser.add_argument("--images-only", action="store_true", help="With --list-models, show only image-output models")
+    parser.add_argument("--descriptions", action="store_true", help="With --list-models, include short provider model descriptions when available")
     parser.add_argument("--no-modalities", action="store_true", help="Do not send modalities for llmgateway chat/completions")
     args = parser.parse_args()
     if not args.list_models and not args.prompt:
@@ -394,7 +610,7 @@ def main() -> int:
             print(json.dumps({"url": url, "body": body, "auth": "<redacted>"}, indent=2, ensure_ascii=False))
             return 0
         print(f"Generating via {args.provider} model={body.get('model')} ...", file=sys.stderr)
-        response = request_json(url, api_key, body, args.timeout)
+        response = atlascloud_generate(url, api_key, body, args) if args.provider == "atlascloud" else request_json(url, api_key, body, args.timeout)
         outputs = save_outputs(response, args, body)
         image_paths = [p for p in outputs if p.suffix.lower() in {".png", ".jpg", ".jpeg", ".webp", ".gif", ".img"}]
         for path in outputs:

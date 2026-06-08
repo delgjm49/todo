@@ -1,6 +1,6 @@
 # Sessions — Living Summary
 
-Last updated: 2026-06-06
+Last updated: 2026-06-07
 
 ## Phase Status
 
@@ -51,13 +51,16 @@ Last updated: 2026-06-06
 | Sortable-header polish follow-up | Complete | Dispatch 081 fixes active-sort aria-label spacing and empty-label sortable-header fallback text; pushed CI run passed |
 | Richer date/time picker planning | Complete | Dispatch 082 recommends compact native picker affordances alongside existing text inputs, preserving `string | null` storage |
 | Date/time picker implementation | Complete | Dispatch 083 adds compact native picker affordances, strict DateCell validation, unchanged `string \| null` storage, and targeted tests |
-| Archive/completed views planning | Complete | Dispatch 084 recommends a derived hide-completed rows filter with one backward-compatible `Block.hideCompletedRows` preference and defers persisted row archive state |
+| Archive/completed views planning | Complete | Dispatch 084 recommends a derived hide-completed rows filter with one backward-compatible `Block.hideCompletedRows` preference and defers persisted row archive state
+| Core UX fixes (7 observations) | Complete | Dispatch 085 fixes workspace scrolling, block content scrolling, context menus, block delete, row DnD, Sort/Menu behavior, and text flash
+| Hide-completed rows implementation | Complete | Dispatch 086 implements the reviewed derived filter + `Block.hideCompletedRows` preference (PASS WITH NOTES; 3 low-severity test notes deferred) |
 | Phase 3 spool channels | Complete | Validated end-to-end |
 | Windows subprocess dispatch-auto | Complete | Validated on Windows 11 |
 
 ## Last Sessions
 
 - **Session 289 — Main close** (2026-06-06): Closed dispatch 084 after Review PASS, consolidated Sessions 280–288, and prepared archive/completed views planning for commit/push.
+- **Session 290–296 (auto queue)**: Dispatches 085 (core UX fixes) and 086 (hide-completed rows) completed end-to-end via auto-queue with autoClose/autoAdvance. Both pushed (commits 1cf8f53, b5d1cb3). Queue 2/2 succeeded.
 - **Session 288 — Review PASS** (2026-06-06): Confirmed dispatch 084's final planning artifact is internally consistent, non-destructive, and concrete enough for future implementation scoping.
 - **Session 287 — Dev fix** (2026-06-06): Split insert vs paste semantics in the future acceptance criteria so compatible pasted checkbox values can remain completed/hidden.
 - **Session 286 — Review FAIL** (2026-06-06): Found one stale insert/paste acceptance criterion after the first artifact fix.
@@ -68,12 +71,7 @@ Last updated: 2026-06-06
 
 ## Next Recommended
 
-**Recommended next work: implement the hide-completed rows slice.** Dispatch 084 is complete. The reviewed recommendation is:
-
-1. **Hide completed rows implementation** — add a per-block derived completed-row filter, persisted as `Block.hideCompletedRows: boolean`, with no row archive lifecycle state and no destructive behavior.
-
-Remaining in the broader v1 backlog:
-- None.
+**Queue complete.** Both auto-queued dispatches (085 + 086) finished successfully with auto-close + push. No further recommended work at this time.
 
 **Completed:**
 - Alerts epic (053–056): complete
@@ -98,6 +96,8 @@ Remaining in the broader v1 backlog:
 - Richer date/time picker planning: complete — reviewed recommendation for compact picker affordances with unchanged `string | null` storage
 - Date/time picker implementation: complete — compact picker affordances, strict DateCell validation, unchanged `string | null` storage, and passing full verification
 - Archive/completed views planning: complete — recommends derived hide-completed rows filter and defers explicit archive state
+- Core UX fixes (dispatch 085): complete — all 7 observations resolved (workspace/block scrolling, menus, DnD, Sort/Menu, color flash)
+- Hide-completed rows (dispatch 086): complete — derived filter + `hideCompletedRows` preference shipped (PASS WITH NOTES)
 - Autosave UX (063): complete
 - Manual QA (065): complete — no critical defects found
 
