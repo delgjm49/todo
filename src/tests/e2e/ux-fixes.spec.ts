@@ -1,3 +1,4 @@
+import assert from "node:assert/strict";
 import { expect, type Page, test } from "@playwright/test";
 
 const STORAGE_PREFIX = "todo-app::";
@@ -160,6 +161,11 @@ test.describe("core UX fixes", () => {
     await page.getByRole("button", { name: "+ Workspace" }).click();
     await page.getByRole("button", { name: "+ Workspace" }).click();
 
+    const cardTitles = page.getByTestId("workspace-card-title");
+    await expect(cardTitles.nth(0)).toHaveText("Home");
+    await expect(cardTitles.nth(1)).toHaveText("Workspace 2");
+    await expect(cardTitles.nth(2)).toHaveText("Workspace 3");
+
     // Open context menu on Workspace 2
     const secondCard = page.getByRole("button").filter({ hasText: "Workspace 2" }).first();
     await secondCard.click({ button: "right" });
@@ -167,9 +173,9 @@ test.describe("core UX fixes", () => {
     await page.getByRole("button", { name: "Move up" }).click();
 
     // After move up: [Workspace 2, Home, Workspace 3]
-    // Verify Workspace 2 is now first
-    const dockCards = page.getByRole("button").filter({ hasText: /Workspace [23]/ });
-    await expect(dockCards.first()).toBeVisible();
+    await expect(cardTitles.nth(0)).toHaveText("Workspace 2");
+    await expect(cardTitles.nth(1)).toHaveText("Home");
+    await expect(cardTitles.nth(2)).toHaveText("Workspace 3");
   });
 
   test("workspace context-menu move down reorders workspaces", async ({ page }) => {
@@ -179,6 +185,11 @@ test.describe("core UX fixes", () => {
     await page.getByRole("button", { name: "+ Workspace" }).click();
     await page.getByRole("button", { name: "+ Workspace" }).click();
 
+    const cardTitles = page.getByTestId("workspace-card-title");
+    await expect(cardTitles.nth(0)).toHaveText("Home");
+    await expect(cardTitles.nth(1)).toHaveText("Workspace 2");
+    await expect(cardTitles.nth(2)).toHaveText("Workspace 3");
+
     // Open context menu on Workspace 2
     const secondCard = page.getByRole("button").filter({ hasText: "Workspace 2" }).first();
     await secondCard.click({ button: "right" });
@@ -186,9 +197,9 @@ test.describe("core UX fixes", () => {
     await page.getByRole("button", { name: "Move down" }).click();
 
     // After move down: [Home, Workspace 3, Workspace 2]
-    // Verify something is still rendered
-    const dockCards = page.getByRole("button").filter({ hasText: /Workspace [23]/ });
-    await expect(dockCards.first()).toBeVisible();
+    await expect(cardTitles.nth(0)).toHaveText("Home");
+    await expect(cardTitles.nth(1)).toHaveText("Workspace 3");
+    await expect(cardTitles.nth(2)).toHaveText("Workspace 2");
   });
 
   test("block sort button and menu button show different content", async ({ page }) => {
@@ -213,5 +224,94 @@ test.describe("core UX fixes", () => {
     await expect(page.getByText("Rename block")).toBeVisible();
     await expect(page.getByText("Collapse block")).toBeVisible();
     await expect(page.getByText("Delete block")).toBeVisible();
+  });
+
+  test("pointer-drag reorder workspace down by insert-before target", async ({ page }) => {
+    await resetTodoStorage(page);
+
+    // Create two more workspaces → [Home, Workspace 2, Workspace 3]
+    await page.getByRole("button", { name: "+ Workspace" }).click();
+    await page.getByRole("button", { name: "+ Workspace" }).click();
+
+    // Assert initial visible order
+    const cardTitles = page.getByTestId("workspace-card-title");
+    await expect(cardTitles.nth(0)).toHaveText("Home");
+    await expect(cardTitles.nth(1)).toHaveText("Workspace 2");
+    await expect(cardTitles.nth(2)).toHaveText("Workspace 3");
+
+    // Get bounding box of Workspace 2 (source) and Home (target for insert-before)
+    const workspace2Card = page.getByTestId("workspace-card").filter({ hasText: "Workspace 2" }).first();
+    const homeCard = page.getByTestId("workspace-card").filter({ hasText: "Home" }).first();
+    const ws2Box = await workspace2Card.boundingBox();
+    const homeBox = await homeCard.boundingBox();
+    assert.ok(ws2Box, "Workspace 2 card must have a bounding box");
+    assert.ok(homeBox, "Home card must have a bounding box");
+
+    // Drag Workspace 2 up above Home (insert before)
+    // Start from middle of Workspace 2, end above middle of Home
+    const startX = ws2Box.x + ws2Box.width / 2;
+    const startY = ws2Box.y + ws2Box.height / 2;
+    const endY = homeBox.y + homeBox.height / 2 - 10; // above Home's midpoint
+
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    // Move in small increments so pointermove fires at intermediate positions
+    const steps = 10;
+    for (let i = 1; i <= steps; i++) {
+      const y = startY + (endY - startY) * (i / steps);
+      await page.mouse.move(startX, y);
+    }
+
+    // During active drag, the drop-indicator should be visible on the target card
+    await expect(page.getByTestId("drop-indicator").first()).toBeVisible();
+
+    await page.mouse.up();
+
+    // After drag: [Workspace 2, Home, Workspace 3]
+    await expect(cardTitles.nth(0)).toHaveText("Workspace 2");
+    await expect(cardTitles.nth(1)).toHaveText("Home");
+    await expect(cardTitles.nth(2)).toHaveText("Workspace 3");
+  });
+
+  test("pointer-drag reorder workspace to end of list", async ({ page }) => {
+    await resetTodoStorage(page);
+
+    // Create two more workspaces → [Home, Workspace 2, Workspace 3]
+    await page.getByRole("button", { name: "+ Workspace" }).click();
+    await page.getByRole("button", { name: "+ Workspace" }).click();
+
+    const cardTitles = page.getByTestId("workspace-card-title");
+    await expect(cardTitles.nth(0)).toHaveText("Home");
+
+    // Get bounding box of Home card and the last card
+    const homeCard = page.getByTestId("workspace-card").filter({ hasText: "Home" }).first();
+    const lastCard = page.getByTestId("workspace-card").filter({ hasText: "Workspace 3" }).first();
+    const homeBox = await homeCard.boundingBox();
+    const lastBox = await lastCard.boundingBox();
+    assert.ok(homeBox, "Home card must have a bounding box");
+    assert.ok(lastBox, "Last card must have a bounding box");
+
+    // Drag Home card far below the last card (append to end)
+    const startX = homeBox.x + homeBox.width / 2;
+    const startY = homeBox.y + homeBox.height / 2;
+    const endY = lastBox.y + lastBox.height + 50; // well below last card
+
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    const steps = 15;
+    for (let i = 1; i <= steps; i++) {
+      const y = startY + (endY - startY) * (i / steps);
+      await page.mouse.move(startX, y);
+    }
+
+    // During active drag at end-of-list, the drop-indicator-end marker should be visible
+    await expect(page.getByTestId("drop-indicator-end")).toBeVisible();
+
+    await page.mouse.up();
+
+    // After append to end: [Workspace 2, Workspace 3, Home]
+    await expect(cardTitles.nth(0)).toHaveText("Workspace 2");
+    await expect(cardTitles.nth(1)).toHaveText("Workspace 3");
+    await expect(cardTitles.nth(2)).toHaveText("Home");
   });
 });

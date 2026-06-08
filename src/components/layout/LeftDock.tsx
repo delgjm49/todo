@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import type { WorkspaceId } from "../../domain/ids.js";
+import type { WorkspaceIndexEntry } from "../../types/workspace.js";
 import { useDocumentStore } from "../../stores/documentStore.js";
 import { useUiStore } from "../../stores/uiStore.js";
 import { WorkspaceCard } from "../workspace/WorkspaceCard.js";
@@ -19,12 +21,26 @@ export function LeftDock() {
   const openWorkspaceMenu = useUiStore((state) => state.openWorkspaceMenu);
   const closeWorkspaceMenu = useUiStore((state) => state.closeWorkspaceMenu);
   const resetWorkspaceInteractionState = useUiStore((state) => state.resetWorkspaceInteractionState);
+  const draggingWorkspaceId = useUiStore((state) => state.draggingWorkspaceId);
+  const dropTargetWorkspaceId = useUiStore((state) => state.dropTargetWorkspaceId);
+  const setWorkspaceDragState = useUiStore((state) => state.setWorkspaceDragState);
   const showSettingsScreen = useUiStore((state) => state.showSettingsScreen);
 
   const [renaming, setRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState("");
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const renameInputRef = useRef<HTMLInputElement>(null);
+
+  // Pointer-drag workspace reorder state
+  const [isDragging, setIsDragging] = useState(false);
+  const dragSessionRef = useRef<{
+    sourceId: WorkspaceId;
+    startX: number;
+    startY: number;
+    active: boolean;
+  } | null>(null);
+  const suppressNextClickRef = useRef(false);
+  const dropAfterEndRef = useRef(false);
 
   // Reset inline states whenever the menu opens or closes
   useEffect(() => {
@@ -88,6 +104,124 @@ export function LeftDock() {
     closeWorkspaceMenu();
   }
 
+  // ---- Pointer-drag workspace reorder ----
+
+  const handleCardPointerDown = useCallback(
+    (entry: WorkspaceIndexEntry, event: React.PointerEvent<HTMLDivElement>) => {
+      if (event.button !== 0 || event.isPrimary === false) return;
+      if (workspaceMenu) return; // menu is open, don't start drag
+
+      dragSessionRef.current = {
+        sourceId: entry.id,
+        startX: event.clientX,
+        startY: event.clientY,
+        active: false,
+      };
+      dropAfterEndRef.current = false;
+      setIsDragging(true);
+    },
+    [workspaceMenu]
+  );
+
+  // Document-level pointer event listeners during an active drag
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const onPointerMove = (event: PointerEvent) => {
+      const session = dragSessionRef.current;
+      if (!session) return;
+
+      const dx = event.clientX - session.startX;
+      const dy = event.clientY - session.startY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (!session.active) {
+        if (distance < 6) return; // movement threshold not reached yet
+
+        // Promote to active drag
+        session.active = true;
+        closeWorkspaceMenu();
+        setWorkspaceDragState(session.sourceId, null);
+        document.body.style.userSelect = "none";
+        document.body.style.webkitUserSelect = "none";
+      }
+
+      // Calculate drop target from card positions
+      const cards = document.querySelectorAll<HTMLElement>(
+        '[data-testid="workspace-card"]'
+      );
+      let foundTarget: WorkspaceId | null = null;
+
+      for (const card of cards) {
+        const id = card.getAttribute("data-workspace-id");
+        if (id === session.sourceId || !id) continue;
+
+        const rect = card.getBoundingClientRect();
+        const midpointY = rect.top + rect.height / 2;
+
+        if (event.clientY < midpointY) {
+          foundTarget = id as WorkspaceId;
+          break;
+        }
+      }
+
+      if (!foundTarget) {
+        // Pointer is below all remaining cards — end-of-list drop
+        dropAfterEndRef.current = true;
+      } else {
+        dropAfterEndRef.current = false;
+      }
+
+      setWorkspaceDragState(session.sourceId, foundTarget);
+    };
+
+    const onPointerUp = () => {
+      const session = dragSessionRef.current;
+      if (!session) return;
+
+      document.body.style.userSelect = "";
+      document.body.style.webkitUserSelect = "";
+
+      if (session.active) {
+        const currentDropTarget = useUiStore.getState().dropTargetWorkspaceId;
+
+        if (currentDropTarget) {
+          void reorderWorkspaces(session.sourceId, currentDropTarget);
+        } else if (dropAfterEndRef.current) {
+          void reorderWorkspaces(session.sourceId, null);
+        }
+
+        suppressNextClickRef.current = true;
+      }
+
+      setWorkspaceDragState(null);
+      dragSessionRef.current = null;
+      dropAfterEndRef.current = false;
+      setIsDragging(false);
+    };
+
+    const onPointerCancel = () => {
+      document.body.style.userSelect = "";
+      document.body.style.webkitUserSelect = "";
+      setWorkspaceDragState(null);
+      dragSessionRef.current = null;
+      dropAfterEndRef.current = false;
+      setIsDragging(false);
+    };
+
+    document.addEventListener("pointermove", onPointerMove);
+    document.addEventListener("pointerup", onPointerUp);
+    document.addEventListener("pointercancel", onPointerCancel);
+
+    return () => {
+      document.removeEventListener("pointermove", onPointerMove);
+      document.removeEventListener("pointerup", onPointerUp);
+      document.removeEventListener("pointercancel", onPointerCancel);
+    };
+  }, [isDragging, closeWorkspaceMenu, setWorkspaceDragState, reorderWorkspaces]);
+
+  const showEndOfListMarker = isDragging && !!draggingWorkspaceId && !dropTargetWorkspaceId;
+
   return (
     <aside className="flex h-full w-[280px] min-h-0 max-h-screen overflow-hidden flex-col border-r border-border bg-panel/90 px-4 py-4 backdrop-blur">
       <div className="shrink-0 rounded-2xl border border-border bg-panelMuted/70 px-4 py-4 shadow-soft">
@@ -122,10 +256,31 @@ export function LeftDock() {
                 entry={entry}
                 theme={theme}
                 active={entry.id === activeWorkspaceId}
+                dragging={entry.id === draggingWorkspaceId}
+                dropTarget={entry.id === dropTargetWorkspaceId}
+                onPointerDown={(event) => handleCardPointerDown(entry, event)}
                 onOpenMenu={(x, y) => openWorkspaceMenu(entry.id, x, y)}
-                onSelect={() => selectWorkspace(entry.id)}
+                onSelect={() => {
+                  if (suppressNextClickRef.current) {
+                    suppressNextClickRef.current = false;
+                    return;
+                  }
+                  selectWorkspace(entry.id);
+                }}
               />
             ))}
+            {showEndOfListMarker && (
+              <div
+                className="flex items-center justify-center gap-2 px-3 py-1"
+                data-testid="drop-indicator-end"
+              >
+                <div className="h-px flex-1 bg-accent/50" />
+                <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-accent">
+                  drop to end
+                </span>
+                <div className="h-px flex-1 bg-accent/50" />
+              </div>
+            )}
           </div>
         )}
       </div>

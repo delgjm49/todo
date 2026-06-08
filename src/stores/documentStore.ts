@@ -92,7 +92,7 @@ export interface DocumentStoreState {
   ) => boolean;
   reorderWorkspaces: (
     sourceWorkspaceId: WorkspaceId,
-    targetWorkspaceId: WorkspaceId,
+    targetWorkspaceId: WorkspaceId | null,
     options?: DocumentMutationOptions
   ) => boolean;
   updateWorkspaceAlertSummary: (
@@ -1182,13 +1182,39 @@ export const useDocumentStore = create<DocumentStoreState>()((set, get) => {
       return false;
     }
 
+    const sourceIndex = state.workspaceIndex.findIndex((entry) => entry.id === sourceWorkspaceId);
+    if (sourceIndex < 0) {
+      return false;
+    }
+
+    // Handle append-to-end (null target)
+    if (targetWorkspaceId === null) {
+      if (sourceIndex === state.workspaceIndex.length - 1) {
+        return false; // already last
+      }
+
+      const nextWorkspaceIndex = structuredClone(state.workspaceIndex);
+      const [moved] = nextWorkspaceIndex.splice(sourceIndex, 1);
+      if (!moved) return false;
+      nextWorkspaceIndex.push(moved);
+
+      const nextSnapshot: AppDocumentSnapshot = {
+        settings: structuredClone(state.settings),
+        workspaceIndex: reindexSnapshotWorkspaces(nextWorkspaceIndex),
+        workspacesById: structuredClone(state.workspacesById),
+        activeWorkspaceId: state.activeWorkspaceId,
+        loadedWorkspaceIds: structuredClone(state.loadedWorkspaceIds),
+      };
+
+      return commitSnapshot(set, get, nextSnapshot, "drag", options);
+    }
+
     if (sourceWorkspaceId === targetWorkspaceId) {
       return false;
     }
 
-    const sourceIndex = state.workspaceIndex.findIndex((entry) => entry.id === sourceWorkspaceId);
     const targetIndex = state.workspaceIndex.findIndex((entry) => entry.id === targetWorkspaceId);
-    if (sourceIndex < 0 || targetIndex < 0) {
+    if (targetIndex < 0) {
       return false;
     }
 

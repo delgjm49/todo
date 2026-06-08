@@ -305,6 +305,54 @@ describe("document store autosave", () => {
     );
   });
 
+  test("reorderWorkspaces with null target appends to end and persists", async () => {
+    const service = await createMemoryStorageService();
+    await useDocumentStore.getState().initializeAppData(service);
+    const homeId = useDocumentStore.getState().activeWorkspaceId;
+    assert.ok(homeId);
+
+    assert.equal(useDocumentStore.getState().createWorkspace("Second", { service, autosaveDelayMs: 5 }), true);
+    const secondId = useDocumentStore.getState().activeWorkspaceId;
+    assert.ok(secondId);
+    assert.equal(useDocumentStore.getState().createWorkspace("Third", { service, autosaveDelayMs: 5 }), true);
+    const thirdId = useDocumentStore.getState().activeWorkspaceId;
+    assert.ok(thirdId);
+
+    // Initial: [Home, Second, Third]
+    // Append Home to end → [Second, Third, Home]
+    const appended = useDocumentStore
+      .getState()
+      .reorderWorkspaces(homeId, null, { service, autosaveDelayMs: 5 });
+    assert.equal(appended, true);
+    assert.deepEqual(
+      useDocumentStore.getState().workspaceIndex.map((ws) => ws.id),
+      [secondId, thirdId, homeId]
+    );
+    assert.deepEqual(
+      useDocumentStore.getState().workspaceIndex.map((ws) => ws.order),
+      [0, 1, 2]
+    );
+
+    // Verify persistence
+    await wait(20);
+    assert.equal(useDocumentStore.getState().saveStatus, "saved");
+    await useDocumentStore.getState().initializeAppData(service);
+    assert.deepEqual(
+      useDocumentStore.getState().workspaceIndex.map((ws) => ws.id),
+      [secondId, thirdId, homeId]
+    );
+    assert.deepEqual(
+      useDocumentStore.getState().workspaceIndex.map((ws) => ws.order),
+      [0, 1, 2]
+    );
+
+    // Already last: reorderWorkspaces(homeId, null) should return false
+    const alreadyLast = useDocumentStore
+      .getState()
+      .reorderWorkspaces(homeId, null, { service, autosaveDelayMs: 5 });
+    assert.equal(alreadyLast, false);
+  });
+
   test("creates blocks from each supported template through the store", async () => {
     const service = await createMemoryStorageService();
     const calls: AppDocumentSnapshot[] = [];

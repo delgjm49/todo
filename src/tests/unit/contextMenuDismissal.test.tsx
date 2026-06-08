@@ -1138,3 +1138,337 @@ describe("context menu dismissal", () => {
     assert.equal(moveDownButton.hasAttribute("disabled"), true);
   });
 });
+
+describe("workspace pointer-drag reorder", () => {
+  function mockCardRects() {
+    const cards = document.querySelectorAll<HTMLElement>(
+      '[data-testid="workspace-card"]'
+    );
+    const rects: { element: HTMLElement; id: string; rect: DOMRect }[] = [];
+
+    cards.forEach((card, index) => {
+      const id = card.getAttribute("data-workspace-id");
+      if (!id) return;
+
+      const top = index * 64;
+      const rect = {
+        top,
+        bottom: top + 60,
+        height: 60,
+        width: 280,
+        left: 0,
+        right: 280,
+        x: 0,
+        y: top,
+        toJSON() {
+          return this;
+        },
+      } as DOMRect;
+
+      Object.defineProperty(card, "getBoundingClientRect", {
+        configurable: true,
+        value: () => rect,
+      });
+
+      rects.push({ element: card, id, rect });
+    });
+
+    return rects;
+  }
+
+  const threeWorkspaceState = {
+    settings: {
+      theme: "dark" as const,
+      defaults: {
+        fontFamily: "Segoe UI",
+        fontSize: 14,
+        textColor: "#F3F4F6",
+        cellBackground: "#111827",
+        blockBorderColor: "#374151",
+        blockBorderWidth: 1,
+        workspaceAccentEnabled: true,
+        workspaceBackground: "#1F2937",
+        workspaceTextColor: "#F9FAFB",
+        workspaceAccentColor: "#60A5FA",
+      },
+    },
+    workspaceIndex: [
+      {
+        id: "ws_home",
+        title: "Home",
+        order: 0,
+        style: {
+          background: "#1F2937",
+          textColor: "#F9FAFB",
+          accentStripe: { enabled: true, color: "#60A5FA" },
+        },
+      },
+      {
+        id: "ws_work",
+        title: "Work",
+        order: 1,
+        style: {
+          background: "#111827",
+          textColor: "#F9FAFB",
+          accentStripe: { enabled: true, color: "#34D399" },
+        },
+      },
+      {
+        id: "ws_projects",
+        title: "Projects",
+        order: 2,
+        style: {
+          background: "#111827",
+          textColor: "#F9FAFB",
+          accentStripe: { enabled: true, color: "#F59E0B" },
+        },
+      },
+    ],
+    workspacesById: {
+      ws_home: { id: "ws_home", blocks: [] },
+      ws_work: { id: "ws_work", blocks: [] },
+      ws_projects: { id: "ws_projects", blocks: [] },
+    },
+    loadedWorkspaceIds: ["ws_home", "ws_work", "ws_projects"],
+    activeWorkspaceId: "ws_home",
+  };
+
+  test("dragging a card above another card inserts before the target", async () => {
+    useDocumentStore.setState(threeWorkspaceState);
+    useUiStore.setState({
+      workspaceMenu: null,
+      blockMenu: null,
+      draggingWorkspaceId: null,
+      dropTargetWorkspaceId: null,
+      draggingBlockId: null,
+      dropTargetBlockId: null,
+      screen: "main",
+      inspectorOpen: false,
+    });
+
+    await renderNode(<LeftDock />);
+
+    const rects = mockCardRects();
+
+    // Find the source card (Work, index 1) and target card (Home, index 0)
+    const sourceRects = rects.filter((r) => r.id === "ws_work");
+    const targetRects = rects.filter((r) => r.id === "ws_home");
+    assert.equal(sourceRects.length, 1);
+    assert.equal(targetRects.length, 1);
+
+    const sourceCard = sourceRects[0].element;
+    const sourceRect = sourceRects[0].rect;
+    const targetCard = targetRects[0].element;
+
+    // pointerdown on Work card (middle of card = y: 64 + 30 = 94)
+    await act(async () => {
+      sourceCard.dispatchEvent(
+        new window.PointerEvent("pointerdown", {
+          bubbles: true,
+          button: 0,
+          isPrimary: true,
+          clientX: 10,
+          clientY: sourceRect.top + 30,
+        })
+      );
+    });
+
+    // pointermove above Home's midpoint (Home midpoint = 32)
+    await act(async () => {
+      document.dispatchEvent(
+        new window.PointerEvent("pointermove", {
+          bubbles: true,
+          clientX: 10,
+          clientY: 20, // well above Home's midpoint (32), so drop target should be Home
+        })
+      );
+    });
+
+    // Should now have an active drag with dropTargetWorkspaceId = ws_home
+    assert.equal(
+      useUiStore.getState().draggingWorkspaceId,
+      "ws_work"
+    );
+    assert.equal(
+      useUiStore.getState().dropTargetWorkspaceId,
+      "ws_home"
+    );
+
+    // Drop-indicator should be visible on the target card (Home)
+    const dropIndicator = document.querySelector('[data-testid="drop-indicator"]');
+    assert.ok(dropIndicator, "Expected drop-indicator on target card");
+    // End-of-list marker should NOT be visible
+    const dropIndicatorEnd = document.querySelector('[data-testid="drop-indicator-end"]');
+    assert.equal(dropIndicatorEnd, null, "Expected no end-of-list marker");
+
+    // pointerup to commit
+    await act(async () => {
+      document.dispatchEvent(new window.PointerEvent("pointerup", { bubbles: true }));
+    });
+
+    const state = useDocumentStore.getState();
+    assert.deepEqual(
+      state.workspaceIndex.map((ws) => ws.id),
+      ["ws_work", "ws_home", "ws_projects"]
+    );
+    assert.deepEqual(
+      state.workspaceIndex.map((ws) => ws.order),
+      [0, 1, 2]
+    );
+  });
+
+  test("dragging below all cards appends to end", async () => {
+    useDocumentStore.setState(threeWorkspaceState);
+    useUiStore.setState({
+      workspaceMenu: null,
+      blockMenu: null,
+      draggingWorkspaceId: null,
+      dropTargetWorkspaceId: null,
+      draggingBlockId: null,
+      dropTargetBlockId: null,
+      screen: "main",
+      inspectorOpen: false,
+    });
+
+    await renderNode(<LeftDock />);
+
+    mockCardRects();
+
+    const homeCard = document.querySelector<HTMLElement>(
+      '[data-workspace-id="ws_home"]'
+    );
+    assert.ok(homeCard);
+
+    // pointerdown on Home card
+    await act(async () => {
+      homeCard.dispatchEvent(
+        new window.PointerEvent("pointerdown", {
+          bubbles: true,
+          button: 0,
+          isPrimary: true,
+          clientX: 10,
+          clientY: 30,
+        })
+      );
+    });
+
+    // pointermove far below the last card (last card bottom = 128 + 60 = 188)
+    await act(async () => {
+      document.dispatchEvent(
+        new window.PointerEvent("pointermove", {
+          bubbles: true,
+          clientX: 10,
+          clientY: 250, // below all cards
+        })
+      );
+    });
+
+    // Should not have a specific drop target (it's end-of-list)
+    assert.equal(
+      useUiStore.getState().draggingWorkspaceId,
+      "ws_home"
+    );
+    assert.equal(useUiStore.getState().dropTargetWorkspaceId, null);
+
+    // End-of-list marker should be visible
+    const dropIndicatorEnd = document.querySelector('[data-testid="drop-indicator-end"]');
+    assert.ok(dropIndicatorEnd, "Expected end-of-list drop marker");
+    // Drop-indicator should NOT be visible (no specific card target)
+    const dropIndicator = document.querySelector('[data-testid="drop-indicator"]');
+    assert.equal(dropIndicator, null, "Expected no drop-indicator on any card");
+
+    // pointerup to commit (append-to-end for null target)
+    await act(async () => {
+      document.dispatchEvent(new window.PointerEvent("pointerup", { bubbles: true }));
+    });
+
+    const state = useDocumentStore.getState();
+    // Home should now be last: [Work, Projects, Home]
+    assert.deepEqual(
+      state.workspaceIndex.map((ws) => ws.id),
+      ["ws_work", "ws_projects", "ws_home"]
+    );
+    assert.deepEqual(
+      state.workspaceIndex.map((ws) => ws.order),
+      [0, 1, 2]
+    );
+  });
+
+  test("pointer move below threshold does not trigger reorder", async () => {
+    useDocumentStore.setState({
+      ...threeWorkspaceState,
+      activeWorkspaceId: "ws_home",
+    });
+    useUiStore.setState({
+      workspaceMenu: null,
+      blockMenu: null,
+      draggingWorkspaceId: null,
+      dropTargetWorkspaceId: null,
+      draggingBlockId: null,
+      dropTargetBlockId: null,
+      screen: "main",
+      inspectorOpen: false,
+    });
+
+    await renderNode(<LeftDock />);
+
+    mockCardRects();
+
+    const homeCard = document.querySelector<HTMLElement>(
+      '[data-workspace-id="ws_home"]'
+    );
+    assert.ok(homeCard);
+
+    // pointerdown on Home
+    await act(async () => {
+      homeCard.dispatchEvent(
+        new window.PointerEvent("pointerdown", {
+          bubbles: true,
+          button: 0,
+          isPrimary: true,
+          clientX: 10,
+          clientY: 30,
+        })
+      );
+    });
+
+    // pointermove with tiny movement (3px — below 6px threshold)
+    await act(async () => {
+      document.dispatchEvent(
+        new window.PointerEvent("pointermove", {
+          bubbles: true,
+          clientX: 10,
+          clientY: 33,
+        })
+      );
+    });
+
+    // Drag should NOT be active
+    assert.equal(useUiStore.getState().draggingWorkspaceId, null);
+    assert.equal(useUiStore.getState().dropTargetWorkspaceId, null);
+
+    // Neither marker should appear
+    assert.equal(
+      document.querySelector('[data-testid="drop-indicator"]'),
+      null,
+      "Expected no drop-indicator below threshold"
+    );
+    assert.equal(
+      document.querySelector('[data-testid="drop-indicator-end"]'),
+      null,
+      "Expected no end-of-list marker below threshold"
+    );
+
+    // pointerup
+    await act(async () => {
+      document.dispatchEvent(new window.PointerEvent("pointerup", { bubbles: true }));
+    });
+
+    // Order unchanged
+    const state = useDocumentStore.getState();
+    assert.deepEqual(
+      state.workspaceIndex.map((ws) => ws.id),
+      ["ws_home", "ws_work", "ws_projects"]
+    );
+  });
+});

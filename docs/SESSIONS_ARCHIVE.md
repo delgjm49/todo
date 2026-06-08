@@ -4941,3 +4941,138 @@ Closed dispatch 088 after second re-review PASS. The final change set fixes work
 
 ### Outcome
 Dispatch 088 closed with message `011-main-to-main.md`; committed and pushed by Main after dirty-file close gate.
+
+
+## Session 306 — 2026-06-08
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: agents/channels/089-workspace-pointer-drag-reorder/
+- Dispatch: agents/artifacts/089-workspace-pointer-drag-reorder-dispatch.md
+
+### Summary
+After closing dispatch 088, framed dispatch 089 for reliable pointer-based workspace drag reorder. The dispatch explicitly avoids native HTML5 drag/drop, preserves 088's working scroll/menu/rename/delete/Move up/down behavior, and asks Plan to ground a targeted implementation in current post-088 files and tests.
+
+### Outcome
+Dispatch artifact and first Main → Plan channel message created; ready for Plan pickup.
+
+## Session 307 — 2026-06-08
+
+### Agent Type
+plan
+
+### Artifacts
+- Channel: agents/channels/089-workspace-pointer-drag-reorder/
+- Dispatch: agents/artifacts/089-workspace-pointer-drag-reorder-dispatch.md
+- Plan: agents/artifacts/089-workspace-pointer-drag-reorder-plan.md
+
+### Summary
+Created a grounded implementation plan for reliable pointer-based workspace drag reorder in the left dock. The plan cites current post-088 code/tests, preserves scroll/menu/inline rename/delete/Move up/down behavior, avoids native HTML5 workspace drag/drop, and directs Dev to add visible-order pointer-drag test coverage.
+
+### Outcome
+Plan artifact created and `agents/channels/089-workspace-pointer-drag-reorder/messages/002-plan-to-dev.md` created; ready for Dev pickup.
+
+## Session 308 — 2026-06-08
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: agents/channels/089-workspace-pointer-drag-reorder/
+- Dispatch: agents/artifacts/089-workspace-pointer-drag-reorder-dispatch.md
+- Plan: agents/artifacts/089-workspace-pointer-drag-reorder-plan.md
+- Complete: agents/artifacts/089-workspace-pointer-drag-reorder-complete.md
+- Next: messages/003-dev-to-review.md
+
+### Summary
+Implemented pointer-based workspace drag reorder in the left dock. Changes span WorkspaceCard (drag props, visual states, stable selectors), LeftDock (custom pointer-event session management with threshold-based activation, card rect drop-target calculation, append-to-end support, click-after-drag suppression), and documentStore (extended reorderWorkspaces to accept null for append-to-end). Added 3 unit tests for pointer-drag insert-before, append-to-end, and below-threshold no-op; added append-to-end store test; added 2 pointer-drag E2E tests; strengthened Move up/down E2E with exact order assertions. All 77 targeted JS tests and 9 E2E tests pass.
+
+### Outcome
+Complete artifact and `003-dev-to-review.md` created; ready for Review pickup.
+
+## Session 309 — 2026-06-08
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: agents/channels/089-workspace-pointer-drag-reorder/
+- Plan: agents/artifacts/089-workspace-pointer-drag-reorder-plan.md
+- Complete: agents/artifacts/089-workspace-pointer-drag-reorder-complete.md
+- Review: agents/artifacts/089-workspace-pointer-drag-reorder-review.md
+- Next: messages/004-review-to-main.md
+
+### Summary
+Reviewed the pointer-based workspace drag reorder implementation. Confirmed all 7 plan steps addressed, all acceptance criteria met, and all dispatch 088 behaviors preserved. Reran all three verification commands: build passes (no TypeScript errors), 77/77 unit/integration tests pass, 9/9 E2E tests pass including new pointer-drag and strengthened Move up/down tests. No issues found.
+
+### Outcome
+Review artifact and `004-review-to-main.md` created with State = review-pass. Ready for Main closeout.
+
+## Session 310 — 2026-06-08
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: agents/channels/089-workspace-pointer-drag-reorder/
+- Dispatch: agents/artifacts/089-workspace-pointer-drag-reorder-dispatch.md
+
+### Summary
+User-tested dispatch 089 after review-pass and confirmed pointer-based workspace drag reorder works, but the interaction lacks enough visible feedback during dragging. The user requested stronger cursor/drop-position feedback and approved routing the follow-up through dispatch.
+
+### Outcome
+Did not close or commit dispatch 089. Created `005-main-to-dev.md` routing the dispatch back to Dev for clearer drag feedback and required re-review.
+
+## Session 311 — 2026-06-08
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: agents/channels/089-workspace-pointer-drag-reorder/
+- Main message: messages/005-main-to-dev.md
+- Complete (updated): agents/artifacts/089-workspace-pointer-drag-reorder-complete.md
+- Next: messages/006-dev-to-review.md
+
+### Summary
+Implemented enhanced drag feedback for workspace pointer-drag reorder. Changes: (1) dragged cards now appear "lifted" with `scale-[0.97]`, `shadow-lg`, 70% opacity, and accent ring; (2) drop-target cards show a prominent top-edge accent horizontal line (`drop-indicator`) plus `bg-accent/10` background tint; (3) end-of-list drops show a "drop to end" accent marker (`drop-indicator-end`) at the bottom of the workspace list. Added unit test assertions verifying marker presence/absence during each drag state, and E2E assertions confirming marker visibility during active drag. All 77 unit/integration tests and 9 E2E tests pass.
+
+### Outcome
+Complete artifact updated and `006-dev-to-review.md` created; ready for re-review.
+
+## Session 312 — 2026-06-08
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: agents/channels/089-workspace-pointer-drag-reorder/
+- Complete: agents/artifacts/089-workspace-pointer-drag-reorder-complete.md
+- Review (updated): agents/artifacts/089-workspace-pointer-drag-reorder-review.md
+- Next: messages/007-review-to-main.md
+
+### Summary
+Re-reviewed the drag-feedback fix round for workspace pointer-drag reorder. Verified: (1) insert-before marker (`drop-indicator` accent line) renders on target cards during active drag, (2) append-to-end marker (`drop-indicator-end`) renders below all cards when dragging to end, (3) dragged card visual enhanced with `scale-[0.97]` and `shadow-lg`, (4) drop-target card shows `bg-accent/10` tint, (5) neither marker appears below threshold. All three verification commands pass (build, 77/77 unit/integration, 9/9 E2E). No issues found.
+
+### Outcome
+Review artifact updated with re-review findings and `007-review-to-main.md` created with State = review-pass. Ready for Main closeout.
+
+## Session 313 — 2026-06-08
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: agents/channels/089-workspace-pointer-drag-reorder/
+- Dispatch: agents/artifacts/089-workspace-pointer-drag-reorder-dispatch.md
+- Plan: agents/artifacts/089-workspace-pointer-drag-reorder-plan.md
+- Complete: agents/artifacts/089-workspace-pointer-drag-reorder-complete.md
+- Review: agents/artifacts/089-workspace-pointer-drag-reorder-review.md
+
+### Summary
+Closed dispatch 089 after review-pass and drag-feedback re-review-pass. The final change set implements pointer-based workspace drag reorder without native HTML5 drag/drop, adds append-to-end support, strengthens visible drag feedback with source/target/end markers, and preserves 088's scrolling, portaled context menu, inline rename/delete, color/stripe, and Move up/down fallback behavior.
+
+### Outcome
+Dispatch 089 closed with message `008-main-to-main.md`; committed and pushed by Main after dirty-file close gate. Follow-up insertion-gap animation polish was scoped into dispatch 090.
