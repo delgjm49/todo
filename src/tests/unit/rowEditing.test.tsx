@@ -294,6 +294,88 @@ describe("row editing ui", () => {
     assert.ok(cellElement.className.includes("line-through"));
   });
 
+  test("completed rows are hidden when hideCompletedRows is true, with empty-state guidance", async () => {
+    const block = createBlockTemplate("basic_checklist", "ws_home", {
+      blockId: "block_home",
+      title: "Today",
+      order: 0,
+    });
+    const rowId = block.rows[0]?.id;
+    const checkboxColumnId = block.columns.find((column) => column.type === "checkbox")?.id;
+    assert.ok(rowId);
+    assert.ok(checkboxColumnId);
+
+    const completedHiddenBlock: Block = {
+      ...block,
+      hideCompletedRows: true,
+      columns: block.columns.map((column) =>
+        column.id === checkboxColumnId
+          ? {
+              ...column,
+              settings: { strikeoutRowWhenChecked: true, moveCheckedRowsToBottom: false },
+            }
+          : column
+      ),
+      rows: block.rows.map((row) => ({
+        ...row,
+        cells: {
+          ...row.cells,
+          [checkboxColumnId]: { value: true, format: {} },
+        },
+      })),
+    };
+
+    useDocumentStore.setState({
+      settings: {
+        theme: "dark",
+        defaults: {
+          fontFamily: "Segoe UI",
+          fontSize: 14,
+          textColor: "#F3F4F6",
+          cellBackground: "#111827",
+          blockBorderColor: "#374151",
+          blockBorderWidth: 1,
+          workspaceAccentEnabled: true,
+          workspaceBackground: "#1F2937",
+          workspaceTextColor: "#F9FAFB",
+          workspaceAccentColor: "#60A5FA",
+        },
+      },
+      workspaceIndex: [
+        {
+          id: "ws_home",
+          title: "Home",
+          order: 0,
+          style: {
+            background: "#1F2937",
+            textColor: "#F9FAFB",
+            accentStripe: { enabled: true, color: "#60A5FA" },
+          },
+        },
+      ],
+      workspacesById: {
+        ws_home: {
+          id: "ws_home",
+          blocks: [completedHiddenBlock],
+        },
+      },
+      loadedWorkspaceIds: ["ws_home"],
+      activeWorkspaceId: "ws_home",
+    });
+
+    await renderMainPane();
+
+    // The completed row should NOT be rendered when hideCompletedRows is true
+    const rowElement = document.querySelector(`[data-testid="row-${rowId}"]`);
+    assert.equal(rowElement, null);
+
+    // The empty-state guidance should be present
+    assert.ok(
+      document.body.textContent?.includes("All completed rows are hidden"),
+      "Empty-state guidance should be displayed when all rows are hidden"
+    );
+  });
+
   test("adds, inserts, and deletes rows from UI controls", async () => {
     const block = createBlockTemplate("basic_checklist", "ws_home", {
       blockId: "block_home",

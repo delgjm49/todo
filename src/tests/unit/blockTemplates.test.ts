@@ -30,6 +30,11 @@ describe("block templates", () => {
     assert.equal(numberedList.columns[0]?.type, "numbered");
     assert.equal(numberedList.columns[1]?.type, "text");
     assert.equal(numberedList.rows[0]?.cells[numberedList.columns[0]!.id]?.value, null);
+
+    // All block templates default hideCompletedRows to false
+    assert.equal(checklist.hideCompletedRows, false);
+    assert.equal(bulletList.hideCompletedRows, false);
+    assert.equal(numberedList.hideCompletedRows, false);
   });
 });
 

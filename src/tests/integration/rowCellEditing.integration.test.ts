@@ -7,6 +7,7 @@ import {
   flushAutosave,
 } from "./helpers/integrationHarness.js";
 import { createStorageService } from "../../services/storage/index.js";
+import { filterCompletedRows } from "../../domain/rows/completedRowFilter.js";
 import type { StorageBackend } from "../../services/storage/backends.js";
 
 // ---------------------------------------------------------------------------
@@ -204,6 +205,51 @@ describe("row and cell editing integration", () => {
     const lastRowAfter = reloadedBlock.rows[reloadedBlock.rows.length - 1];
     assert.equal(lastRowAfter?.id, starterRowId);
     assert.equal(lastRowAfter?.cells[checkboxColumnId]?.value, true);
+  });
+
+  test("checkbox toggle hides and reveals completed rows when hideCompletedRows is enabled", async () => {
+    const wsId = getActiveWorkspaceId();
+    const { blockId, checkboxColumnId, starterRowId } = getStarterBlockInfo(wsId);
+
+    // Enable hideCompletedRows
+    const toggledOn = useDocumentStore.getState().toggleBlockHideCompletedRows(wsId, blockId);
+    assert.equal(toggledOn, true);
+
+    // Verify the preference stuck
+    let block = useDocumentStore.getState().workspacesById[wsId]?.blocks.find((b) => b.id === blockId);
+    assert.ok(block);
+    assert.equal(block.hideCompletedRows, true);
+
+    // Starter row should be visible before checking the checkbox (unchecked)
+    let visibleRows = filterCompletedRows(block.rows, block.columns, block.hideCompletedRows);
+    const starterRowVisible = visibleRows.some((r) => r.id === starterRowId);
+    assert.equal(starterRowVisible, true);
+
+    // Toggle the checkbox on (check it)
+    useDocumentStore.getState().toggleCheckboxCellValue(wsId, blockId, starterRowId, checkboxColumnId);
+
+    // Re-read block state and verify the row cell is checked
+    block = useDocumentStore.getState().workspacesById[wsId]?.blocks.find((b) => b.id === blockId);
+    assert.ok(block);
+    assert.equal(block.rows[0]?.cells[checkboxColumnId]?.value, true);
+
+    // The starter row should now be excluded by the filter
+    visibleRows = filterCompletedRows(block.rows, block.columns, block.hideCompletedRows);
+    const starterRowHidden = visibleRows.some((r) => r.id === starterRowId);
+    assert.equal(starterRowHidden, false);
+
+    // Toggle the checkbox off (uncheck)
+    useDocumentStore.getState().toggleCheckboxCellValue(wsId, blockId, starterRowId, checkboxColumnId);
+
+    // Re-read block state and verify the row cell is unchecked
+    block = useDocumentStore.getState().workspacesById[wsId]?.blocks.find((b) => b.id === blockId);
+    assert.ok(block);
+    assert.equal(block.rows[0]?.cells[checkboxColumnId]?.value, false);
+
+    // The starter row should be visible again after unchecking
+    visibleRows = filterCompletedRows(block.rows, block.columns, block.hideCompletedRows);
+    const starterRowVisibleAgain = visibleRows.some((r) => r.id === starterRowId);
+    assert.equal(starterRowVisibleAgain, true);
   });
 
   test("date, time, dropdown cell edits persist across reload", async () => {
