@@ -31,7 +31,7 @@ except Exception:  # pragma: no cover - optional dependency varies by Python ins
 
 DEFAULT_LLMGATEWAY_MODEL = "grok-imagine-image"
 DEFAULT_OPENROUTER_CHAT_MODEL = "openai/gpt-5.5"
-DEFAULT_OPENROUTER_IMAGE_MODEL = "openai/gpt-5-image"
+DEFAULT_OPENROUTER_IMAGE_MODEL = "openai/gpt-5.4-image-2"
 
 IMAGE_URL_KEYS = {"image_url", "imageUrl", "url", "uri"}
 BASE64_KEYS = {"b64_json", "base64", "image_base64", "data"}

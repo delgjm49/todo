@@ -13,10 +13,11 @@ Use the repo-local wrapper; it reads existing credentials from `~/.pi/agent/mode
 
 ## Default routing
 
-- Use **OpenRouter** as the working default. The wrapper also defaults to OpenRouter:
+- Use **OpenRouter** as the working default. The wrapper defaults to the higher-quality
+  `openai/gpt-5.4-image-2` image model unless the user asks for another model:
 
   ```bash
-  tools/ai-image.py '<prompt>' --image-model openai/gpt-5-image-mini
+  tools/ai-image.py '<prompt>' --image-model openai/gpt-5.4-image-2
   ```
 
 - For **Grok Imagine** requests, DevPass / LLM Gateway exposes `grok-imagine-image`, but the current
@@ -32,7 +33,7 @@ Use the repo-local wrapper; it reads existing credentials from `~/.pi/agent/mode
   tools/ai-image.py '<prompt>' \
     --provider openrouter \
     --model openai/gpt-5.5 \
-    --image-model openai/gpt-5-image \
+    --image-model openai/gpt-5.4-image-2 \
     --open
   ```
 
