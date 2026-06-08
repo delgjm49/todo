@@ -1,6 +1,6 @@
 # Sessions — Living Summary
 
-Last updated: 2026-06-07
+Last updated: 2026-06-08
 
 ## Phase Status
 
@@ -61,6 +61,7 @@ Last updated: 2026-06-07
 
 - **Session 289 — Main close** (2026-06-06): Closed dispatch 084 after Review PASS, consolidated Sessions 280–288, and prepared archive/completed views planning for commit/push.
 - **Session 290–296 (auto queue)**: Dispatches 085 (core UX fixes) and 086 (hide-completed rows) completed end-to-end via auto-queue with autoClose/autoAdvance. Both pushed (commits 1cf8f53, b5d1cb3). Queue 2/2 succeeded.
+- **Session 087 (auto queue)**: Dispatch 087 (test cleanup for three deferred 086 items) completed end-to-end via auto-queue. All three open test items resolved; review-pass. Pushed (commit c67fc2f). Queue 1/1 succeeded.
 - **Session 288 — Review PASS** (2026-06-06): Confirmed dispatch 084's final planning artifact is internally consistent, non-destructive, and concrete enough for future implementation scoping.
 - **Session 287 — Dev fix** (2026-06-06): Split insert vs paste semantics in the future acceptance criteria so compatible pasted checkbox values can remain completed/hidden.
 - **Session 286 — Review FAIL** (2026-06-06): Found one stale insert/paste acceptance criterion after the first artifact fix.
@@ -71,7 +72,7 @@ Last updated: 2026-06-07
 
 ## Next Recommended
 
-**Queue complete.** Both auto-queued dispatches (085 + 086) finished successfully with auto-close + push. No further recommended work at this time.
+**Queue complete.** Dispatch 087 (deferred test cleanup) finished successfully with auto-close + push. No further recommended work at this time.
 
 **Completed:**
 - Alerts epic (053–056): complete
@@ -98,6 +99,7 @@ Last updated: 2026-06-07
 - Archive/completed views planning: complete — recommends derived hide-completed rows filter and defers explicit archive state
 - Core UX fixes (dispatch 085): complete — all 7 observations resolved (workspace/block scrolling, menus, DnD, Sort/Menu, color flash)
 - Hide-completed rows (dispatch 086): complete — derived filter + `hideCompletedRows` preference shipped (PASS WITH NOTES)
+- Deferred test cleanup (dispatch 087): complete — three low-severity test additions from 086 review-pass now implemented
 - Autosave UX (063): complete
 - Manual QA (065): complete — no critical defects found
 
