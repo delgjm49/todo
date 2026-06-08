@@ -130,8 +130,42 @@ Use the live `--list-models --descriptions` command for exact availability. Cura
 | Logos/posters/text in image | Ideogram v3, Qwen Image, Seedream 4.5/5 | Better typography/layout than generic photoreal models. |
 | Photorealism/product shots | Imagen 4/Ultra, GPT Image, Flux Pro | Higher quality; confirm before large batches. |
 | Natural-language image edits | GPT Image edit, Qwen Image edit, Flux Kontext, Seedream edit | Requires image-input/upload tooling; text-to-image wrapper is only partially sufficient today. |
-| Grok Imagine | Atlas `xai/grok-imagine-image/text-to-image` | Prefer Atlas route over current DevPass coding plan. |
+| Base/reference image → new image | Flux Kontext/Redux, Qwen Image edit/edit-plus, Seedream edit, Nano Banana edit/reference, Grok Imagine edit | Use models tagged `IMAGE-TO-IMAGE`, `edit`, `reference`, `kontext`, `redux`, or `fill`; do not use plain text-to-image models for this. |
+| Grok Imagine | Atlas `xai/grok-imagine-image/text-to-image` or `xai/grok-imagine-image/edit` | Use `/edit` for reference/base-image workflows; use `/text-to-image` for pure prompts. |
 
+## Base/reference image workflows
+
+Atlas exposes many image-input models for taking a base image, reference image, or multiple images and
+editing/recomposing them. Important distinction:
+
+- **Text-to-image** models create from prompt only. Examples: `.../text-to-image`, Imagen, Flux
+  Schnell, Seedream text-to-image.
+- **Image-to-image / edit** models take one or more images plus instructions. Use these for “use this
+  as a base,” “keep this character,” “change the background,” “make variants of this image,” “match
+  this style,” inpainting/outpainting, object edits, and reference-guided new images.
+- **Current tooling limit:** `tools/ai-image.py` and `tools/ai-image-async.py` currently wrap
+  text-to-image generation only. They can list edit/reference models, but they do not yet upload a
+  source image or pass image-reference parameters. If the user asks for base-image editing, explain
+  that the provider supports it and either ask to add/upload-support tooling or use the provider UI/API
+  manually for that request.
+
+Good Atlas model families for base/reference image work:
+
+| Need | Candidate models | Notes |
+| --- | --- | --- |
+| Precise natural-language edit | `openai/gpt-image-2/edit`, `openai/gpt-image-1.5/edit`, `openai/gpt-image-1/edit` | Add/remove objects, backgrounds, colors, text/graphic edits. |
+| Reference-guided generation / character consistency | `black-forest-labs/flux-2-pro/edit`, `black-forest-labs/flux-2-flex/edit`, Flux Kontext | Multi-reference workflows; good for identity/style consistency. |
+| Strong prompt + image editing | `qwen/qwen-image-2.0-pro/edit`, `alibaba/qwen-image/edit-plus`, `atlascloud/qwen-image/edit` | Good for detail edits, style transfer, and text-bearing images. |
+| Fast/professional edits | `bytedance/seedream-v4.5/edit`, `bytedance/seedream-v5.0-lite/edit`, `.../edit-sequential` | Preserves faces/lighting/color; sequential variants support batch-like editing. |
+| Grok reference/edit | `xai/grok-imagine-image/edit`, `xai/grok-imagine-image-quality/edit` | Supports single and multi-image reference editing. |
+| Google image edit/reference | `google/nano-banana/edit`, `google/nano-banana-2/edit`, `google/nano-banana-2/reference-to-image` | Natural-language image transformations; check live descriptions. |
+
+Discovery command:
+
+```bash
+tools/ai-image.py --provider atlascloud --list-models --images-only --descriptions \
+  | grep -Ei 'IMAGE-TO-IMAGE|edit|reference|kontext|redux|fill'
+```
 
 Common options:
 
