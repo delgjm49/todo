@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import type { WorkspaceId } from "../../domain/ids.js";
 import type { WorkspaceIndexEntry } from "../../types/workspace.js";
@@ -33,6 +33,7 @@ export function LeftDock() {
 
   // Pointer-drag workspace reorder state
   const [isDragging, setIsDragging] = useState(false);
+  const [pressedWorkspaceId, setPressedWorkspaceId] = useState<WorkspaceId | null>(null);
   const dragSessionRef = useRef<{
     sourceId: WorkspaceId;
     startX: number;
@@ -111,6 +112,7 @@ export function LeftDock() {
       if (event.button !== 0 || event.isPrimary === false) return;
       if (workspaceMenu) return; // menu is open, don't start drag
 
+      setPressedWorkspaceId(entry.id);
       dragSessionRef.current = {
         sourceId: entry.id,
         startX: event.clientX,
@@ -144,6 +146,7 @@ export function LeftDock() {
         setWorkspaceDragState(session.sourceId, null);
         document.body.style.userSelect = "none";
         document.body.style.webkitUserSelect = "none";
+        document.body.style.cursor = "grabbing";
       }
 
       // Calculate drop target from card positions
@@ -181,6 +184,7 @@ export function LeftDock() {
 
       document.body.style.userSelect = "";
       document.body.style.webkitUserSelect = "";
+      document.body.style.cursor = "";
 
       if (session.active) {
         const currentDropTarget = useUiStore.getState().dropTargetWorkspaceId;
@@ -197,15 +201,18 @@ export function LeftDock() {
       setWorkspaceDragState(null);
       dragSessionRef.current = null;
       dropAfterEndRef.current = false;
+      setPressedWorkspaceId(null);
       setIsDragging(false);
     };
 
     const onPointerCancel = () => {
       document.body.style.userSelect = "";
       document.body.style.webkitUserSelect = "";
+      document.body.style.cursor = "";
       setWorkspaceDragState(null);
       dragSessionRef.current = null;
       dropAfterEndRef.current = false;
+      setPressedWorkspaceId(null);
       setIsDragging(false);
     };
 
@@ -220,7 +227,150 @@ export function LeftDock() {
     };
   }, [isDragging, closeWorkspaceMenu, setWorkspaceDragState, reorderWorkspaces]);
 
-  const showEndOfListMarker = isDragging && !!draggingWorkspaceId && !dropTargetWorkspaceId;
+  // ---- Drop slot helpers ----
+
+  function WorkspaceDropSlot({
+    position,
+    edge,
+    targetWorkspaceId,
+  }: {
+    position: "before" | "end";
+    edge: "top" | "middle" | "bottom";
+    targetWorkspaceId?: WorkspaceId;
+  }) {
+    return (
+      <div
+        className="h-3 shrink-0 rounded-md border border-accent/60 bg-accent/10 shadow-sm shadow-accent/40 ring-1 ring-accent/30"
+        data-testid="workspace-drop-slot"
+        data-drop-position={position}
+        data-drop-edge={edge}
+        data-target-workspace-id={targetWorkspaceId}
+        aria-hidden="true"
+      />
+    );
+  }
+
+  function renderWorkspaceList(): ReactNode {
+    if (workspaceIndex.length === 0) {
+      return (
+        <div className="rounded-xl border border-dashed border-border px-4 py-4 text-sm text-textMuted">
+          No workspaces are available.
+        </div>
+      );
+    }
+
+    const draggingId = draggingWorkspaceId;
+    const targetId = dropTargetWorkspaceId;
+
+    // Determine the non-dragging entries for slot-neighbor lookups
+    const nonDraggingIds = draggingId
+      ? workspaceIndex.filter((e) => e.id !== draggingId)
+      : [];
+
+    return (
+      <div className="flex flex-col gap-2">
+        {workspaceIndex.flatMap((entry) => {
+          const items: ReactNode[] = [];
+          const entryId = entry.id;
+
+          // ---- Slot rendering ----
+
+          // Before-target slot: appears immediately before the target card
+          const showBeforeSlot =
+            isDragging &&
+            !!draggingId &&
+            !!targetId &&
+            entryId === targetId;
+
+          if (showBeforeSlot) {
+            const targetIdx = nonDraggingIds.findIndex(
+              (e) => e.id === targetId
+            );
+            const hasPrevNeighbor = targetIdx > 0;
+            const prevNeighbor = hasPrevNeighbor
+              ? nonDraggingIds[targetIdx - 1]
+              : null;
+            const edge = prevNeighbor ? "middle" : "top";
+
+            items.push(
+              <WorkspaceDropSlot
+                key={`slot-before-${entryId}`}
+                position="before"
+                edge={edge}
+                targetWorkspaceId={targetId}
+              />
+            );
+          }
+
+          // ---- Nudge derivation ----
+
+          let slotNudge: "up" | "down" | null = null;
+          if (isDragging && !!draggingId && entryId !== draggingId) {
+            if (targetId) {
+              // Slot is before the target card
+              const targetIdx = nonDraggingIds.findIndex(
+                (e) => e.id === targetId
+              );
+              if (targetIdx > 0 && entryId === nonDraggingIds[targetIdx - 1]?.id) {
+                // Previous neighbor: slot below this card → nudge up
+                slotNudge = "up";
+              } else if (entryId === targetId) {
+                // Target card: slot above this card → nudge down
+                slotNudge = "down";
+              }
+            } else if (dropAfterEndRef.current) {
+              // End-of-list slot: last non-dragging card nudges up
+              const lastNonDragging =
+                nonDraggingIds[nonDraggingIds.length - 1];
+              if (lastNonDragging && entryId === lastNonDragging.id) {
+                slotNudge = "up";
+              }
+            }
+          }
+
+          // ---- Card rendering ----
+
+          items.push(
+            <WorkspaceCard
+              key={entryId}
+              entry={entry}
+              theme={theme}
+              active={entryId === activeWorkspaceId}
+              dragging={entryId === draggingId}
+              pressed={
+                !draggingId && entryId === pressedWorkspaceId
+              }
+              slotNudge={slotNudge}
+              onPointerDown={(event) =>
+                handleCardPointerDown(entry, event)
+              }
+              onOpenMenu={(x, y) =>
+                openWorkspaceMenu(entryId, x, y)
+              }
+              onSelect={() => {
+                if (suppressNextClickRef.current) {
+                  suppressNextClickRef.current = false;
+                  return;
+                }
+                selectWorkspace(entryId);
+              }}
+            />
+          );
+
+          return items;
+        })}
+
+        {/* End-of-list slot */}
+        {isDragging && !!draggingId && !targetId && (
+          <WorkspaceDropSlot
+            key="slot-end"
+            position="end"
+            edge="bottom"
+          />
+        )}
+      </div>
+    );
+  }
 
   return (
     <aside className="flex h-full w-[280px] min-h-0 max-h-screen overflow-hidden flex-col border-r border-border bg-panel/90 px-4 py-4 backdrop-blur">
@@ -244,45 +394,7 @@ export function LeftDock() {
       </div>
 
       <div className="mt-4 min-h-0 flex-1 overflow-y-auto pr-1" data-testid="workspace-list-scroll">
-        {workspaceIndex.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border px-4 py-4 text-sm text-textMuted">
-            No workspaces are available.
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {workspaceIndex.map((entry) => (
-              <WorkspaceCard
-                key={entry.id}
-                entry={entry}
-                theme={theme}
-                active={entry.id === activeWorkspaceId}
-                dragging={entry.id === draggingWorkspaceId}
-                dropTarget={entry.id === dropTargetWorkspaceId}
-                onPointerDown={(event) => handleCardPointerDown(entry, event)}
-                onOpenMenu={(x, y) => openWorkspaceMenu(entry.id, x, y)}
-                onSelect={() => {
-                  if (suppressNextClickRef.current) {
-                    suppressNextClickRef.current = false;
-                    return;
-                  }
-                  selectWorkspace(entry.id);
-                }}
-              />
-            ))}
-            {showEndOfListMarker && (
-              <div
-                className="flex items-center justify-center gap-2 px-3 py-1"
-                data-testid="drop-indicator-end"
-              >
-                <div className="h-px flex-1 bg-accent/50" />
-                <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-accent">
-                  drop to end
-                </span>
-                <div className="h-px flex-1 bg-accent/50" />
-              </div>
-            )}
-          </div>
-        )}
+        {renderWorkspaceList()}
       </div>
 
       <div className="mt-4 shrink-0 rounded-2xl border border-border bg-panelMuted/70 px-4 py-4">

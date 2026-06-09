@@ -1258,7 +1258,6 @@ describe("workspace pointer-drag reorder", () => {
 
     const sourceCard = sourceRects[0].element;
     const sourceRect = sourceRects[0].rect;
-    const targetCard = targetRects[0].element;
 
     // pointerdown on Work card (middle of card = y: 64 + 30 = 94)
     await act(async () => {
@@ -1294,12 +1293,25 @@ describe("workspace pointer-drag reorder", () => {
       "ws_home"
     );
 
-    // Drop-indicator should be visible on the target card (Home)
-    const dropIndicator = document.querySelector('[data-testid="drop-indicator"]');
-    assert.ok(dropIndicator, "Expected drop-indicator on target card");
-    // End-of-list marker should NOT be visible
-    const dropIndicatorEnd = document.querySelector('[data-testid="drop-indicator-end"]');
-    assert.equal(dropIndicatorEnd, null, "Expected no end-of-list marker");
+    // Insert-before slot should be visible before the target card (Home)
+    const beforeSlots = document.querySelectorAll(
+      '[data-testid="workspace-drop-slot"][data-drop-position="before"]'
+    );
+    assert.equal(beforeSlots.length, 1, "Expected one before-target drop slot");
+    const slot = beforeSlots[0];
+    assert.equal(
+      slot.getAttribute("data-target-workspace-id"),
+      "ws_home"
+    );
+    assert.equal(
+      slot.getAttribute("data-drop-edge"),
+      "top"
+    );
+    // End-of-list slot should NOT be visible
+    const endSlots = document.querySelectorAll(
+      '[data-testid="workspace-drop-slot"][data-drop-position="end"]'
+    );
+    assert.equal(endSlots.length, 0, "Expected no end-of-list drop slot");
 
     // pointerup to commit
     await act(async () => {
@@ -1370,12 +1382,20 @@ describe("workspace pointer-drag reorder", () => {
     );
     assert.equal(useUiStore.getState().dropTargetWorkspaceId, null);
 
-    // End-of-list marker should be visible
-    const dropIndicatorEnd = document.querySelector('[data-testid="drop-indicator-end"]');
-    assert.ok(dropIndicatorEnd, "Expected end-of-list drop marker");
-    // Drop-indicator should NOT be visible (no specific card target)
-    const dropIndicator = document.querySelector('[data-testid="drop-indicator"]');
-    assert.equal(dropIndicator, null, "Expected no drop-indicator on any card");
+    // End-of-list drop slot should be visible
+    const endSlots = document.querySelectorAll(
+      '[data-testid="workspace-drop-slot"][data-drop-position="end"]'
+    );
+    assert.equal(endSlots.length, 1, "Expected one end-of-list drop slot");
+    assert.equal(
+      endSlots[0].getAttribute("data-drop-edge"),
+      "bottom"
+    );
+    // Before-target slot should NOT be visible
+    const beforeSlots = document.querySelectorAll(
+      '[data-testid="workspace-drop-slot"][data-drop-position="before"]'
+    );
+    assert.equal(beforeSlots.length, 0, "Expected no before-target drop slot");
 
     // pointerup to commit (append-to-end for null target)
     await act(async () => {
@@ -1447,17 +1467,11 @@ describe("workspace pointer-drag reorder", () => {
     assert.equal(useUiStore.getState().draggingWorkspaceId, null);
     assert.equal(useUiStore.getState().dropTargetWorkspaceId, null);
 
-    // Neither marker should appear
-    assert.equal(
-      document.querySelector('[data-testid="drop-indicator"]'),
-      null,
-      "Expected no drop-indicator below threshold"
+    // No drop slot should appear below threshold
+    const allSlots = document.querySelectorAll(
+      '[data-testid="workspace-drop-slot"]'
     );
-    assert.equal(
-      document.querySelector('[data-testid="drop-indicator-end"]'),
-      null,
-      "Expected no end-of-list marker below threshold"
-    );
+    assert.equal(allSlots.length, 0, "Expected no drop slot below threshold");
 
     // pointerup
     await act(async () => {
@@ -1469,6 +1483,175 @@ describe("workspace pointer-drag reorder", () => {
     assert.deepEqual(
       state.workspaceIndex.map((ws) => ws.id),
       ["ws_home", "ws_work", "ws_projects"]
+    );
+  });
+
+  test("dragging a card before the middle card shows a middle slot with correct neighbor nudge", async () => {
+    useDocumentStore.setState(threeWorkspaceState);
+    useUiStore.setState({
+      workspaceMenu: null,
+      blockMenu: null,
+      draggingWorkspaceId: null,
+      dropTargetWorkspaceId: null,
+      draggingBlockId: null,
+      dropTargetBlockId: null,
+      screen: "main",
+      inspectorOpen: false,
+    });
+
+    await renderNode(<LeftDock />);
+
+    const rects = mockCardRects();
+
+    // Drag Home (index 0) before Projects (index 2, middle target)
+    const homeCard = rects.find((r) => r.id === "ws_home")?.element;
+    assert.ok(homeCard);
+
+    // pointerdown on Home
+    await act(async () => {
+      homeCard.dispatchEvent(
+        new window.PointerEvent("pointerdown", {
+          bubbles: true,
+          button: 0,
+          isPrimary: true,
+          clientX: 10,
+          clientY: 30,
+        })
+      );
+    });
+
+    // pointermove above Projects' midpoint (Projects midpoint = 128 + 30 = 158)
+    await act(async () => {
+      document.dispatchEvent(
+        new window.PointerEvent("pointermove", {
+          bubbles: true,
+          clientX: 10,
+          clientY: 140, // above Projects midpoint (158)
+        })
+      );
+    });
+
+    // Should target ws_projects
+    assert.equal(useUiStore.getState().dropTargetWorkspaceId, "ws_projects");
+
+    // Slot should have edge="middle" because Work (non-dragging) exists before Projects
+    const beforeSlots = document.querySelectorAll(
+      '[data-testid="workspace-drop-slot"][data-drop-position="before"]'
+    );
+    assert.equal(beforeSlots.length, 1);
+    assert.equal(beforeSlots[0].getAttribute("data-drop-edge"), "middle");
+    assert.equal(
+      beforeSlots[0].getAttribute("data-target-workspace-id"),
+      "ws_projects"
+    );
+
+    // The card above the slot (Work) should nudge up (-translate-y-1)
+    const workCardEl = document.querySelector('[data-workspace-id="ws_work"]');
+    assert.ok(workCardEl);
+    assert.ok(workCardEl.className.includes("-translate-y-1"));
+
+    // The target card (Projects) should nudge down (translate-y-1)
+    const projectsCardEl = document.querySelector('[data-workspace-id="ws_projects"]');
+    assert.ok(projectsCardEl);
+    assert.ok(projectsCardEl.className.includes("translate-y-1"));
+
+    // Home (dragged) should NOT have any nudge class
+    const homeCardEl = document.querySelector('[data-workspace-id="ws_home"]');
+    assert.ok(homeCardEl);
+    assert.equal(homeCardEl.className.includes("translate"), false);
+
+    // pointerup to commit
+    await act(async () => {
+      document.dispatchEvent(new window.PointerEvent("pointerup", { bubbles: true }));
+    });
+
+    // Home inserted before Projects: [Work, Home, Projects]
+    const state = useDocumentStore.getState();
+    assert.deepEqual(
+      state.workspaceIndex.map((ws) => ws.id),
+      ["ws_work", "ws_home", "ws_projects"]
+    );
+    assert.deepEqual(
+      state.workspaceIndex.map((ws) => ws.order),
+      [0, 1, 2]
+    );
+  });
+
+  test("dragging a card before the first card shows top-edge slot with nudge", async () => {
+    useDocumentStore.setState(threeWorkspaceState);
+    useUiStore.setState({
+      workspaceMenu: null,
+      blockMenu: null,
+      draggingWorkspaceId: null,
+      dropTargetWorkspaceId: null,
+      draggingBlockId: null,
+      dropTargetBlockId: null,
+      screen: "main",
+      inspectorOpen: false,
+    });
+
+    await renderNode(<LeftDock />);
+
+    mockCardRects();
+
+    // Find the Work card element via data attribute
+    const workCard = document.querySelector<HTMLElement>(
+      '[data-workspace-id="ws_work"]'
+    );
+    assert.ok(workCard);
+
+    // pointerdown on Work (index 1, midpoint y=94)
+    await act(async () => {
+      workCard.dispatchEvent(
+        new window.PointerEvent("pointerdown", {
+          bubbles: true,
+          button: 0,
+          isPrimary: true,
+          clientX: 10,
+          clientY: 94,
+        })
+      );
+    });
+
+    // pointermove above Home's midpoint (30) so target = Home
+    await act(async () => {
+      document.dispatchEvent(
+        new window.PointerEvent("pointermove", {
+          bubbles: true,
+          clientX: 10,
+          clientY: 20,
+        })
+      );
+    });
+
+    assert.equal(useUiStore.getState().dropTargetWorkspaceId, "ws_home");
+
+    // Slot should have edge="top" (no card before Home except the dragged one)
+    const beforeSlots = document.querySelectorAll(
+      '[data-testid="workspace-drop-slot"][data-drop-position="before"]'
+    );
+    assert.equal(beforeSlots.length, 1);
+    assert.equal(beforeSlots[0].getAttribute("data-drop-edge"), "top");
+    assert.equal(
+      beforeSlots[0].getAttribute("data-target-workspace-id"),
+      "ws_home"
+    );
+
+    // The target card (Home) should nudge down (slot above it)
+    const homeCardEl = document.querySelector('[data-workspace-id="ws_home"]');
+    assert.ok(homeCardEl);
+    assert.ok(
+      homeCardEl.className.includes("translate-y-1"),
+      "Home card should nudge down (translate-y-1)"
+    );
+
+    // No previous neighbor to nudge up — verify Work (dragged) has no nudge
+    const workCardAfter = document.querySelector('[data-workspace-id="ws_work"]');
+    assert.ok(workCardAfter);
+    assert.equal(
+      workCardAfter.className.includes("translate"),
+      false,
+      "Dragged card should not have nudge"
     );
   });
 });

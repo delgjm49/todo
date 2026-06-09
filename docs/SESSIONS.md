@@ -56,6 +56,7 @@ Last updated: 2026-06-08
 | Hide-completed rows implementation | Complete | Dispatch 086 implements the reviewed derived filter + `Block.hideCompletedRows` preference (PASS WITH NOTES; 3 low-severity test notes deferred) |
 | Workspace scroll/reorder regression | Complete | Dispatch 088 fixes dock/main scrolling, menu layering, in-app rename/delete, reliable Move up/down reorder, stale UX-fixes coverage, and removes misleading native drag pending pointer-drag follow-up |
 | Workspace pointer drag reorder | Complete | Dispatch 089 implements pointer-based workspace drag reorder, append-to-end support, and visible drag/drop feedback while preserving 088 behavior |
+| Workspace drag polish | Complete | Dispatch 090 adds insertion-slot feedback, neighbor nudging, top/bottom slot adaptations, and clearer active-drag cursor behavior |
 | Phase 3 spool channels | Complete | Validated end-to-end |
 | Windows subprocess dispatch-auto | Complete | Validated on Windows 11 |
 
@@ -63,6 +64,7 @@ Last updated: 2026-06-08
 
 - **Session 289 — Main close** (2026-06-06): Closed dispatch 084 after Review PASS, consolidated Sessions 280–288, and prepared archive/completed views planning for commit/push.
 - **Session 290–296 (auto queue)**: Dispatches 085 (core UX fixes) and 086 (hide-completed rows) completed end-to-end via auto-queue with autoClose/autoAdvance. Both pushed (commits 1cf8f53, b5d1cb3). Queue 2/2 succeeded.
+- **Sessions 314–318 — Dispatch 090** (2026-06-08): Closed workspace drag polish after Review PASS. Shipped insertion-slot feedback, neighboring card nudge styling, top/middle/bottom slot adaptations, and pressed/active cursor handling with 85 targeted tests and 9 E2E tests passing.
 - **Sessions 306–313 — Dispatch 089** (2026-06-08): Closed pointer-based workspace drag reorder after review and drag-feedback re-review. Shipped reliable pointer reorder, append-to-end support, visible source/target/end drag feedback, and preserved 088's scroll/menu/rename/delete/Move up/down behavior.
 - **Sessions 297–305 — Dispatch 088** (2026-06-08): Closed workspace scroll/reorder regression after two user-tested fix rounds: scrolling works, context menu is portaled, rename/delete use in-app UI, Move up/down reorder works, stale UX-fixes tests refreshed, and native drag affordance removed for a pointer-drag follow-up.
 - **Session 087 (auto queue)**: Dispatch 087 (test cleanup for three deferred 086 items) completed end-to-end via auto-queue. All three open test items resolved; review-pass. Pushed (commit c67fc2f). Queue 1/1 succeeded.
@@ -76,7 +78,7 @@ Last updated: 2026-06-08
 
 ## Next Recommended
 
-**Next:** Dispatch 090 for workspace drag polish: insertion-gap animation, cards nudging apart around the drop slot, top/bottom slot behavior, and clearer active-drag cursor while preserving dispatch 089's working pointer reorder.
+**Queue complete.** Workspace drag polish (dispatch 090) is closed. No further recommended work at this time.
 
 **Completed:**
 - Alerts epic (053–056): complete
@@ -106,12 +108,13 @@ Last updated: 2026-06-08
 - Deferred test cleanup (dispatch 087): complete — three low-severity test additions from 086 review-pass now implemented
 - Workspace scroll/reorder regression (dispatch 088): complete — dock/main scrolling, context-menu layering, in-app workspace rename/delete, Move up/down reorder, and refreshed UX-fixes coverage
 - Workspace pointer drag reorder (dispatch 089): complete — pointer-based workspace drag, append-to-end support, visible drag feedback, and passing targeted/E2E coverage
+- Workspace drag polish (dispatch 090): complete — insertion slots, neighbor nudging, top/bottom adaptations, and clearer cursor/pressed drag states
 - Autosave UX (063): complete
 - Manual QA (065): complete — no critical defects found
 
 ## Blockers / Open Questions
 
-Workspace pointer drag works after dispatch 089, but the user wants more refined insertion-gap polish: neighboring cards should nudge apart around the landing slot with a thin highlighted/shadow rectangle, including top/bottom slot adaptations and clearer active-drag cursor. Dispatch 090 is scoped for this polish.
+None.
 
 ## Full Archive
 

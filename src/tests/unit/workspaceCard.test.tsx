@@ -400,3 +400,120 @@ describe("WorkspaceCard light-mode rendering", () => {
     assert.ok(chipTexts.includes(STOCK_LIGHT_WORKSPACE_TEXT_COLOR), `Expected ${STOCK_LIGHT_WORKSPACE_TEXT_COLOR} in chip, got: ${chipTexts.join(", ")}`);
   });
 });
+
+describe("WorkspaceCard drag and nudge state classes", () => {
+  test("dragging prop applies lifted visual classes", async () => {
+    await renderNode(
+      <WorkspaceCard
+        entry={entry()}
+        active={false}
+        dragging={true}
+        onOpenMenu={() => {}}
+        onSelect={() => {}}
+      />
+    );
+
+    const card = document.querySelector('[role="button"]') as HTMLElement;
+    assert.ok(card);
+
+    // cursor-grabbing for active drag
+    assert.ok(card.className.includes("cursor-grabbing"));
+    // lifted state classes
+    assert.ok(card.className.includes("opacity-70"));
+    assert.ok(card.className.includes("scale-[0.97]"));
+    assert.ok(card.className.includes("shadow-lg"));
+    assert.ok(card.className.includes("select-none"));
+    assert.ok(card.className.includes("z-10"));
+  });
+
+  test("pressed prop applies cursor-grabbing without lifted state", async () => {
+    await renderNode(
+      <WorkspaceCard
+        entry={entry()}
+        active={false}
+        pressed={true}
+        onOpenMenu={() => {}}
+        onSelect={() => {}}
+      />
+    );
+
+    const card = document.querySelector('[role="button"]') as HTMLElement;
+    assert.ok(card);
+
+    // cursor-grabbing for held state
+    assert.ok(card.className.includes("cursor-grabbing"));
+    // Must NOT have the full lifted active-drag classes
+    assert.equal(card.className.includes("opacity-70"), false);
+    assert.equal(card.className.includes("shadow-lg"), false);
+    assert.equal(card.className.includes("select-none"), false);
+    // Should have default border/background for inactive card
+    assert.ok(card.className.includes("border-border"));
+  });
+
+  test("pressed active card shows pressed + active visual state", async () => {
+    await renderNode(
+      <WorkspaceCard
+        entry={entry()}
+        active={true}
+        pressed={true}
+        onOpenMenu={() => {}}
+        onSelect={() => {}}
+      />
+    );
+
+    const card = document.querySelector('[role="button"]') as HTMLElement;
+    assert.ok(card);
+
+    assert.ok(card.className.includes("cursor-grabbing"));
+    assert.ok(card.className.includes("border-accent/70"));
+    assert.ok(card.className.includes("shadow-soft"));
+  });
+
+  test("slotNudge up applies -translate-y-1", async () => {
+    await renderNode(
+      <WorkspaceCard
+        entry={entry()}
+        active={false}
+        slotNudge="up"
+        onOpenMenu={() => {}}
+        onSelect={() => {}}
+      />
+    );
+
+    const card = document.querySelector('[role="button"]') as HTMLElement;
+    assert.ok(card);
+    assert.ok(card.className.includes("-translate-y-1"));
+    assert.ok(card.className.includes("transition-transform"));
+  });
+
+  test("slotNudge down applies translate-y-1", async () => {
+    await renderNode(
+      <WorkspaceCard
+        entry={entry()}
+        active={false}
+        slotNudge="down"
+        onOpenMenu={() => {}}
+        onSelect={() => {}}
+      />
+    );
+
+    const card = document.querySelector('[role="button"]') as HTMLElement;
+    assert.ok(card);
+    assert.ok(card.className.includes("translate-y-1"));
+    assert.ok(card.className.includes("transition-transform"));
+  });
+
+  test("old drop-indicator is not rendered", async () => {
+    await renderNode(
+      <WorkspaceCard
+        entry={entry()}
+        active={false}
+        onOpenMenu={() => {}}
+        onSelect={() => {}}
+      />
+    );
+
+    const indicator = document.querySelector('[data-testid="drop-indicator"]');
+    assert.equal(indicator, null, "Expected no old drop-indicator in WorkspaceCard");
+  });
+});

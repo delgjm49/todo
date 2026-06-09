@@ -5076,3 +5076,91 @@ Closed dispatch 089 after review-pass and drag-feedback re-review-pass. The fina
 
 ### Outcome
 Dispatch 089 closed with message `008-main-to-main.md`; committed and pushed by Main after dirty-file close gate. Follow-up insertion-gap animation polish was scoped into dispatch 090.
+
+
+## Session 314 — 2026-06-08
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: agents/channels/090-workspace-drag-polish/
+- Dispatch: agents/artifacts/090-workspace-drag-polish-dispatch.md
+
+### Summary
+After closing dispatch 089, framed dispatch 090 for workspace drag polish. The dispatch asks for insertion-slot feedback between cards, neighboring cards nudging apart, top/bottom slot adaptations, and clearer active-drag cursor/visual state while preserving the working pointer reorder implementation and 088/089 behavior.
+
+### Outcome
+Dispatch artifact and first Main → Plan channel message created; ready for Plan pickup.
+
+## Session 315 — 2026-06-08
+
+### Agent Type
+plan
+
+### Artifacts
+- Channel: agents/channels/090-workspace-drag-polish/
+- Dispatch: agents/artifacts/090-workspace-drag-polish-dispatch.md
+- Plan: agents/artifacts/090-workspace-drag-polish-plan.md
+- Next message: agents/channels/090-workspace-drag-polish/messages/002-plan-to-dev.md
+
+### Summary
+Created the implementation plan for workspace drag polish after reading the active channel message, dispatch artifact, dispatch 089 review, current drag/source files, current store behavior, and relevant unit/E2E tests. The plan directs Dev to replace target-card feedback with a standalone insertion slot, add top/middle/bottom neighbor nudging, improve active/pressed cursor state, and update stable unit/E2E coverage without changing storage or native drag/drop behavior.
+
+### Outcome
+Plan artifact written and Plan → Dev handoff prepared; ready for Dev pickup.
+
+## Session 316 — 2026-06-08
+
+### Agent Type
+dev
+
+### Artifacts
+- Channel: agents/channels/090-workspace-drag-polish/
+- Dispatch: agents/artifacts/090-workspace-drag-polish-dispatch.md
+- Plan: agents/artifacts/090-workspace-drag-polish-plan.md
+- Complete: agents/artifacts/090-workspace-drag-polish-complete.md
+- Next message: agents/channels/090-workspace-drag-polish/messages/003-dev-to-review.md
+
+### Summary
+Implemented workspace drag polish per the plan: replaced target-card highlighting with insertion-slot rendering (`WorkspaceDropSlot`) with top/middle/bottom edge adaptations; added neighbor nudge transforms via `slotNudge` prop; added `pressedWorkspaceId` local state for pre-threshold cursor feedback; added body-level `cursor: grabbing` during active drag with cleanup. Updated 5 source/test files. All 85 unit tests and 9 Playwright E2E tests pass.
+
+### Outcome
+Dev → Review handoff prepared; ready for Review pickup.
+
+## Session 317 — 2026-06-08
+
+### Agent Type
+review
+
+### Artifacts
+- Channel: agents/channels/090-workspace-drag-polish/
+- Dispatch: agents/artifacts/090-workspace-drag-polish-dispatch.md
+- Plan: agents/artifacts/090-workspace-drag-polish-plan.md
+- Complete: agents/artifacts/090-workspace-drag-polish-complete.md
+- Review: agents/artifacts/090-workspace-drag-polish-review.md
+- Next message: agents/channels/090-workspace-drag-polish/messages/004-review-to-main.md
+
+### Summary
+Reviewed the implementation against the plan. All acceptance criteria met: insertion-slot rendering works for top/middle/bottom edges, neighbor nudge classes are correct, pressed/dragging cursor states are applied, body cursor is managed robustly. Reran all three verification commands — 85 unit/integration tests pass, 9 E2E tests pass, TypeScript compiles cleanly. No out-of-scope working tree changes. One minor note about end-slot rendering on the first frame after promotion (negligible in practice).
+
+### Outcome
+PASS — Review → Main handoff prepared with State = review-pass. Ready for Main closeout.
+
+## Session 318 — 2026-06-08
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: agents/channels/090-workspace-drag-polish/
+- Dispatch: agents/artifacts/090-workspace-drag-polish-dispatch.md
+- Plan: agents/artifacts/090-workspace-drag-polish-plan.md
+- Complete: agents/artifacts/090-workspace-drag-polish-complete.md
+- Review: agents/artifacts/090-workspace-drag-polish-review.md
+
+### Summary
+Closed dispatch 090 after Review PASS. The final change set refines workspace pointer-drag feedback with insertion slots, neighbor nudge styling, top/middle/bottom slot adaptations, pressed/active cursor handling, and passing targeted/E2E verification while preserving dispatch 088/089 workspace behavior.
+
+### Outcome
+Dispatch 090 closed with message `005-main-to-main.md`; committed and pushed by Main after dirty-file close gate.

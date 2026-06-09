@@ -262,8 +262,16 @@ test.describe("core UX fixes", () => {
       await page.mouse.move(startX, y);
     }
 
-    // During active drag, the drop-indicator should be visible on the target card
-    await expect(page.getByTestId("drop-indicator").first()).toBeVisible();
+    // During active drag, the insert-before drop slot should be visible
+    await expect(
+      page.locator(
+        '[data-testid="workspace-drop-slot"][data-drop-position="before"]'
+      ).first()
+    ).toBeVisible();
+
+    // Assert body cursor is grabbing during active drag (computed)
+    const cursorDuringDrag = await page.evaluate(() => document.body.style.cursor);
+    expect(cursorDuringDrag).toBe("grabbing");
 
     await page.mouse.up();
 
@@ -271,6 +279,10 @@ test.describe("core UX fixes", () => {
     await expect(cardTitles.nth(0)).toHaveText("Workspace 2");
     await expect(cardTitles.nth(1)).toHaveText("Home");
     await expect(cardTitles.nth(2)).toHaveText("Workspace 3");
+
+    // Assert body cursor is restored after mouse up
+    const cursorAfter = await page.evaluate(() => document.body.style.cursor);
+    expect(cursorAfter).toBe("");
   });
 
   test("pointer-drag reorder workspace to end of list", async ({ page }) => {
@@ -304,8 +316,12 @@ test.describe("core UX fixes", () => {
       await page.mouse.move(startX, y);
     }
 
-    // During active drag at end-of-list, the drop-indicator-end marker should be visible
-    await expect(page.getByTestId("drop-indicator-end")).toBeVisible();
+    // During active drag at end-of-list, the end drop slot should be visible
+    await expect(
+      page.locator(
+        '[data-testid="workspace-drop-slot"][data-drop-position="end"]'
+      ).first()
+    ).toBeVisible();
 
     await page.mouse.up();
 

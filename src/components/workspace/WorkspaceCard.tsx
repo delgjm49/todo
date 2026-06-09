@@ -9,7 +9,8 @@ export function WorkspaceCard({
   onOpenMenu,
   onSelect,
   dragging = false,
-  dropTarget = false,
+  pressed = false,
+  slotNudge = null,
   onPointerDown,
 }: {
   entry: WorkspaceIndexEntry;
@@ -18,25 +19,42 @@ export function WorkspaceCard({
   onOpenMenu: (x: number, y: number) => void;
   onSelect: () => void;
   dragging?: boolean;
-  dropTarget?: boolean;
+  pressed?: boolean;
+  slotNudge?: "up" | "down" | null;
   onPointerDown?: (event: React.PointerEvent<HTMLDivElement>) => void;
 }) {
   const effectiveStyle = resolveThemeAwareWorkspaceStyle(entry.style, theme);
   const workspaceBackground = effectiveStyle.background ?? undefined;
   const workspaceTextColor = effectiveStyle.textColor ?? undefined;
 
+  const cardBaseClass =
+    "group relative flex w-full items-stretch overflow-hidden rounded-2xl border text-left transition";
+
+  let stateClass: string;
+  if (dragging) {
+    stateClass =
+      "cursor-grabbing opacity-70 scale-[0.97] shadow-lg ring-2 ring-accent/50 select-none z-10";
+  } else if (pressed) {
+    stateClass = "cursor-grabbing";
+    stateClass += active
+      ? " border-accent/70 shadow-soft ring-1 ring-accent/40"
+      : " border-border bg-panelMuted/60 hover:border-accent/40";
+  } else if (active) {
+    stateClass = "cursor-grab border-accent/70 shadow-soft ring-1 ring-accent/40";
+  } else {
+    stateClass = "cursor-grab border-border bg-panelMuted/60 hover:border-accent/40";
+  }
+
+  let nudgeClass = "";
+  if (slotNudge === "up") nudgeClass = " -translate-y-1 transition-transform";
+  if (slotNudge === "down") nudgeClass = " translate-y-1 transition-transform";
+
+  const className = `${cardBaseClass} ${stateClass}${nudgeClass}`;
+
   return (
     <div
       aria-pressed={active}
-      className={`group relative flex w-full items-stretch overflow-hidden rounded-2xl border text-left transition ${
-        dragging
-          ? "cursor-grabbing opacity-70 scale-[0.97] shadow-lg ring-2 ring-accent/50 select-none"
-          : dropTarget
-            ? "cursor-grab border-accent ring-2 ring-accent bg-accent/10"
-            : active
-              ? "cursor-grab border-accent/70 shadow-soft ring-1 ring-accent/40"
-              : "cursor-grab border-border bg-panelMuted/60 hover:border-accent/40"
-      }`}
+      className={className}
       data-testid="workspace-card"
       data-workspace-id={entry.id}
       onClick={onSelect}
@@ -58,12 +76,6 @@ export function WorkspaceCard({
       }}
       tabIndex={0}
     >
-      {dropTarget && (
-        <div
-          className="pointer-events-none absolute left-0 right-0 top-0 z-10 h-0.5 bg-accent shadow-sm shadow-accent/50"
-          data-testid="drop-indicator"
-        />
-      )}
       <div
         className={`w-2 shrink-0 ${
           effectiveStyle.accentStripe?.enabled === false ? "bg-transparent" : "bg-accent"
