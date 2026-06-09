@@ -31,7 +31,7 @@ pickup agents/channels/###-feature-slug/
 **What happens**:
 1. Agent reads the channel spool and sees the latest message file is addressed to Plan.
 2. Plan reads the dispatch artifact listed in the channel.
-3. Plan completes reconnaissance: reads relevant spec/architecture docs and existing code before writing the plan.
+3. Plan completes reconnaissance: reads relevant spec/architecture docs and existing code before writing the plan. If current external docs, package versions, changelogs, or user-provided URLs matter, use the web research guidance in `agents/workflows/web-research.md`.
 4. Plan creates `###-feature-plan.md`, including a `## Verified Current-State Facts` section.
 5. Plan creates `messages/002-plan-to-dev.md` in the same channel.
 6. Plan appends a session entry to the configured session buffer and outputs the short pickup instruction.
@@ -49,7 +49,7 @@ pickup agents/channels/###-feature-slug/
 **What happens**:
 1. Agent reads the channel spool and sees the latest message file is addressed to Dev.
 2. Dev reads the plan artifact listed in the channel (authoritative over any short channel recap).
-3. Dev implements each step in order.
+3. Dev implements each step in order. If implementation depends on current external docs, package versions, changelogs, or user-provided URLs, use the web research guidance in `agents/workflows/web-research.md`.
 4. Dev verifies the work, reporting each required command using the verification reporting rule in `agents/CLOSING.md`.
 5. Dev writes `###-feature-complete.md`.
 6. Dev creates `messages/003-dev-to-review.md` in the same channel.
