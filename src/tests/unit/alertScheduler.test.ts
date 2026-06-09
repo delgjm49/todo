@@ -368,15 +368,17 @@ describe("edit-triggered re-evaluation", () => {
   test("updateTimeCellValue triggers alert re-evaluation", async () => {
     const workspaceId = await initStore();
 
-    // Build a workspace with an alert-enabled time column and a future-time row
+    // Build a workspace with an alert-enabled time column.
+    // Start with an empty string (deterministic — empty time values produce
+    // no alert because parseTimeDueTime returns undefined for empty input),
+    // then edit to a past time to verify re-evaluation fires.
+    // We avoid computing a "future" time because any local-time computation
+    // can wrap past midnight on CI runners.
     const timeCol = column({ id: "when", type: "time" });
-    // Create time far in the future to avoid alert initially
-    const futureHour = new Date().getHours() + 5;
-    const futureTime = `${String(futureHour % 24).padStart(2, "0")}:00`;
     const wsBlock = block(
       "b1",
       [timeCol],
-      [row("r1", 0, { when: futureTime })],
+      [row("r1", 0, { when: "" })],   // empty string → no alert, but cell exists for editing
     );
     const doc = workspaceDocument(workspaceId, [wsBlock]);
     useDocumentStore.setState({

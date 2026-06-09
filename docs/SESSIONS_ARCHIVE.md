@@ -5164,3 +5164,60 @@ Closed dispatch 090 after Review PASS. The final change set refines workspace po
 
 ### Outcome
 Dispatch 090 closed with message `005-main-to-main.md`; committed and pushed by Main after dirty-file close gate.
+
+
+## Session 319 — Main dispatch
+
+### Artifacts
+- `agents/artifacts/091-github-actions-build-failure-hardening-dispatch.md`
+- `agents/channels/091-github-actions-build-failure-hardening/messages/001-main-to-dev.md`
+
+### Summary
+- Investigated recent GitHub Actions failures via `gh run list` / failed logs.
+- Identified recurring Windows CI unit-test flake in `alertScheduler.test.ts` caused by time-of-day dependent future-time setup.
+- Noted older Playwright `Menu` locator ambiguity failures for audit/hardening.
+- Dispatched a small direct-to-Dev CI hardening task.
+
+### Outcome
+Dispatch 091 is ready for Dev pickup.
+
+## Session 320 — Dev
+
+### Artifacts
+- Channel: agents/channels/091-github-actions-build-failure-hardening/
+- Complete: agents/artifacts/091-github-actions-build-failure-hardening-complete.md
+
+### Summary
+Fixed the time-dependent `updateTimeCellValue` test flake by replacing the clock-hour-based future-time computation with a deterministic empty-string initial value. Audited Playwright `Menu` locators — no remaining ambiguity found (already hardened via `getByRole`). All 553 unit tests pass, typecheck clean.
+
+### Outcome
+Implementation complete, ready for review; next channel message created.
+
+## Session 321 — Review
+
+### Artifacts
+- Channel: agents/channels/091-github-actions-build-failure-hardening/
+- Review: agents/artifacts/091-github-actions-build-failure-hardening-review.md
+
+### Summary
+Reviewed the Dev implementation: time-cell test now deterministic (empty-string initial value instead of clock-hour computation), Playwright Menu locators confirmed already hardened. Ran typecheck (pass), targeted alertScheduler tests (553 pass, 0 fail), and full test suite (553 pass, 0 fail). No issues found.
+
+### Outcome
+PASS — Ready for Main. Next channel message created: 003-review-to-main.md with State = review-pass.
+
+## Session 322 — 2026-06-09
+
+### Agent Type
+main
+
+### Artifacts
+- Channel: agents/channels/091-github-actions-build-failure-hardening/
+- Dispatch: agents/artifacts/091-github-actions-build-failure-hardening-dispatch.md
+- Complete: agents/artifacts/091-github-actions-build-failure-hardening-complete.md
+- Review: agents/artifacts/091-github-actions-build-failure-hardening-review.md
+
+### Summary
+Closed dispatch 091 after Review PASS. The final change hardens the alert scheduler time-cell unit test by replacing clock-hour-dependent future-time setup with deterministic empty input, and confirms current Playwright Menu locators are already role-based. Latest GitHub Actions run on main was green before closeout.
+
+### Outcome
+Dispatch 091 closed with message `004-main-to-main.md`; committed and pushed by Main after dirty-file close gate.
